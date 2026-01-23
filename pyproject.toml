@@ -56,8 +56,8 @@ root_package = "automol"
 name = "Module Layering"
 type = "layers"
 layers = [
-    "automol.layer2",
-    "automol.layer1",
+    "automol.geom",
+    "automol.types",
 ]
 
 # Pytest configurations

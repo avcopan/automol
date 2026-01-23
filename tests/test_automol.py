@@ -1,18 +1,14 @@
 """automol tests."""
 
+import numpy as np
+
 import automol
 
 
-def test_stub() -> None:
-    """Stub test to ensure the test suite runs."""
-    print(automol.__version__)  # noqa: T201
-
-
-def test__greet() -> None:
-    """Test the greet function."""
-    assert automol.greet("World") == "Hello, World!"
-
-
-def test__greet_jim() -> None:
-    """Test the greet_jim function."""
-    assert automol.greet_jim() == "Hello, Jim!"
+def test__geometry() -> None:
+    """Test the Geometry model."""
+    geo = automol.Geometry(
+        symbols=["O", "H", "H"], coordinates=[[0, 0, 0], [1, 0, 0], [0, 1, 0]]
+    )
+    assert geo.symbols == ["O", "H", "H"]
+    assert np.array_equal(geo.coordinates, [[0, 0, 0], [1, 0, 0], [0, 1, 0]])
