@@ -1,0 +1,73 @@
+[project]
+name = "automol"
+version = "0.0.0"
+authors = [{name = "Andreas V. Copan", email = "avcopan@uga.edu"}]
+requires-python = ">= 3.11"
+dependencies = []
+
+[build-system]
+build-backend = "uv_build"
+requires = ["uv_build"]
+
+# Ruff configurations
+[tool.ruff]
+exclude = [
+    "docs",
+    "**/*.ipynb",
+]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "COM812",   # missing trailing comma (handled by format)
+    "RUF022",   # `__all__` is not sorted
+    "TID252",   # relative import
+    "D203",     # confict: incorrect blank line before class (uses D211 instead)
+    "D213",     # conflict: multi-line summary second line (uses D212 instead)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**.py" = ["S101"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+# Ty configurations
+[tool.ty.src]
+include = [
+    "src",
+    "tests",
+]
+
+# Import-linter configurations
+[tool.importlinter]
+root_package = "automol"
+
+[[tool.importlinter.contracts]]
+name = "Module Layering"
+type = "layers"
+layers = [
+    "automol.layer2",
+    "automol.layer1",
+]
+
+# Pytest configurations
+[tool.pytest.ini_options]
+testpaths = ["tests", "src"]
+addopts = [
+    "--doctest-modules",
+    "--cov=automol",
+    "--cov-report=term-missing",
+    "--cov-report=xml",
+]
+doctest_optionflags = "NORMALIZE_WHITESPACE"
+
+# Pytest-cov configurations
+[tool.coverage.run]
+branch = true
+source = ["automol"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 80
