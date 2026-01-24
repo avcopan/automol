@@ -69,3 +69,5 @@ release = "tbump"
 # Setup and initialize this repository (only run once)
 setup = "./scripts/setup.sh"
 init = { cmd = "./scripts/init.sh", depends-on = ["setup"]}
+# Project tasks
+elements-data = { cmd = "./scripts/elements-data.py" }
