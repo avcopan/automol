@@ -28,6 +28,7 @@ lefthook = "*"
 rattler-build = "*"
 tbump = "*"
 ipykernel = "*"
+mendeleev = "*"
 
 [feature.docs.dependencies]
 sphinx = "*"
