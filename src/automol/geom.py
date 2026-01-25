@@ -1,8 +1,10 @@
 """Model and functions for manipulating molecular geometries."""
 
+import numpy as np
 from pydantic import BaseModel, ConfigDict
 
-from .types import CoordinatesField
+from . import element
+from .types import CoordinatesField, FloatArray
 
 
 class Geometry(BaseModel):
@@ -35,3 +37,20 @@ class Geometry(BaseModel):
     spin: int = 0
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
+
+
+def center_of_mass(geo: Geometry) -> FloatArray:
+    """Calculate geometry center of mass.
+
+    Parameters
+    ----------
+    geom :
+        Input geometry.
+
+    Returns
+    -------
+        Center of mass coordinates.
+    """
+    masses = list(map(element.mass, geo.symbols))
+    coords = geo.coordinates
+    return np.sum(np.reshape(masses, (-1, 1)) * coords, axis=0) / np.sum(masses)

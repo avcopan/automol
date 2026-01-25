@@ -7,7 +7,7 @@ from numpy import typing as npt
 from pydantic import BeforeValidator, PlainSerializer
 from pydantic.functional_validators import SkipValidation
 
-from .core import Coordinates, FloatArray
+from .core import FloatArray
 
 
 # Float array field
@@ -27,7 +27,7 @@ FloatArrayField = Annotated[
 
 
 # Coordinates field
-def _coordinates_validator(obj: object) -> Coordinates:
+def _coordinates_validator(obj: object) -> FloatArray:
     arr = _float_array_validator(obj)
 
     if arr.ndim != 2 or arr.shape[-1] != 3:  # noqa: PLR2004

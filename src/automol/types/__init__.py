@@ -1,6 +1,6 @@
 """Types."""
 
-from .core import Coordinates, FloatArray
+from .core import FloatArray
 from .pydantic import CoordinatesField, FloatArrayField
 
-__all__ = ["Coordinates", "FloatArray", "CoordinatesField", "FloatArrayField"]
+__all__ = ["FloatArray", "CoordinatesField", "FloatArrayField"]
