@@ -39,11 +39,8 @@ jobs:
           # Publish to Anaconda.org
           pixi run publish-conda
 
-          # Publish to PyPI (uncomment for actual release)
-          # pixi run publish-pypi
-
-          # Publish to Test PyPI (comment out for actual release)
-          pixi run publish-test-pypi
+          # Publish to PyPI
+          pixi run publish-pypi
         env:
           ANACONDA_API_KEY: ${{ secrets.ANACONDA_API_KEY }}
           UV_PUBLISH_TOKEN: ${{ secrets.UV_PUBLISH_TOKEN }}
