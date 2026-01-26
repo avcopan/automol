@@ -1,6 +1,6 @@
 """automol."""
 
-__version__ = "0.0.0"
+__version__ = "0.0.1"
 
 from . import geom, types
 from .geom import Geometry
