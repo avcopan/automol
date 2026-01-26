@@ -1,9 +1,9 @@
-"""Model and functions for manipulating molecular geometries."""
+"""Molecular geometries."""
 
 import numpy as np
 from pydantic import BaseModel, ConfigDict
 
-from . import element
+from . import element, rd
 from .types import CoordinatesField, FloatArray
 
 
@@ -39,13 +39,37 @@ class Geometry(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
-def center_of_mass(geo: Geometry) -> FloatArray:
-    """Calculate geometry center of mass.
+def from_rdkit_molecule(mol: rd.Mol) -> Geometry:
+    """
+    Generate geometry from RDKit molecule.
 
     Parameters
     ----------
-    geom :
-        Input geometry.
+    mol
+        RDKit molecule.
+
+    Returns
+    -------
+        Geometry.
+    """
+    if not rd.mol.has_coordinates(mol):
+        mol = rd.mol.add_coordinates(mol)
+
+    return Geometry(
+        symbols=rd.mol.symbols(mol),
+        coordinates=rd.mol.coordinates(mol),
+        charge=rd.mol.charge(mol),
+        spin=rd.mol.spin(mol),
+    )
+
+
+def center_of_mass(geo: Geometry) -> FloatArray:
+    """
+    Calculate geometry center of mass.
+
+    Parameters
+    ----------
+        Geometry.
 
     Returns
     -------
