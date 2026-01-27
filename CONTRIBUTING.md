@@ -7,26 +7,28 @@ documentation improvements, and new features.
 This document outlines the basic development workflow and coding
 conventions used in the project.
 
-------------------------------------------------------------------------
-
 ## Development workflow
 
-1.  Fork the repository and create a feature branch.
-2.  Make your changes with clear, focused commits.
-3.  Ensure all tests pass and new functionality is covered by tests.
-4.  Open a pull request with a clear description of the changes.
-
-------------------------------------------------------------------------
+To get set up:
+1. Install [Pixi](https://pixi.prefix.dev/latest/installation/)
+2. Fork the repository
+3. Clone the repository and run `pixi run init` inside it
+To contribute code, submit pull requests with clear descriptions of the changes.
+For larger contributions, create an issue first to propose your idea.
 
 ## Coding standards
 
--   Follow PEP 8 for Python code style.
--   Prefer explicit, readable code over clever or overly compact
-    constructs.
--   Use type annotations consistently.
--   Write docstrings using NumPy-style formatting.
+Coding standards are largely enforced by the pre-commit hooks, which perform
+formatting and linting ([Ruff](https://github.com/charliermarsh/ruff)),
+import linting ([Lint-Imports](https://import-linter.readthedocs.io/en/stable/)),
+static type-checking ([Ty](https://github.com/astral-sh/ty)),
+and testing ([PyTest](https://docs.pytest.org/en/latest/))
+with code coverage reports [CodeCov](https://docs.codecov.com/docs).
 
-------------------------------------------------------------------------
+Docstrings follow the
+[NumPy docstring standard](https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard).
+
+---
 
 ## Naming conventions
 
@@ -49,7 +51,7 @@ variable names.
 
 **Rule:** Module names must not be used for data-valued variables.
 
-------------------------------------------------------------------------
+---
 
 ### Types (data models)
 
@@ -64,7 +66,7 @@ Smiles
 These classes represent molecular data objects and define their schema
 and validation.
 
-------------------------------------------------------------------------
+---
 
 ### Variables (instances of data types)
 
@@ -92,7 +94,7 @@ instance**
 
 This distinction is used consistently throughout the codebase.
 
-------------------------------------------------------------------------
+---
 
 ### Functions vs methods
 
@@ -107,7 +109,7 @@ def center_of_mass(geo: Geometry) -> FloatArray:
 This keeps data models lightweight and separates data representation
 from algorithms, following standard scientific Python practice.
 
-------------------------------------------------------------------------
+---
 
 ## Questions
 
