@@ -13,22 +13,16 @@ class Geometry(BaseModel):
 
     Parameters
     ----------
-    symbols : list[str]
+    symbols
         Atomic symbols in order (e.g., ``["H", "O", "H"]``).
         The length of ``symbols`` must match the number of atoms.
-
-    coordinates : CoordinatesField
-        Cartesian coordinates of the atoms.
+    coordinates
+        Cartesian coordinates of the atoms in Angstroms.
         Shape is ``(len(symbols), 3)`` and the ordering corresponds to ``symbols``.
-        Units are assumed to be **angstroms** unless otherwise specified.
-
-    charge : int, optional
+    charge
         Total molecular charge.
-        Default is ``0``.
-
-    spin : int, optional
-        Total spin multiplicity or spin quantum number (depending on convention).
-        Default is ``0``.
+    spin
+        Number of unpaired electrons, i.e. two times the spin quantum number (``2S``).
     """
 
     symbols: list[str]
