@@ -10,7 +10,8 @@ from automol import Geometry, geom
 def water() -> Geometry:
     """Water geometry fixture."""
     return Geometry(
-        symbols=["O", "H", "H"], coordinates=[[0, 0, 0], [1, 0, 0], [0, 1, 0]]
+        symbols=["O", "H", "H"],
+        coordinates=[[0, 0, 0], [1, 0, 0], [0, 1, 0]],  # ty:ignore[invalid-argument-type]
     )
 
 

@@ -3,7 +3,6 @@
 from typing import Annotated
 
 import numpy as np
-from numpy import typing as npt
 from pydantic import BeforeValidator, PlainSerializer
 from pydantic.functional_validators import SkipValidation
 
@@ -20,7 +19,7 @@ def _float_array_serializer(arr: FloatArray) -> list:
 
 
 FloatArrayField = Annotated[
-    SkipValidation[npt.ArrayLike],
+    SkipValidation[FloatArray],
     BeforeValidator(_float_array_validator),
     PlainSerializer(_float_array_serializer, return_type=list),
 ]
@@ -38,7 +37,7 @@ def _coordinates_validator(obj: object) -> FloatArray:
 
 
 CoordinatesField = Annotated[
-    SkipValidation[npt.ArrayLike],
+    SkipValidation[FloatArray],
     BeforeValidator(_coordinates_validator),
     PlainSerializer(_float_array_serializer, return_type=list),
 ]
