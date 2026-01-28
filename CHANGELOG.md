@@ -16,8 +16,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Change 1
 - Change 2...
 
-## [0.0.1] - 2026-01-26
+## [0.0.2] - 2026-01-28
+### Fixed
+- Fix Geometry.coordinate type annotation
 
+## [0.0.1] - 2026-01-26
 ### Added
 - Generate Geometry from SMILES
 - Calculate Geometry center of mass
