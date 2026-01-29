@@ -1,6 +1,6 @@
 [project]
 name = "automol"
-version = "0.0.2"
+version = "0.0.3"
 authors = [{name = "Andreas V. Copan", email = "avcopan@uga.edu"}]
 requires-python = ">= 3.12"
 dependencies = [

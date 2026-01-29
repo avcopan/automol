@@ -1,7 +1,7 @@
 github_url = "https://github.com/avcopan/automol"
 
 [version]
-current = "0.0.2"
+current = "0.0.3"
 regex = '''
   (?P<major>\d+)
   \.
