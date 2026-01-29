@@ -5,16 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 ### Added
-- Feature 1
-- Feature 2...
-
-### Fixed
-- Fix 1
-- Fix 2...
-
-### Changed
-- Change 1
-- Change 2...
+- Geometry hash function
 
 ## [0.0.2] - 2026-01-28
 ### Fixed
