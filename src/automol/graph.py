@@ -1,11 +1,13 @@
 """Core functions."""
 
 import copy
+import itertools
 import operator as op
+from collections import Counter, defaultdict
+from collections.abc import Collection, Iterator
 from enum import StrEnum
 
 import networkx as nx
-from networkx.algorithms.isomorphism import ISMAGS
 from pydantic import BaseModel
 from pydantic._internal._model_construction import ModelMetaclass
 from rdkit.Chem import rdchem
@@ -163,7 +165,35 @@ def remove_bond_orders(G: nx.Graph, *, in_place: bool = False) -> nx.Graph:  # n
     return G
 
 
+def remove_bonds(
+    G: nx.Graph,  # noqa: N803
+    bonds: Collection[tuple[int, int]],
+    *,
+    in_place: bool = False,
+) -> nx.Graph:
+    """Return a copy of the graph with specified bonds removed."""
+    G = G if in_place else copy.deepcopy(G)  # noqa: N806
+    G.remove_edges_from(bonds)
+    return G
+
+
 # Comparisons
+def isomorphisms(G1: nx.Graph, G2: nx.Graph) -> list[dict[int, int]]:  # noqa: N803
+    """Check if two graphs are isomorphic.
+
+    Does not consider bond orders.
+    """
+    return list(nx.vf2pp_all_isomorphisms(G1, G2, node_label=Atom.symbol))
+
+
+def isomorphism(G1: nx.Graph, G2: nx.Graph) -> dict[int, int] | None:  # noqa: N803
+    """Check if two graphs are isomorphic.
+
+    Does not consider bond orders.
+    """
+    return nx.vf2pp_isomorphism(G1, G2, node_label=Atom.symbol)
+
+
 def is_isomorphic(G1: nx.Graph, G2: nx.Graph, *, bond_orders: bool = False) -> bool:  # noqa: N803
     """Check if two graphs are isomorphic."""
     if not bond_orders:
@@ -172,75 +202,24 @@ def is_isomorphic(G1: nx.Graph, G2: nx.Graph, *, bond_orders: bool = False) -> b
     return nx.is_isomorphic(G1, G2, node_match=op.eq, edge_match=op.eq)
 
 
-def mcs_mappings(G1: nx.Graph, G2: nx.Graph) -> list[dict[int, int]]:  # noqa: N803
-    """Find the maximum common subgraph between two graphs."""
-    ismags = ISMAGS(G1, G2, node_match=op.eq, edge_match=op.eq)
-    return list(ismags.largest_common_subgraph())
-
-
-def reaction_mappings_mcs_recursive(
-    G1: nx.Graph,  # noqa: N803
-    G2: nx.Graph,  # noqa: N803
-) -> list[dict[int, int]]:
-    """Find the maximum common subgraph between two graphs using a recursive approach.
-
-    Does not work well. Need to implement algorithm from autoDE.
-    """
-    if G1.number_of_nodes() == 0 or G2.number_of_nodes() == 0:
-        return [{}]
-
-    mappings = []
-
-    for mapping in mcs_mappings(G1, G2):
-        nodes1 = set(G1.nodes()) - set(mapping.keys())
-        nodes2 = set(G2.nodes()) - set(mapping.values())
-
-        sub_mappings = reaction_mappings_mcs_recursive(
-            G1.subgraph(nodes1), G2.subgraph(nodes2)
-        )
-
-        mappings.extend({**mapping, **sub_mapping} for sub_mapping in sub_mappings)
-
-    return mappings
-
-
 # Transition state graphs
-def transition_state_graphs(G1: nx.Graph, G2: nx.Graph) -> list[nx.Graph]:  # noqa: N803
-    """Construct a transition graph between two graphs.
+BondKey = tuple[int, int]
+BondType = tuple[str, str]
+FORMED_BOND = Bond(change=Change.FORMED, order=1)
+BROKEN_BOND = Bond(change=Change.BROKEN, order=1)
 
-    Does not work well. Need to implement algorithm from autoDE.
-    """
-    TGs = []  # noqa: N806
 
-    # Note: Using reverse mappings to map the product onto the reactant
-    for mapping in reaction_mappings_mcs_recursive(G2, G1):
-        G2_ = nx.relabel_nodes(G2, mapping)  # noqa: N806
-
-        formed_bonds = set(G2_.edges()) - set(G1.edges())
-        broken_bonds = set(G1.edges()) - set(G2_.edges())
-
-        formed_bond_model = Bond(change=Change.FORMED, order=1)
-        broken_bond_model = Bond(change=Change.BROKEN, order=1)
-
-        TG = remove_bond_orders(G1)  # noqa: N806
-        TG.add_edges_from(formed_bonds, **formed_bond_model.model_dump())
-        TG.add_edges_from(broken_bonds, **broken_bond_model.model_dump())
-
-        validate(TG)
-
-        RG = reactants_graph(TG)  # noqa: N806
-        PG = products_graph(TG)  # noqa: N806
-
-        if is_isomorphic(RG, G1) and is_isomorphic(PG, G2):
-            TGs.append(TG)
-
-    # Filter out redundant transition graphs
-    unique_transition_graphs = []
-    for TG in TGs:  # noqa: N806
-        if not any(is_isomorphic(TG, G) for G in unique_transition_graphs):
-            unique_transition_graphs.append(TG)
-
-    return unique_transition_graphs
+def transition_state_graph(
+    G: nx.Graph,  # noqa: N803
+    bond_changes: dict[BondKey, Change],
+) -> nx.Graph:
+    """Construct a transition graph from a graph and bond changes."""
+    TG = remove_bond_orders(G)  # noqa: N806
+    formed_bonds = {k for k, c in bond_changes.items() if c == Change.FORMED}
+    broken_bonds = {k for k, c in bond_changes.items() if c == Change.BROKEN}
+    TG.add_edges_from(formed_bonds, **FORMED_BOND.model_dump())
+    TG.add_edges_from(broken_bonds, **BROKEN_BOND.model_dump())
+    return validate(TG)
 
 
 def formed_and_broken_bonds(
@@ -288,6 +267,108 @@ def reactants_graph(G: nx.Graph) -> nx.Graph:  # noqa: N803
 def products_graph(G: nx.Graph) -> nx.Graph:  # noqa: N803
     """Extract the reactant graph from a transition graph."""
     return reactants_graph(reverse(G))
+
+
+# Reaction mapping
+def transition_state_graphs(
+    G1: nx.Graph,  # noqa: N803
+    G2: nx.Graph,  # noqa: N803
+) -> list[nx.Graph]:
+    """Fewest-bonds-first constructive count vector mappings."""
+    TGs, _ = transition_state_graphs_with_mappings(G1, G2)  # noqa: N806
+    return TGs
+
+
+def transition_state_graphs_with_mappings(
+    G1: nx.Graph,  # noqa: N803
+    G2: nx.Graph,  # noqa: N803
+) -> tuple[list[nx.Graph], list[dict[int, int]]]:
+    """Fewest-bonds-first constructive count vector mappings.
+
+    Note: The mappings are from products to reactants!
+    """
+    bond_types1 = _bond_types(G1)
+    bond_types2 = _bond_types(G2)
+    counter1 = Counter(bond_types1.values())
+    counter2 = Counter(bond_types2.values())
+    diff_counter = copy.deepcopy(counter2)
+    diff_counter.subtract(counter1)
+
+    form_counts = {k: v for k, v in diff_counter.items() if v > 0}
+    break_counts = {k: abs(v) for k, v in diff_counter.items() if v < 0}
+
+    G1 = remove_bond_orders(G1)  # noqa: N806
+    G2 = remove_bond_orders(G2)  # noqa: N806
+
+    TGs = []  # noqa: N806
+    mappings = []
+    for break_bonds1 in _iterate_bond_sets(G1, break_counts):
+        for break_bonds2 in _iterate_bond_sets(G2, form_counts):
+            G1_ = remove_bonds(G1, break_bonds1)  # noqa: N806
+            G2_ = remove_bonds(G2, break_bonds2)  # noqa: N806
+
+            mappings = isomorphisms(G2_, G1_)
+            for mapping in mappings:
+                break_bonds = break_bonds1
+                form_bonds = {tuple(sorted(map(mapping.get, b))) for b in break_bonds2}
+                bond_changes = {
+                    **dict.fromkeys(break_bonds, Change.BROKEN),
+                    **dict.fromkeys(form_bonds, Change.FORMED),
+                }
+                TG = transition_state_graph(G1, bond_changes)  # noqa: N806
+                RG = reactants_graph(TG)  # noqa: N806
+                PG = products_graph(TG)  # noqa: N806
+
+                # Continue if reactant does not match
+                if not is_isomorphic(RG, G1):
+                    continue
+
+                # Continue if product does not match
+                if not is_isomorphic(PG, G2):
+                    continue
+
+                # Continue if not unique
+                if any(is_isomorphic(TG, T) for T in TGs):
+                    continue
+
+                TGs.append(TG)
+                mappings.append(mapping)
+
+    return TGs, mappings
+
+
+def _bond_types(G: nx.Graph) -> dict[BondKey, BondType]:  # noqa: N803
+    """Extract the bond types from a transition graph."""
+    return {
+        (key1, key2): tuple(
+            sorted([G.nodes[key1][Atom.symbol], G.nodes[key2][Atom.symbol]])
+        )
+        for key1, key2 in G.edges()
+    }
+
+
+def _bonds_by_type(G: nx.Graph) -> dict[BondType, set[BondKey]]:  # noqa: N803
+    """Group bonds by their types."""
+    bond_types = _bond_types(G)
+    bonds_by_type = defaultdict(set)
+    for bond_key, bond_type in bond_types.items():
+        bonds_by_type[bond_type].add(bond_key)
+    return dict(bonds_by_type)
+
+
+def _iterate_bond_sets(
+    G: nx.Graph,  # noqa: N803
+    counts: dict[BondType, int],
+) -> Iterator[tuple[BondKey, ...]]:
+    """Iterate over all combinations of bonds to form or break."""
+    bonds_by_type = _bonds_by_type(G)
+    combo_iters = [
+        itertools.combinations(bonds_by_type[bond_type], count)
+        for bond_type, count in counts.items()
+    ]
+
+    for combos in itertools.product(*combo_iters):
+        yield tuple(itertools.chain.from_iterable(combos))
 
 
 # Helpers
