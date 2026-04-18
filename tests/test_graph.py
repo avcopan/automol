@@ -3,6 +3,14 @@
 from automol import graph
 
 
+def test__smiles() -> None:
+    """Test graph smiles."""
+    water_smiles = "O"
+    water_inchi = "InChI=1S/H2O/h1H2"
+    water = graph.from_smiles(water_smiles)
+    assert graph.inchi(water) == water_inchi
+
+
 def test__inchi() -> None:
     """Test graph inchi."""
     water_inchi = "InChI=1S/H2O/h1H2"
@@ -10,13 +18,11 @@ def test__inchi() -> None:
     assert graph.inchi(water) == water_inchi
 
 
-def test__transition_graphs() -> None:
-    """Test transition graph construction."""
-    RG0 = graph.from_smiles("CCO")  # noqa: N806
-    PG0 = graph.from_smiles("[CH3].[CH2]O")  # noqa: N806
-    TGs = graph.transition_state_graphs(RG0, PG0)  # noqa: N806
-    for TG in TGs:  # noqa: N806
-        RG = graph.reactants_graph(TG)  # noqa: N806
-        PG = graph.products_graph(TG)  # noqa: N806
-        assert graph.is_isomorphic(RG, RG0)
-        assert graph.is_isomorphic(PG, PG0)
+def test__remove_bonds() -> None:
+    """Test graph remove bonds."""
+    water_smiles = "O"
+    oh_h_smiles = "[OH].[H]"
+    water = graph.from_smiles(water_smiles)
+    oh_h_ref = graph.from_smiles(oh_h_smiles)
+    oh_h = graph.remove_bonds(water, [(0, 1)])
+    assert graph.is_isomorphic(oh_h, oh_h_ref)

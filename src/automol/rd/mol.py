@@ -78,6 +78,22 @@ def from_xyz_block(xyz_block: str) -> Mol:
     return conn_mol
 
 
+def smiles(mol: Mol) -> str:
+    """
+    Get standard SMILES string from Mol.
+
+    Parameters
+    ----------
+    mol
+        RDKit molecule object.
+
+    Returns
+    -------
+        SMILES
+    """
+    return Chem.MolToSmiles(mol)
+
+
 def inchi(mol: Mol) -> str:
     """
     Get standard InChI string from Mol.
