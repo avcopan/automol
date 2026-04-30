@@ -22,5 +22,11 @@ else
   echo '  git commit -m "Initial commit"'
 fi
 
+if git show-ref --verify --quiet refs/heads/template; then
+  echo "Branch 'template' already exists"
+else
+  git branch template
+fi
+
 # Install git hooks with lefthook
 lefthook install
