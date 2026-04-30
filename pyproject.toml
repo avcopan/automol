@@ -61,7 +61,7 @@ addopts = [
     "--doctest-modules",
     "--cov=automol",
     "--cov-report=term-missing",
-    "--cov-report=xml",
+    "--cov-report=html",
 ]
 doctest_optionflags = "NORMALIZE_WHITESPACE"
 
