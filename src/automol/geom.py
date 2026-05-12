@@ -516,7 +516,6 @@ def is_similar(
     geo1: Geometry,
     geo2: Geometry,
     *,
-    moi_tol: float = 1e-3,
     rmsd_tol: float = 1e-1,
 ) -> bool:
     """
@@ -528,33 +527,27 @@ def is_similar(
         Geometry object.
     geo2
         Geometry object.
-    heavy_only
-        If True, only consider heavy atoms.
+    rmsd_tol
+        Maximum allowed RMSD.
 
     Returns
     -------
     bool
         Whether the two geometries are similar.
     """
-    # --- Symbols  ---
-    if geo1.symbols.sort() != geo2.symbols.sort():
+    # --- InChI    ---
+    if inchi(geo1) != inchi(geo2):
         return False
 
     # --- Geometry Hash ---
     if geometry_hash(geo1) == geometry_hash(geo2):
         return True
 
-    # --- Moments of Inertia ---
-    moments_1 = np.sort(inertia_moments(geo1))
-    moments_2 = np.sort(inertia_moments(geo2))
-
-    eps = 1e-6  # Avoid division by zero in linear molecules
-    moi_diff = np.abs(moments_1 - moments_2) / (moments_2 + eps)
-
-    if np.any(moi_diff > moi_tol):
-        return False
-
     # --- Heavy Atom RMSD ---
+    if geo1.symbols != geo2.symbols:
+        msg = "Atomic symbols do not map onto each other. RMSD cannot be computed."
+        raise ValueError(msg)
+
     _, _, rmsd = kabsch(geo1, geo2, heavy_only=True)
 
     return rmsd < rmsd_tol
