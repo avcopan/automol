@@ -61,6 +61,21 @@ class Geometry(BaseModel):
         """Get atomic numbers."""
         return list(map(element.number, self.symbols))
 
+    @property
+    def covalent_radii(self) -> list[float]:
+        """Get Pyykko covalent radii in A."""
+        return list(map(element.covalent_radius, self.symbols))
+
+    @property
+    def groups(self) -> list[float]:
+        """Get atomic groups."""
+        return list(map(element.group, self.symbols))
+
+    @property
+    def nvalences(self) -> list[float]:
+        """Get numbers of valence electrons."""
+        return list(map(element.nvalence, self.symbols))
+
     @model_validator(mode="after")
     def populate_hash(self) -> "Geometry":
         """Populate hash immediately after the model is created."""
@@ -770,3 +785,33 @@ def view(
                 {"index": key},
             )
     return view
+
+
+def determine_neighbors(geo: Geometry) -> ArrayLike:
+    """Determine neighboring atoms."""
+    delta = 0.5
+
+    dmat = distance_matrix(geo)
+    radii = np.array(geo.covalent_radii)
+
+    r_cov_matrix = radii[:, np.newaxis] + radii[np.newaxis, :] + delta
+    neighbors = dmat <= r_cov_matrix
+    np.fill_diagonal(neighbors, 0)  # Atoms don't neighbor themselves
+
+    vals = geo.nvalences
+    syms = geo.symbols
+    for i in range(len(geo.symbols)):
+        val, sym = vals[i], syms[i]
+
+        if not val:
+            msg = f"Cannot determine maximum number of bonds for {sym}."
+            raise ValueError(msg)
+
+        max_bonds = 8 - val if sym != "H" else 1
+
+        current_neighbors = np.where(neighbors[i] == 1)[0]
+        if len(current_neighbors) > max_bonds:
+            msg = f"Atom {sym}:{i} exceeds allowable number of bonds ({max_bonds})."
+            raise NotImplementedError(msg)
+
+    return neighbors

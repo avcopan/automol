@@ -7,6 +7,21 @@ from pathlib import Path
 from mendeleev.db import get_engine
 from sqlalchemy import MetaData, Table, func, select
 
+
+def calculate_nvalence(group: int) -> int | None:
+    """Calculate number of valence electrons based on periodic group."""
+    if not group:
+        return None
+
+    if group <= 2:
+        return group
+
+    if 13 <= group <= 18:
+        return group - 10
+
+    return None
+
+
 engine = get_engine()
 metadata = MetaData()
 
@@ -36,19 +51,26 @@ primary_isotopes = (
     .subquery()
 )
 
-element_primary_isotopes = select(elements.c.symbol, primary_isotopes).join(
-    primary_isotopes,
-    elements.c.atomic_number == primary_isotopes.c.atomic_number,
-)
+stmt = select(
+    elements.c.symbol,
+    elements.c.covalent_radius_pyykko,
+    elements.c.group_id,
+    primary_isotopes.c.atomic_number,
+    primary_isotopes.c.mass_number,
+    primary_isotopes.c.mass,
+).join(primary_isotopes, elements.c.atomic_number == primary_isotopes.c.atomic_number)
 
 with engine.connect() as conn:
-    result = conn.execute(element_primary_isotopes)
+    result = conn.execute(stmt)
     elements_data = [
         {
             "Z": row.atomic_number,
             "A": row.mass_number,
+            "group": row.group_id,
             "symbol": row.symbol,
             "mass": row.mass,
+            "covalent_radius": row.covalent_radius_pyykko / 100,
+            "nvalence": calculate_nvalence(row.group_id),
         }
         for row in result
     ]

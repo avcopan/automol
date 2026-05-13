@@ -24,8 +24,11 @@ class Element:
 
     Z: int
     A: int
+    group: int
     symbol: str
     mass: float
+    covalent_radius: float
+    nvalence: int
 
 
 ELEMENT_BY_NUMBER: dict[int, Element] = {}
@@ -138,3 +141,51 @@ def mass(key: int | str) -> float:
         Atomic mass.
     """
     return from_key(key).mass
+
+
+def covalent_radius(key: int | str) -> float:
+    """
+    Retrieve covalent radius of element by atomic number or symbol.
+
+    Parameters
+    ----------
+    key :
+        Atomic number (int) or symbol (str).
+
+    Returns
+    -------
+        Covalent radius.
+    """
+    return from_key(key).covalent_radius
+
+
+def group(key: int | str) -> float:
+    """
+    Retrieve periodic group by atomic number or symbol.
+
+    Parameters
+    ----------
+    key :
+        Atomic number (int) or symbol (str).
+
+    Returns
+    -------
+        Periodic group.
+    """
+    return from_key(key).group
+
+
+def nvalence(key: int | str) -> float:
+    """
+    Retrieve number of valence electrons by atomic number or symbol.
+
+    Parameters
+    ----------
+    key :
+        Atomic number (int) or symbol (str).
+
+    Returns
+    -------
+        Number of valence electrons.
+    """
+    return from_key(key).nvalence
