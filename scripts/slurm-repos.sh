@@ -5,7 +5,7 @@
 #SBATCH --ntasks=4
 #SBATCH --time=4:00:00
 #SBATCH --mem=10G
-#SBATCH --array=1-1
+#SBATCH --array=0-0
 #SBATCH --output=log-%x-%A_%a.out
 
 set -euo pipefail
