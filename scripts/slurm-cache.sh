@@ -9,6 +9,9 @@
 
 set -euo pipefail
 
+# Repositories
+REPOS=("automol")
+
 if [[ -z "${PIXI_CACHE_DIR:-}" ]]; then
     echo "ERROR: PIXI_CACHE_DIR is not set."
     echo
@@ -19,9 +22,6 @@ if [[ -z "${PIXI_CACHE_DIR:-}" ]]; then
     echo
     exit 1
 fi
-
-# Repositories
-REPOS=("automol")
 
 # Directories
 ORIG_DIR=$SLURM_SUBMIT_DIR
