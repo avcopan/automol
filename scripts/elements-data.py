@@ -13,10 +13,10 @@ def calculate_nvalence(group: int) -> int | None:
     if not group:
         return None
 
-    if group <= 2:
+    if group <= 2:  # noqa: PLR2004
         return group
 
-    if 13 <= group <= 18:
+    if 13 <= group <= 18:  # noqa: PLR2004
         return group - 10
 
     return None
