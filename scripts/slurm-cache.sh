@@ -64,6 +64,7 @@ for repo in "${REPOS[@]}"; do
     echo "--- Installing $repo ---"
     (
         cd "$WORK_DIR/$repo"
+        ./scripts/local.sh stop
         time pixi install -v
     )
 done
