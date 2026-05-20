@@ -67,12 +67,7 @@ class Geometry(BaseModel):
         return list(map(element.covalent_radius, self.symbols))
 
     @property
-    def groups(self) -> list[float]:
-        """Get atomic groups."""
-        return list(map(element.group, self.symbols))
-
-    @property
-    def nvalences(self) -> list[float]:
+    def nvalences(self) -> list[int | None]:
         """Get numbers of valence electrons."""
         return list(map(element.nvalence, self.symbols))
 
@@ -563,6 +558,9 @@ def is_similar(
         msg = "Atomic symbols do not map onto each other. RMSD cannot be computed."
         raise ValueError(msg)
 
+    msg = "Not implemented until canonical ordering is established."
+    raise NotImplementedError(msg)
+
     _, _, rmsd = kabsch(geo1, geo2, heavy_only=True)
 
     return rmsd < rmsd_tol
@@ -787,31 +785,31 @@ def view(
     return view
 
 
-def determine_neighbors(geo: Geometry) -> ArrayLike:
+def adjacency_matrix(
+    geo: Geometry,
+    *,
+    delta: float = 0.5,
+    override_valence: dict[str, int | None] | None = None,
+) -> ArrayLike:
     """Determine neighboring atoms."""
-    delta = 0.5
-
     dmat = distance_matrix(geo)
     radii = np.array(geo.covalent_radii)
 
     r_cov_matrix = radii[:, np.newaxis] + radii[np.newaxis, :] + delta
-    neighbors = dmat <= r_cov_matrix
-    np.fill_diagonal(neighbors, 0)  # Atoms don't neighbor themselves
+    amat = dmat <= r_cov_matrix
+    np.fill_diagonal(amat, 0)  # Atoms don't neighbor themselves
 
-    vals = geo.nvalences
-    syms = geo.symbols
-    for i in range(len(geo.symbols)):
-        val, sym = vals[i], syms[i]
+    max_vals = [element.nvalence(s, override=override_valence) for s in geo.symbols]
+    vals = np.sum(amat, axis=0)
 
-        if not val:
-            msg = f"Cannot determine maximum number of bonds for {sym}."
-            raise ValueError(msg)
+    for i, symb in enumerate(geo.symbols):
+        max_val = max_vals[i]
+        if max_val is not None:
+            max_bonds = 8 - max_val if symb != "H" else 1
+            if vals[i] > max_bonds:
+                msg = (
+                    f"Atom {symb}:{i} exceeds allowable number of bonds ({max_bonds})."
+                )
+                raise NotImplementedError(msg)
 
-        max_bonds = 8 - val if sym != "H" else 1
-
-        current_neighbors = np.where(neighbors[i] == 1)[0]
-        if len(current_neighbors) > max_bonds:
-            msg = f"Atom {sym}:{i} exceeds allowable number of bonds ({max_bonds})."
-            raise NotImplementedError(msg)
-
-    return neighbors
+    return amat

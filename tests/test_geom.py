@@ -58,7 +58,8 @@ def test__inchi(water: Geometry) -> None:
 def test__is_similar(water: Geometry, water_inv: Geometry) -> None:
     """Test similarity analysis."""
     assert geom.is_similar(water, water)
-    assert geom.is_similar(water, water_inv)
+    with pytest.raises(NotImplementedError):
+        assert geom.is_similar(water, water_inv)
 
 
 def test__read_xyz_file(water: Geometry, tmp_path: Path) -> None:
@@ -123,3 +124,9 @@ def test__concat(water: Geometry) -> None:
     concat_geo = geom.concat([geo1, geo2])
     assert water.symbols == concat_geo.symbols
     assert np.allclose(water.coordinates, concat_geo.coordinates)
+
+
+def test__adjacency_matrix(water: Geometry) -> None:
+    """Test adjacency matrix."""
+    amat = geom.adjacency_matrix(geo=water)
+    assert np.array_equal(amat, [[0, 1, 1], [1, 0, 0], [1, 0, 0]])

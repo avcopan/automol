@@ -159,7 +159,7 @@ def covalent_radius(key: int | str) -> float:
     return from_key(key).covalent_radius
 
 
-def group(key: int | str) -> float:
+def group(key: int | str) -> int:
     """
     Retrieve periodic group by atomic number or symbol.
 
@@ -175,7 +175,9 @@ def group(key: int | str) -> float:
     return from_key(key).group
 
 
-def nvalence(key: int | str) -> float:
+def nvalence(
+    key: int | str, *, override: dict[str, int | None] | None = None
+) -> int | None:
     """
     Retrieve number of valence electrons by atomic number or symbol.
 
@@ -183,9 +185,16 @@ def nvalence(key: int | str) -> float:
     ----------
     key :
         Atomic number (int) or symbol (str).
+    override :
+        Dictionary of valence overrides by atomic symbol.
+        Value of None indicates no valence enforcement for that symbol.
 
     Returns
     -------
         Number of valence electrons.
     """
+    if override is not None:
+        symb = from_key(key).symbol
+        if symb in override:
+            return override[symb]
     return from_key(key).nvalence
