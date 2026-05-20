@@ -24,8 +24,11 @@ class Element:
 
     Z: int
     A: int
+    group: int
     symbol: str
     mass: float
+    covalent_radius: float
+    nvalence: int
 
 
 ELEMENT_BY_NUMBER: dict[int, Element] = {}
@@ -138,3 +141,60 @@ def mass(key: int | str) -> float:
         Atomic mass.
     """
     return from_key(key).mass
+
+
+def covalent_radius(key: int | str) -> float:
+    """
+    Retrieve covalent radius of element by atomic number or symbol.
+
+    Parameters
+    ----------
+    key :
+        Atomic number (int) or symbol (str).
+
+    Returns
+    -------
+        Covalent radius.
+    """
+    return from_key(key).covalent_radius
+
+
+def group(key: int | str) -> int:
+    """
+    Retrieve periodic group by atomic number or symbol.
+
+    Parameters
+    ----------
+    key :
+        Atomic number (int) or symbol (str).
+
+    Returns
+    -------
+        Periodic group.
+    """
+    return from_key(key).group
+
+
+def nvalence(
+    key: int | str, *, override: dict[str, int | None] | None = None
+) -> int | None:
+    """
+    Retrieve number of valence electrons by atomic number or symbol.
+
+    Parameters
+    ----------
+    key :
+        Atomic number (int) or symbol (str).
+    override :
+        Dictionary of valence overrides by atomic symbol.
+        Value of None indicates no valence enforcement for that symbol.
+
+    Returns
+    -------
+        Number of valence electrons.
+    """
+    if override is not None:
+        symb = from_key(key).symbol
+        if symb in override:
+            return override[symb]
+    return from_key(key).nvalence

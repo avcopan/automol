@@ -61,6 +61,16 @@ class Geometry(BaseModel):
         """Get atomic numbers."""
         return list(map(element.number, self.symbols))
 
+    @property
+    def covalent_radii(self) -> list[float]:
+        """Get Pyykko covalent radii in A."""
+        return list(map(element.covalent_radius, self.symbols))
+
+    @property
+    def nvalences(self) -> list[int | None]:
+        """Get numbers of valence electrons."""
+        return list(map(element.nvalence, self.symbols))
+
     @model_validator(mode="after")
     def populate_hash(self) -> "Geometry":
         """Populate hash immediately after the model is created."""
@@ -516,7 +526,6 @@ def is_similar(
     geo1: Geometry,
     geo2: Geometry,
     *,
-    moi_tol: float = 1e-3,
     rmsd_tol: float = 1e-1,
 ) -> bool:
     """
@@ -528,33 +537,30 @@ def is_similar(
         Geometry object.
     geo2
         Geometry object.
-    heavy_only
-        If True, only consider heavy atoms.
+    rmsd_tol
+        Maximum allowed RMSD.
 
     Returns
     -------
     bool
         Whether the two geometries are similar.
     """
-    # --- Symbols  ---
-    if geo1.symbols.sort() != geo2.symbols.sort():
+    # --- InChI    ---
+    if inchi(geo1) != inchi(geo2):
         return False
 
     # --- Geometry Hash ---
     if geometry_hash(geo1) == geometry_hash(geo2):
         return True
 
-    # --- Moments of Inertia ---
-    moments_1 = np.sort(inertia_moments(geo1))
-    moments_2 = np.sort(inertia_moments(geo2))
-
-    eps = 1e-6  # Avoid division by zero in linear molecules
-    moi_diff = np.abs(moments_1 - moments_2) / (moments_2 + eps)
-
-    if np.any(moi_diff > moi_tol):
-        return False
-
     # --- Heavy Atom RMSD ---
+    if geo1.symbols != geo2.symbols:
+        msg = "Atomic symbols do not map onto each other. RMSD cannot be computed."
+        raise ValueError(msg)
+
+    msg = "Not implemented until canonical ordering is established."
+    raise NotImplementedError(msg)
+
     _, _, rmsd = kabsch(geo1, geo2, heavy_only=True)
 
     return rmsd < rmsd_tol
@@ -777,3 +783,33 @@ def view(
                 {"index": key},
             )
     return view
+
+
+def adjacency_matrix(
+    geo: Geometry,
+    *,
+    delta: float = 0.5,
+    override_valence: dict[str, int | None] | None = None,
+) -> ArrayLike:
+    """Determine neighboring atoms."""
+    dmat = distance_matrix(geo)
+    radii = np.array(geo.covalent_radii)
+
+    r_cov_matrix = radii[:, np.newaxis] + radii[np.newaxis, :] + delta
+    amat = dmat <= r_cov_matrix
+    np.fill_diagonal(amat, 0)  # Atoms don't neighbor themselves
+
+    max_vals = [element.nvalence(s, override=override_valence) for s in geo.symbols]
+    vals = np.sum(amat, axis=0)
+
+    for i, symb in enumerate(geo.symbols):
+        max_val = max_vals[i]
+        if max_val is not None:
+            max_bonds = 8 - max_val if symb != "H" else 1
+            if vals[i] > max_bonds:
+                msg = (
+                    f"Atom {symb}:{i} exceeds allowable number of bonds ({max_bonds})."
+                )
+                raise NotImplementedError(msg)
+
+    return amat

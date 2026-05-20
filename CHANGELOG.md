@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+- geom.is_similar() checks InChI first, no longer considers moment of inertia deviation, and ensures that geometry symbols are identically ordered between geo1 and geo2 (kabsch implentation is order dependent).
+- Added nvalence, covalent radius, and group to elements-data.
+- geom.determine_neighbors() as a first attempt at defining connectivity from geometries.
 
 ## [0.0.11] - 2026-05-04
 - Added missing pyparsing dependency
