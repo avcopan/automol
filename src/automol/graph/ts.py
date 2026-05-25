@@ -5,13 +5,15 @@ Uses NetworkX for graph representation, with Atom and Bond data validation.
 Does not include bond order information.
 """
 
-import copy
 import itertools
 from collections import Counter, defaultdict
 from collections.abc import Iterator, Sequence
+from dataclasses import dataclass, field
 from enum import StrEnum
+from functools import cached_property
 from typing import Any
 
+import more_itertools as mit
 import networkx as nx
 from rdkit.Chem import rdchem
 
@@ -42,10 +44,29 @@ class TransBond(Bond):
 def all_from_reactants_and_products(
     rct_gra: Graph[Atom, Bond],
     prd_gra: Graph[Atom, Bond],
-) -> list[Graph[Atom, TransBond]]:
-    """Fewest-bonds-first constructive count vector mappings."""
-    gras, _ = all_from_reactants_and_products_with_mappings(rct_gra, prd_gra)
-    return gras
+    *,
+    extra: int = 2,
+    isomorphs: bool = False,
+) -> Iterator[Graph[Atom, TransBond]]:
+    """Fewest-bonds-first constructive count vector mappings.
+
+    Parameters
+    ----------
+    rct_gra
+        Reactant graph
+    prd_gra
+        Product graph
+    extra
+        Maximum number of additional breakable bonds to traverse, by default 2
+    isomorphs
+        Whether to retain isomorphs (True) or filter them out (False)
+
+    Yields
+    ------
+        Transition state graphs
+    """
+    ccv = CCV(rct_gra, prd_gra)
+    yield from (gra for gra, _ in ccv.filtered(extra=extra, isomorphs=isomorphs))
 
 
 # Algorithms
@@ -136,77 +157,139 @@ def products_graph(gra: Graph[Atom, TransBond]) -> Graph[Atom, Bond]:
 
 
 # Reaction mapping
-def all_from_reactants_and_products_with_mappings(
-    rct_gra: Graph[Atom, Bond],
-    prd_gra: Graph[Atom, Bond],
-) -> tuple[list[Graph[Atom, TransBond]], list[dict[int, int]]]:
-    """Fewest-bonds-first constructive count vector mappings.
+@dataclass
+class CCV:
+    """CCV Reaction Mapping helper class."""
 
-    Note: The mappings are from products to reactants!
-    """
-    bond_symbs1 = _bond_symbols(rct_gra)
-    bond_symbs2 = _bond_symbols(prd_gra)
-    counter1 = Counter(bond_symbs1.values())
-    counter2 = Counter(bond_symbs2.values())
-    diff_counter = copy.deepcopy(counter2)
-    diff_counter.subtract(counter1)
+    reactants: Graph[Atom, Bond]
+    products: Graph[Atom, Bond]
+    _seen_bond_changes: list[dict[BondKey, Change]] = field(default_factory=list)
 
-    all_bond_symbs = sorted(diff_counter.keys(), key=lambda x: (-x.count("H"), x))
+    @cached_property
+    def reactant_bond_symbols(self) -> dict[BondKey, BondSymbol]:
+        """Extract the bond symbols from the reactant graph."""
+        return bond_symbols(self.reactants)
 
-    break_counts1 = {k: -v for k, v in diff_counter.items() if v < 0}
-    break_counts2 = {k: v for k, v in diff_counter.items() if v > 0}
+    @cached_property
+    def product_bond_symbols(self) -> dict[BondKey, BondSymbol]:
+        """Extract the bond symbols from the product graph."""
+        return bond_symbols(self.products)
 
-    gras = []
-    mappings = []
-    bnd_changes_lst = []
+    @cached_property
+    def reactant_bond_count_vector(self) -> Counter[BondSymbol]:
+        """Extract the CCV bond count vector from the reactant graph."""
+        return Counter(self.reactant_bond_symbols.values())
 
-    for extra_count in range(2):
-        iter1 = itertools.combinations(all_bond_symbs, extra_count)
-        for extra_symbs in iter1:
-            iter2 = _iterate_break_bond_sets(
-                rct_gra, prd_gra, break_counts1, break_counts2, extra_symbs=extra_symbs
-            )
-            for break_bonds1, break_bonds2 in iter2:
-                gra1 = remove_bonds(rct_gra, break_bonds1)
-                gra2 = remove_bonds(prd_gra, break_bonds2)
+    @cached_property
+    def product_bond_count_vector(self) -> Counter[BondSymbol]:
+        """Extract the CCV bond count vector from the product graph."""
+        return Counter(self.product_bond_symbols.values())
 
-                iter3 = _iterate_reverse_isomorphisms_with_distinct_bond_changes(
-                    gra1,
-                    gra2,
-                    break_bonds1,
-                    break_bonds2,
-                    bnd_changes_lst=bnd_changes_lst,
+    def filtered(
+        self, *, extra: int = 2, isomorphs: bool = False
+    ) -> Iterator[tuple[Graph[Atom, TransBond], dict[int, int]]]:
+        """Yield filtered CCV algorithm results.
+
+        Parameters
+        ----------
+        extra
+            Maximum number of additional breakable bonds to traverse, by default 2
+        isomorphs
+            Whether to retain isomorphs (True) or filter them out (False)
+        bond_score
+            Whether to assign bond scores and return only the lowest-scoring result(s)
+
+        Yields
+        ------
+            Transition state graphs and reaction mappings
+        """
+        seen_gras = []
+        for gra, mapping in self.results(extra=extra):
+            if isomorphs or not any(is_isomorphic(gra, g) for g in seen_gras):
+                seen_gras.append(gra)
+                yield gra, mapping
+
+    def results(
+        self, *, extra: int = 2
+    ) -> Iterator[tuple[Graph[Atom, TransBond], dict[int, int]]]:
+        """Yield all CCV algorithm results.
+
+        Parameters
+        ----------
+        extra
+            Maximum number of additional breakable bonds to traverse, by default 2
+
+        Yields
+        ------
+            Transition state graphs and reaction mappings
+        """
+        for num_extra in range(extra + 1):
+            for extra_cv in self._extra_breaking_bond_count_vectors(num_extra):
+                results = itertools.chain.from_iterable(
+                    self._distinct_transition_graphs_with_reaction_mappings(b1, b2)
+                    for b1, b2 in self._breaking_bond_patterns(extra_cv)
                 )
-                for bnd_changes, mapping in iter3:
-                    gra = from_bond_changes(rct_gra, bnd_changes)
-                    rct_gra_ = reactants_graph(gra)
-                    prd_gra_ = products_graph(gra)
 
-                    # Continue if reactant does not match
-                    if not is_isomorphic(rct_gra, rct_gra_):
-                        continue
+                # If nothing was found, continue
+                first_result = next(results, None)
+                if first_result is None:
+                    continue
 
-                    # Continue if product does not match
-                    if not is_isomorphic(prd_gra, prd_gra_):
-                        continue
+                # Otherwise, return all results for this `extra_cv` and quit
+                yield first_result
+                yield from results
+                return
 
-                    # Continue if not unique
-                    if any(is_isomorphic(gra, g) for g in gras):
-                        continue
+    def _extra_breaking_bond_count_vectors(
+        self, num: int
+    ) -> Iterator[Counter[BondSymbol]]:
+        """Iterate over bond count vectors for a given number of extra bonds."""
+        rcv = self.reactant_bond_count_vector
+        pcv = self.product_bond_count_vector
+        cv = rcv - (rcv - pcv)
+        symbs = sorted(cv.keys(), key=lambda x: (-x.count("H"), x))
+        symbs_pool = list(
+            itertools.chain.from_iterable(itertools.repeat(s, cv[s]) for s in symbs)
+        )
+        return map(
+            Counter, mit.unique_everseen(itertools.combinations(symbs_pool, num))
+        )
 
-                    gras.append(gra)
-                    mappings.append(mapping)
-                    bnd_changes_lst.append(bnd_changes)
+    def _breaking_bond_patterns(
+        self, extra_cv: Counter[BondSymbol]
+    ) -> Iterator[tuple[tuple[BondKey, ...], tuple[BondKey, ...]]]:
+        """Iterate over bond combinations consistent with a given bond count vector."""
+        rcv0 = self.reactant_bond_count_vector
+        pcv0 = self.product_bond_count_vector
+        rcv = (rcv0 - pcv0) + extra_cv
+        pcv = (pcv0 - rcv0) + extra_cv
+        return itertools.product(
+            count_vector_bond_combinations(
+                self.reactants, rcv, self.reactant_bond_symbols
+            ),
+            count_vector_bond_combinations(
+                self.products, pcv, self.product_bond_symbols
+            ),
+        )
 
-        # If we found somthing, break
-        if gras:
-            break
+    def _distinct_transition_graphs_with_reaction_mappings(
+        self, break_bonds1: Sequence[BondKey], break_bonds2: Sequence[BondKey]
+    ) -> Iterator[tuple[Graph[Atom, TransBond], dict[int, int]]]:
+        """Iterate over reverse_isomorphisms with distinct bond changes."""
+        gra1 = remove_bonds(self.reactants, break_bonds1)
+        gra2 = remove_bonds(self.products, break_bonds2)
+        for mapping in isomorphisms(gra1, gra2):
+            bond_changes = bond_changes_from_mapping_and_break_pattern(
+                mapping, break_bonds1, break_bonds2
+            )
+            if bond_changes not in self._seen_bond_changes:
+                self._seen_bond_changes.append(bond_changes)
+                gra = from_bond_changes(self.reactants, bond_changes)
+                yield gra, mapping
 
-    return gras, mappings
 
-
-def _bond_symbols(G: Graph) -> dict[BondKey, BondSymbol]:  # noqa: N803
-    """Extract the bond symbols from a transition graph."""
+def bond_symbols(G: Graph) -> dict[BondKey, BondSymbol]:  # noqa: N803
+    """Get bond symbols by bond key."""
     return {
         (key1, key2): tuple(
             sorted([G.nodes[key1][Atom.symbol], G.nodes[key2][Atom.symbol]])
@@ -215,69 +298,48 @@ def _bond_symbols(G: Graph) -> dict[BondKey, BondSymbol]:  # noqa: N803
     }
 
 
-def _bonds_by_symbol(G: Graph) -> dict[BondSymbol, set[BondKey]]:  # noqa: N803
-    """Group bonds by their symbols."""
-    bond_symbs = _bond_symbols(G)
-    bonds_by_symb = defaultdict(set)
-    for bond_key, bond_symb in bond_symbs.items():
-        bonds_by_symb[bond_symb].add(bond_key)
-    return dict(bonds_by_symb)
-
-
-def _iterate_break_bond_sets(
-    gra1: Graph[Atom, Bond],
-    gra2: Graph[Atom, Bond],
-    break_counts1: dict[BondSymbol, int],
-    break_counts2: dict[BondSymbol, int],
-    extra_symbs: Sequence[BondSymbol] = (),
-) -> Iterator[tuple[tuple[BondKey, ...], tuple[BondKey, ...]]]:
-    """Fewest-bonds-first constructive count vector mappings.
-
-    Note: The mappings are from products to reactants!
-    """
-    break_counts1 = defaultdict(int, break_counts1)
-    break_counts2 = defaultdict(int, break_counts2)
-    for bond_symb in extra_symbs:
-        break_counts1[bond_symb] += 1
-        break_counts2[bond_symb] += 1
-
-    for break_bonds1 in _iterate_bond_sets(gra1, break_counts1):
-        for break_bonds2 in _iterate_bond_sets(gra2, break_counts2):
-            yield break_bonds1, break_bonds2
-
-
-def _iterate_bond_sets(
+def bond_symbol_keys(
     G: Graph,  # noqa: N803
-    counts: dict[BondSymbol, int],
+    symbs: dict[BondKey, BondSymbol] | None = None,
+) -> dict[BondSymbol, set[BondKey]]:
+    """Get bond keys by bond symbol."""
+    symbs = bond_symbols(G) if symbs is None else symbs
+    symb_keys = defaultdict(set)
+    for key, symb in symbs.items():
+        symb_keys[symb].add(key)
+    return dict(symb_keys)
+
+
+def count_vector_bond_combinations(
+    G: Graph,  # noqa: N803
+    cv: Counter[BondSymbol],
+    symbs: dict[BondKey, BondSymbol] | None = None,
 ) -> Iterator[tuple[BondKey, ...]]:
-    """Iterate over all combinations of bonds to form or break."""
-    bonds_by_symb = _bonds_by_symbol(G)
-    combo_iters = [
-        itertools.combinations(bonds_by_symb[symb], count)
-        for symb, count in counts.items()
+    """Iterate over bond combinations consistent with a given bond count vector."""
+    symbs = bond_symbols(G) if symbs is None else symbs
+    symb_keys = bond_symbol_keys(G, symbs)
+    per_symbol_combination_iters = [
+        itertools.combinations(symb_keys[symb], count) for symb, count in cv.items()
     ]
+    for per_symbol_combinations in itertools.product(*per_symbol_combination_iters):
+        yield tuple(itertools.chain.from_iterable(per_symbol_combinations))
 
-    for combos in itertools.product(*combo_iters):
-        yield tuple(itertools.chain.from_iterable(combos))
 
-
-def _iterate_reverse_isomorphisms_with_distinct_bond_changes(
-    gra1: Graph[Atom, Bond],
-    gra2: Graph[Atom, Bond],
+def bond_changes_from_mapping_and_break_pattern(
+    mapping: dict[int, int],
     break_bonds1: Sequence[BondKey],
     break_bonds2: Sequence[BondKey],
-    bnd_changes_lst: list[dict[BondKey, Change]],
-) -> Iterator[tuple[dict[BondKey, Change], dict[int, int]]]:
-    """Iterate over reverse_isomorphisms with distinct bond changes."""
-    bnd_changes_lst = copy.copy(bnd_changes_lst)
-    mappings = isomorphisms(gra2, gra1)
-    for mapping in mappings:
-        break_bonds = break_bonds1
-        form_bonds = {tuple(sorted(map(mapping.get, b))) for b in break_bonds2}
-        bnd_changes = {
-            **dict.fromkeys(break_bonds, Change.BROKEN),
-            **dict.fromkeys(form_bonds, Change.FORMED),
-        }
-        if bnd_changes not in bnd_changes_lst:
-            bnd_changes_lst.append(bnd_changes)
-            yield bnd_changes, mapping
+) -> dict[BondKey, Change]:
+    """Construct a bond change dictionary from breaking and forming bond lists."""
+    rev_map = {v: k for k, v in mapping.items()}
+    break_bonds = break_bonds1
+    form_bonds = {
+        (rev_map[b[0]], rev_map[b[1]])
+        if b[0] < b[1]
+        else (rev_map[b[1]], rev_map[b[0]])
+        for b in break_bonds2
+    }
+    return {
+        **dict.fromkeys(break_bonds, Change.BROKEN),
+        **dict.fromkeys(form_bonds, Change.FORMED),
+    }

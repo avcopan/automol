@@ -6,7 +6,7 @@ Excludes bond order information by design.
 """
 
 import copy
-from collections.abc import Collection
+from collections.abc import Collection, Iterator
 from typing import Any, TypeVar
 
 import networkx as nx
@@ -215,9 +215,9 @@ def remove_bonds[AtomT: Atom, BondT: Bond](
 # Algorithms
 def isomorphisms(
     gra1: Graph[Atom, Bond], gra2: Graph[Atom, Bond]
-) -> list[dict[int, int]]:
+) -> Iterator[dict[int, int]]:
     """Check if two graphs are isomorphic."""
-    return list(nx.vf2pp_all_isomorphisms(gra1, gra2, node_label=Atom.symbol))
+    return nx.vf2pp_all_isomorphisms(gra1, gra2, node_label=Atom.symbol)
 
 
 def isomorphism(
@@ -227,10 +227,10 @@ def isomorphism(
 
     Does not consider bond orders.
     """
-    return nx.vf2pp_isomorphism(gra1, gra2, node_label=Atom.symbol)
+    return next(isomorphisms(gra1, gra2), None)
 
 
 # Comparisons
 def is_isomorphic(gra1: Graph[Atom, Bond], gra2: Graph[Atom, Bond]) -> bool:
     """Check if two graphs are isomorphic."""
-    return nx.vf2pp_is_isomorphic(gra1, gra2, node_label=Atom.symbol)
+    return isomorphism(gra1, gra2) is not None

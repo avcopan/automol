@@ -22,7 +22,7 @@ def test__all_from_reactants_and_products(
     """Test transition state graph generation from reactants and products."""
     rct_gra0 = graph.from_smiles(rct_smi)
     prd_gra0 = graph.from_smiles(prd_smi)
-    ts_gras = ts.all_from_reactants_and_products(rct_gra0, prd_gra0)
+    ts_gras = list(ts.all_from_reactants_and_products(rct_gra0, prd_gra0))
     assert len(ts_gras) == ts_count
     for ts_gra in ts_gras:
         rct_gra = ts.reactants_graph(ts_gra)
