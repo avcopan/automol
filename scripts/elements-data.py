@@ -4,23 +4,9 @@
 import json
 from pathlib import Path
 
+from mendeleev import element as mendeleev_element
 from mendeleev.db import get_engine
 from sqlalchemy import MetaData, Table, func, select
-
-
-def calculate_nvalence(group: int) -> int | None:
-    """Calculate number of valence electrons based on periodic group."""
-    if not group:
-        return None
-
-    if group <= 2:  # noqa: PLR2004
-        return group
-
-    if 13 <= group <= 18:  # noqa: PLR2004
-        return group - 10
-
-    return None
-
 
 engine = get_engine()
 metadata = MetaData()
@@ -70,7 +56,7 @@ with engine.connect() as conn:
             "symbol": row.symbol,
             "mass": row.mass,
             "covalent_radius": row.covalent_radius_pyykko / 100,
-            "nvalence": calculate_nvalence(row.group_id),
+            "nvalence": mendeleev_element(row.atomic_number).nvalence(),
         }
         for row in result
     ]

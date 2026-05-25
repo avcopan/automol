@@ -3,6 +3,7 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,7 +40,7 @@ def _load_elements() -> None:
     data_path = Path(__file__).with_name("elements-data.json")
 
     with data_path.open() as f:
-        elements_data: list[dict[str, object]] = json.load(f)
+        elements_data: list[dict[str, Any]] = json.load(f)
 
     for element_data in elements_data:
         element = Element(**element_data)
@@ -175,9 +176,7 @@ def group(key: int | str) -> int:
     return from_key(key).group
 
 
-def nvalence(
-    key: int | str, *, override: dict[str, int | None] | None = None
-) -> int | None:
+def nvalence(key: int | str, *, override: dict[str, int] | None = None) -> int:
     """
     Retrieve number of valence electrons by atomic number or symbol.
 
@@ -187,7 +186,6 @@ def nvalence(
         Atomic number (int) or symbol (str).
     override :
         Dictionary of valence overrides by atomic symbol.
-        Value of None indicates no valence enforcement for that symbol.
 
     Returns
     -------

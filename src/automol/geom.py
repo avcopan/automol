@@ -67,7 +67,7 @@ class Geometry(BaseModel):
         return list(map(element.covalent_radius, self.symbols))
 
     @property
-    def nvalences(self) -> list[int | None]:
+    def nvalences(self) -> list[int]:
         """Get numbers of valence electrons."""
         return list(map(element.nvalence, self.symbols))
 
@@ -789,7 +789,7 @@ def adjacency_matrix(
     geo: Geometry,
     *,
     delta: float = 0.5,
-    override_valence: dict[str, int | None] | None = None,
+    override_valence: dict[str, int] | None = None,
 ) -> ArrayLike:
     """Determine neighboring atoms."""
     dmat = distance_matrix(geo)

@@ -15,7 +15,7 @@
     "symbol": "He",
     "mass": 4.00260325413,
     "covalent_radius": 0.46,
-    "nvalence": 8
+    "nvalence": 2
   },
   {
     "Z": 3,
@@ -186,7 +186,7 @@
     "symbol": "Sc",
     "mass": 44.955907051,
     "covalent_radius": 1.48,
-    "nvalence": null
+    "nvalence": 3
   },
   {
     "Z": 22,
@@ -195,7 +195,7 @@
     "symbol": "Ti",
     "mass": 47.947940677,
     "covalent_radius": 1.36,
-    "nvalence": null
+    "nvalence": 4
   },
   {
     "Z": 23,
@@ -204,7 +204,7 @@
     "symbol": "V",
     "mass": 50.943957664,
     "covalent_radius": 1.34,
-    "nvalence": null
+    "nvalence": 5
   },
   {
     "Z": 24,
@@ -213,7 +213,7 @@
     "symbol": "Cr",
     "mass": 51.940504714,
     "covalent_radius": 1.22,
-    "nvalence": null
+    "nvalence": 6
   },
   {
     "Z": 25,
@@ -222,7 +222,7 @@
     "symbol": "Mn",
     "mass": 54.93804304,
     "covalent_radius": 1.19,
-    "nvalence": null
+    "nvalence": 7
   },
   {
     "Z": 26,
@@ -231,7 +231,7 @@
     "symbol": "Fe",
     "mass": 55.934935537,
     "covalent_radius": 1.16,
-    "nvalence": null
+    "nvalence": 8
   },
   {
     "Z": 27,
@@ -240,7 +240,7 @@
     "symbol": "Co",
     "mass": 58.933193524,
     "covalent_radius": 1.11,
-    "nvalence": null
+    "nvalence": 9
   },
   {
     "Z": 28,
@@ -249,7 +249,7 @@
     "symbol": "Ni",
     "mass": 57.93534165,
     "covalent_radius": 1.1,
-    "nvalence": null
+    "nvalence": 10
   },
   {
     "Z": 29,
@@ -258,7 +258,7 @@
     "symbol": "Cu",
     "mass": 62.929597119,
     "covalent_radius": 1.12,
-    "nvalence": null
+    "nvalence": 11
   },
   {
     "Z": 30,
@@ -267,7 +267,7 @@
     "symbol": "Zn",
     "mass": 63.929141776,
     "covalent_radius": 1.18,
-    "nvalence": null
+    "nvalence": 12
   },
   {
     "Z": 31,
@@ -348,7 +348,7 @@
     "symbol": "Y",
     "mass": 88.905838156,
     "covalent_radius": 1.63,
-    "nvalence": null
+    "nvalence": 3
   },
   {
     "Z": 40,
@@ -357,7 +357,7 @@
     "symbol": "Zr",
     "mass": 89.904698755,
     "covalent_radius": 1.54,
-    "nvalence": null
+    "nvalence": 4
   },
   {
     "Z": 41,
@@ -366,7 +366,7 @@
     "symbol": "Nb",
     "mass": 92.90637317,
     "covalent_radius": 1.47,
-    "nvalence": null
+    "nvalence": 5
   },
   {
     "Z": 42,
@@ -375,7 +375,7 @@
     "symbol": "Mo",
     "mass": 97.905403609,
     "covalent_radius": 1.38,
-    "nvalence": null
+    "nvalence": 6
   },
   {
     "Z": 43,
@@ -384,7 +384,7 @@
     "symbol": "Tc",
     "mass": 82.966377,
     "covalent_radius": 1.28,
-    "nvalence": null
+    "nvalence": 7
   },
   {
     "Z": 44,
@@ -393,7 +393,7 @@
     "symbol": "Ru",
     "mass": 101.904340312,
     "covalent_radius": 1.25,
-    "nvalence": null
+    "nvalence": 8
   },
   {
     "Z": 45,
@@ -402,7 +402,7 @@
     "symbol": "Rh",
     "mass": 102.905494081,
     "covalent_radius": 1.25,
-    "nvalence": null
+    "nvalence": 9
   },
   {
     "Z": 46,
@@ -411,7 +411,7 @@
     "symbol": "Pd",
     "mass": 105.903480287,
     "covalent_radius": 1.2,
-    "nvalence": null
+    "nvalence": 10
   },
   {
     "Z": 47,
@@ -420,7 +420,7 @@
     "symbol": "Ag",
     "mass": 106.905091509,
     "covalent_radius": 1.28,
-    "nvalence": null
+    "nvalence": 11
   },
   {
     "Z": 48,
@@ -429,7 +429,7 @@
     "symbol": "Cd",
     "mass": 113.903364998,
     "covalent_radius": 1.36,
-    "nvalence": null
+    "nvalence": 12
   },
   {
     "Z": 49,
@@ -510,7 +510,7 @@
     "symbol": "La",
     "mass": 138.906362927,
     "covalent_radius": 1.8,
-    "nvalence": null
+    "nvalence": 3
   },
   {
     "Z": 58,
@@ -519,7 +519,7 @@
     "symbol": "Ce",
     "mass": 139.905448433,
     "covalent_radius": 1.63,
-    "nvalence": null
+    "nvalence": 4
   },
   {
     "Z": 59,
@@ -528,7 +528,7 @@
     "symbol": "Pr",
     "mass": 140.907659604,
     "covalent_radius": 1.76,
-    "nvalence": null
+    "nvalence": 5
   },
   {
     "Z": 60,
@@ -537,7 +537,7 @@
     "symbol": "Nd",
     "mass": 141.907728824,
     "covalent_radius": 1.74,
-    "nvalence": null
+    "nvalence": 6
   },
   {
     "Z": 61,
@@ -546,7 +546,7 @@
     "symbol": "Pm",
     "mass": 125.957327,
     "covalent_radius": 1.73,
-    "nvalence": null
+    "nvalence": 7
   },
   {
     "Z": 62,
@@ -555,7 +555,7 @@
     "symbol": "Sm",
     "mass": 151.919738646,
     "covalent_radius": 1.72,
-    "nvalence": null
+    "nvalence": 8
   },
   {
     "Z": 63,
@@ -564,7 +564,7 @@
     "symbol": "Eu",
     "mass": 152.921236789,
     "covalent_radius": 1.68,
-    "nvalence": null
+    "nvalence": 9
   },
   {
     "Z": 64,
@@ -573,7 +573,7 @@
     "symbol": "Gd",
     "mass": 157.9241112,
     "covalent_radius": 1.69,
-    "nvalence": null
+    "nvalence": 10
   },
   {
     "Z": 65,
@@ -582,7 +582,7 @@
     "symbol": "Tb",
     "mass": 158.925353707,
     "covalent_radius": 1.68,
-    "nvalence": null
+    "nvalence": 11
   },
   {
     "Z": 66,
@@ -591,7 +591,7 @@
     "symbol": "Dy",
     "mass": 163.929180819,
     "covalent_radius": 1.67,
-    "nvalence": null
+    "nvalence": 12
   },
   {
     "Z": 67,
@@ -600,7 +600,7 @@
     "symbol": "Ho",
     "mass": 164.930329116,
     "covalent_radius": 1.66,
-    "nvalence": null
+    "nvalence": 13
   },
   {
     "Z": 68,
@@ -609,7 +609,7 @@
     "symbol": "Er",
     "mass": 165.930301067,
     "covalent_radius": 1.65,
-    "nvalence": null
+    "nvalence": 14
   },
   {
     "Z": 69,
@@ -618,7 +618,7 @@
     "symbol": "Tm",
     "mass": 168.934218956,
     "covalent_radius": 1.64,
-    "nvalence": null
+    "nvalence": 15
   },
   {
     "Z": 70,
@@ -627,7 +627,7 @@
     "symbol": "Yb",
     "mass": 173.938867545,
     "covalent_radius": 1.7,
-    "nvalence": null
+    "nvalence": 16
   },
   {
     "Z": 71,
@@ -636,7 +636,7 @@
     "symbol": "Lu",
     "mass": 174.940777211,
     "covalent_radius": 1.62,
-    "nvalence": null
+    "nvalence": 17
   },
   {
     "Z": 72,
@@ -645,7 +645,7 @@
     "symbol": "Hf",
     "mass": 179.946559537,
     "covalent_radius": 1.52,
-    "nvalence": null
+    "nvalence": 4
   },
   {
     "Z": 73,
@@ -654,7 +654,7 @@
     "symbol": "Ta",
     "mass": 180.947998528,
     "covalent_radius": 1.46,
-    "nvalence": null
+    "nvalence": 5
   },
   {
     "Z": 74,
@@ -663,7 +663,7 @@
     "symbol": "W",
     "mass": 183.95093318,
     "covalent_radius": 1.37,
-    "nvalence": null
+    "nvalence": 6
   },
   {
     "Z": 75,
@@ -672,7 +672,7 @@
     "symbol": "Re",
     "mass": 186.955752217,
     "covalent_radius": 1.31,
-    "nvalence": null
+    "nvalence": 7
   },
   {
     "Z": 76,
@@ -681,7 +681,7 @@
     "symbol": "Os",
     "mass": 191.961478765,
     "covalent_radius": 1.29,
-    "nvalence": null
+    "nvalence": 8
   },
   {
     "Z": 77,
@@ -690,7 +690,7 @@
     "symbol": "Ir",
     "mass": 192.962923753,
     "covalent_radius": 1.22,
-    "nvalence": null
+    "nvalence": 9
   },
   {
     "Z": 78,
@@ -699,7 +699,7 @@
     "symbol": "Pt",
     "mass": 194.964794325,
     "covalent_radius": 1.23,
-    "nvalence": null
+    "nvalence": 10
   },
   {
     "Z": 79,
@@ -708,7 +708,7 @@
     "symbol": "Au",
     "mass": 196.966570103,
     "covalent_radius": 1.24,
-    "nvalence": null
+    "nvalence": 11
   },
   {
     "Z": 80,
@@ -717,7 +717,7 @@
     "symbol": "Hg",
     "mass": 201.970643604,
     "covalent_radius": 1.33,
-    "nvalence": null
+    "nvalence": 12
   },
   {
     "Z": 81,
@@ -798,7 +798,7 @@
     "symbol": "Ac",
     "mass": 205.015144152,
     "covalent_radius": 1.86,
-    "nvalence": null
+    "nvalence": 3
   },
   {
     "Z": 90,
@@ -807,7 +807,7 @@
     "symbol": "Th",
     "mass": 232.038053606,
     "covalent_radius": 1.75,
-    "nvalence": null
+    "nvalence": 4
   },
   {
     "Z": 91,
@@ -816,7 +816,7 @@
     "symbol": "Pa",
     "mass": 231.0358825,
     "covalent_radius": 1.69,
-    "nvalence": null
+    "nvalence": 5
   },
   {
     "Z": 92,
@@ -825,7 +825,7 @@
     "symbol": "U",
     "mass": 238.050786936,
     "covalent_radius": 1.7,
-    "nvalence": null
+    "nvalence": 6
   },
   {
     "Z": 93,
@@ -834,7 +834,7 @@
     "symbol": "Np",
     "mass": 219.031601865,
     "covalent_radius": 1.71,
-    "nvalence": null
+    "nvalence": 7
   },
   {
     "Z": 94,
@@ -843,7 +843,7 @@
     "symbol": "Pu",
     "mass": 221.038572,
     "covalent_radius": 1.72,
-    "nvalence": null
+    "nvalence": 8
   },
   {
     "Z": 95,
@@ -852,7 +852,7 @@
     "symbol": "Am",
     "mass": 223.04584,
     "covalent_radius": 1.66,
-    "nvalence": null
+    "nvalence": 9
   },
   {
     "Z": 96,
@@ -861,7 +861,7 @@
     "symbol": "Cm",
     "mass": 231.050746,
     "covalent_radius": 1.66,
-    "nvalence": null
+    "nvalence": 10
   },
   {
     "Z": 97,
@@ -870,7 +870,7 @@
     "symbol": "Bk",
     "mass": 233.056652,
     "covalent_radius": 1.68,
-    "nvalence": null
+    "nvalence": 11
   },
   {
     "Z": 98,
@@ -879,7 +879,7 @@
     "symbol": "Cf",
     "mass": 237.062199272,
     "covalent_radius": 1.68,
-    "nvalence": null
+    "nvalence": 12
   },
   {
     "Z": 99,
@@ -888,7 +888,7 @@
     "symbol": "Es",
     "mass": 239.06831,
     "covalent_radius": 1.65,
-    "nvalence": null
+    "nvalence": 13
   },
   {
     "Z": 100,
@@ -897,7 +897,7 @@
     "symbol": "Fm",
     "mass": 241.074311,
     "covalent_radius": 1.67,
-    "nvalence": null
+    "nvalence": 14
   },
   {
     "Z": 101,
@@ -906,7 +906,7 @@
     "symbol": "Md",
     "mass": 244.081157,
     "covalent_radius": 1.73,
-    "nvalence": null
+    "nvalence": 15
   },
   {
     "Z": 102,
@@ -915,7 +915,7 @@
     "symbol": "No",
     "mass": 248.086623,
     "covalent_radius": 1.76,
-    "nvalence": null
+    "nvalence": 16
   },
   {
     "Z": 103,
@@ -924,7 +924,7 @@
     "symbol": "Lr",
     "mass": 251.094289,
     "covalent_radius": 1.61,
-    "nvalence": null
+    "nvalence": 17
   },
   {
     "Z": 104,
@@ -933,7 +933,7 @@
     "symbol": "Rf",
     "mass": 253.100528,
     "covalent_radius": 1.57,
-    "nvalence": null
+    "nvalence": 4
   },
   {
     "Z": 105,
@@ -942,7 +942,7 @@
     "symbol": "Db",
     "mass": 255.106919,
     "covalent_radius": 1.49,
-    "nvalence": null
+    "nvalence": 5
   },
   {
     "Z": 106,
@@ -951,7 +951,7 @@
     "symbol": "Sg",
     "mass": 258.11304,
     "covalent_radius": 1.43,
-    "nvalence": null
+    "nvalence": 6
   },
   {
     "Z": 107,
@@ -960,7 +960,7 @@
     "symbol": "Bh",
     "mass": 260.121443,
     "covalent_radius": 1.41,
-    "nvalence": null
+    "nvalence": 7
   },
   {
     "Z": 108,
@@ -969,7 +969,7 @@
     "symbol": "Hs",
     "mass": 263.128479,
     "covalent_radius": 1.34,
-    "nvalence": null
+    "nvalence": 8
   },
   {
     "Z": 109,
@@ -978,7 +978,7 @@
     "symbol": "Mt",
     "mass": 265.135937,
     "covalent_radius": 1.29,
-    "nvalence": null
+    "nvalence": 9
   },
   {
     "Z": 110,
@@ -987,7 +987,7 @@
     "symbol": "Ds",
     "mass": 267.143726,
     "covalent_radius": 1.28,
-    "nvalence": null
+    "nvalence": 10
   },
   {
     "Z": 111,
@@ -996,7 +996,7 @@
     "symbol": "Rg",
     "mass": 272.153273,
     "covalent_radius": 1.21,
-    "nvalence": null
+    "nvalence": 11
   },
   {
     "Z": 112,
@@ -1005,7 +1005,7 @@
     "symbol": "Cn",
     "mass": 276.161418,
     "covalent_radius": 1.22,
-    "nvalence": null
+    "nvalence": 12
   },
   {
     "Z": 113,
