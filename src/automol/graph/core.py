@@ -6,17 +6,18 @@ Excludes bond order information by design.
 """
 
 import copy
-from collections.abc import Collection, Iterator
+from collections.abc import Collection, Iterator, Sequence
 from typing import Any, TypeVar
 
 import networkx as nx
+import numpy as np
 from networkx.algorithms.isomorphism import GraphMatcher
 from pydantic import BaseModel
 from pydantic._internal._model_construction import ModelMetaclass
 from rdkit.Chem import rdchem
 from rdkit.Chem.rdchem import Mol, RWMol
 
-from .. import rd
+from .. import element, rd
 
 BondKey = tuple[int, int]
 
@@ -79,6 +80,100 @@ class MolGraph(Graph[Atom, Bond]):
 
     atom_type = Atom
     bond_type = Bond
+
+
+# Properties
+def atom_keys[AtomT: Atom, BondT: Bond](gra: Graph[AtomT, BondT]) -> list[int]:
+    """Get list of atom keys."""
+    return list(gra.nodes())
+
+
+def symbols[AtomT: Atom, BondT: Bond](
+    gra: Graph[AtomT, BondT], keys: Sequence[int] | None = None
+) -> list[str]:
+    """Get symbols of atoms."""
+    keys = atom_keys(gra) if keys is None else keys
+    return [gra.nodes[key][Atom.symbol] for key in keys]
+
+
+def element_bonding_capacities[AtomT: Atom, BondT: Bond](
+    gra: Graph[AtomT, BondT], keys: Sequence[int] | None = None
+) -> list[int]:
+    """Get element valences of atoms."""
+    symbs = symbols(gra, keys)
+    return [element.bonding_capacity(symb) for symb in symbs]
+
+
+def degrees(gra: MolGraph, keys: Sequence[int] | None = None) -> list[int]:
+    """Get degrees of atoms."""
+    keys = atom_keys(gra) if keys is None else keys
+    return [gra.degree[key] for key in keys]
+
+
+def open_valences(gra: MolGraph, keys: Sequence[int] | None = None) -> list[int]:
+    """Get open valences of atoms.
+
+    This is the capacity minus the degree, i.e. the number of additional bonds
+    that could be formed.
+    """
+    caps = element_bonding_capacities(gra, keys)
+    degs = degrees(gra, keys)
+    return np.subtract(caps, degs).tolist()
+
+
+# Transformations
+def remove_bonds[AtomT: Atom, BondT: Bond](
+    gra: Graph[AtomT, BondT],
+    bonds: Collection[tuple[int, int]],
+    *,
+    in_place: bool = False,
+) -> Graph[AtomT, BondT]:
+    """Return a copy of the graph with specified bonds removed."""
+    gra = gra if in_place else copy.deepcopy(gra)
+    gra.remove_edges_from(bonds)
+    return gra
+
+
+# Algorithms
+def isomorphisms[AtomT: Atom, BondT: Bond](
+    gra1: Graph[AtomT, BondT], gra2: Graph[AtomT, BondT]
+) -> Iterator[dict[int, int]]:
+    """Check if two graphs are isomorphic."""
+    return graph_matcher(gra1, gra2).isomorphisms_iter()
+
+
+def isomorphism[AtomT: Atom, BondT: Bond](
+    gra1: Graph[AtomT, BondT], gra2: Graph[AtomT, BondT]
+) -> dict[int, int] | None:
+    """Check if two graphs are isomorphic.
+
+    Does not consider bond orders.
+    """
+    return next(isomorphisms(gra1, gra2), None)
+
+
+# Comparisons
+def is_isomorphic[AtomT: Atom, BondT: Bond](
+    gra1: Graph[AtomT, BondT], gra2: Graph[AtomT, BondT]
+) -> bool:
+    """Check if two graphs are isomorphic."""
+    return graph_matcher(gra1, gra2).is_isomorphic()
+
+
+def graph_matcher[AtomT: Atom, BondT: Bond](
+    gra1: Graph[AtomT, BondT], gra2: Graph[AtomT, BondT]
+) -> GraphMatcher:
+    """Check if two graphs are isomorphic."""
+    atom_fields = gra1.atom_type.model_fields.keys()
+    bond_fields = gra1.bond_type.model_fields.keys()
+
+    def atom_match(n1: dict[str, Any], n2: dict[str, Any]) -> bool:
+        return all(n1[field] == n2[field] for field in atom_fields)
+
+    def bond_match(e1: dict[str, Any], e2: dict[str, Any]) -> bool:
+        return all(e1[field] == e2[field] for field in bond_fields)
+
+    return GraphMatcher(gra1, gra2, node_match=atom_match, edge_match=bond_match)
 
 
 # Conversions from other types
@@ -196,58 +291,3 @@ def rdkit_mol_with_index_map[AtomT: Atom, BondT: Bond](
 
     to_key = dict(map(reversed, to_idx.items()))
     return rw_mol.GetMol(), to_key
-
-
-# Transformations
-def remove_bonds[AtomT: Atom, BondT: Bond](
-    gra: Graph[AtomT, BondT],
-    bonds: Collection[tuple[int, int]],
-    *,
-    in_place: bool = False,
-) -> Graph[AtomT, BondT]:
-    """Return a copy of the graph with specified bonds removed."""
-    gra = gra if in_place else copy.deepcopy(gra)
-    gra.remove_edges_from(bonds)
-    return gra
-
-
-# Algorithms
-def isomorphisms[AtomT: Atom, BondT: Bond](
-    gra1: Graph[AtomT, BondT], gra2: Graph[AtomT, BondT]
-) -> Iterator[dict[int, int]]:
-    """Check if two graphs are isomorphic."""
-    return graph_matcher(gra1, gra2).isomorphisms_iter()
-
-
-def isomorphism[AtomT: Atom, BondT: Bond](
-    gra1: Graph[AtomT, BondT], gra2: Graph[AtomT, BondT]
-) -> dict[int, int] | None:
-    """Check if two graphs are isomorphic.
-
-    Does not consider bond orders.
-    """
-    return next(isomorphisms(gra1, gra2), None)
-
-
-# Comparisons
-def is_isomorphic[AtomT: Atom, BondT: Bond](
-    gra1: Graph[AtomT, BondT], gra2: Graph[AtomT, BondT]
-) -> bool:
-    """Check if two graphs are isomorphic."""
-    return graph_matcher(gra1, gra2).is_isomorphic()
-
-
-def graph_matcher[AtomT: Atom, BondT: Bond](
-    gra1: Graph[AtomT, BondT], gra2: Graph[AtomT, BondT]
-) -> GraphMatcher:
-    """Check if two graphs are isomorphic."""
-    atom_fields = gra1.atom_type.model_fields.keys()
-    bond_fields = gra1.bond_type.model_fields.keys()
-
-    def atom_match(n1: dict[str, Any], n2: dict[str, Any]) -> bool:
-        return all(n1[field] == n2[field] for field in atom_fields)
-
-    def bond_match(e1: dict[str, Any], e2: dict[str, Any]) -> bool:
-        return all(e1[field] == e2[field] for field in bond_fields)
-
-    return GraphMatcher(gra1, gra2, node_match=atom_match, edge_match=bond_match)

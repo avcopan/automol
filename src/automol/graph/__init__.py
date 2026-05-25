@@ -5,6 +5,9 @@ from .core import (
     Atom,
     Bond,
     Graph,
+    atom_keys,
+    degrees,
+    element_bonding_capacities,
     from_inchi,
     from_rdkit_mol,
     from_smiles,
@@ -12,8 +15,10 @@ from .core import (
     is_isomorphic,
     isomorphism,
     isomorphisms,
+    open_valences,
     rdkit_mol,
     remove_bonds,
+    symbols,
 )
 
 __all__ = [
@@ -21,6 +26,9 @@ __all__ = [
     "Atom",
     "Bond",
     "Graph",
+    "atom_keys",
+    "degrees",
+    "element_bonding_capacities",
     "from_inchi",
     "from_rdkit_mol",
     "from_smiles",
@@ -28,6 +36,8 @@ __all__ = [
     "is_isomorphic",
     "isomorphism",
     "isomorphisms",
+    "open_valences",
     "rdkit_mol",
     "remove_bonds",
+    "symbols",
 ]

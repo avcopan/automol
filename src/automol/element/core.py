@@ -26,6 +26,7 @@ class Element:
     Z: int
     A: int
     group: int
+    period: int
     symbol: str
     mass: float
     covalent_radius: float
@@ -162,7 +163,7 @@ def covalent_radius(key: int | str) -> float:
 
 def group(key: int | str) -> int:
     """
-    Retrieve periodic group by atomic number or symbol.
+    Retrieve group number by atomic number or symbol.
 
     Parameters
     ----------
@@ -171,9 +172,52 @@ def group(key: int | str) -> int:
 
     Returns
     -------
-        Periodic group.
+        Group number.
     """
     return from_key(key).group
+
+
+def period(key: int | str) -> int:
+    """
+    Retrieve period number by atomic number or symbol.
+
+    Parameters
+    ----------
+    key :
+        Atomic number (int) or symbol (str).
+
+    Returns
+    -------
+        Period.
+    """
+    return from_key(key).period
+
+
+PERIOD_SHELL_CAPACITY = {
+    1: 2,  # H, He
+    2: 8,  # Li to Ne
+    3: 8,  # Na to Ar
+    4: 18,  # K to Kr
+    5: 18,  # Rb to Xe
+    6: 32,  # Cs to Rn
+    7: 32,  # Fr to Og
+}
+
+
+def shell_capacity(key: int | str) -> int:
+    """
+    Determine shell capacity by atomic number or symbol.
+
+    Parameters
+    ----------
+    key :
+        Atomic number (int) or symbol (str).
+
+    Returns
+    -------
+        Shell capacity.
+    """
+    return PERIOD_SHELL_CAPACITY[period(key)]
 
 
 def nvalence(key: int | str, *, override: dict[str, int] | None = None) -> int:
@@ -196,3 +240,27 @@ def nvalence(key: int | str, *, override: dict[str, int] | None = None) -> int:
         if symb in override:
             return override[symb]
     return from_key(key).nvalence
+
+
+def bonding_capacity(key: int | str, *, override: dict[str, int] | None = None) -> int:
+    """
+    Determine bonding capacity by atomic number or symbol.
+
+    Parameters
+    ----------
+    key :
+        Atomic number (int) or symbol (str).
+    override :
+        Dictionary of bonding capacity overrides by atomic symbol.
+
+    Returns
+    -------
+        Bonding capacity.
+    """
+    if override is not None:
+        symb = from_key(key).symbol
+        if symb in override:
+            return override[symb]
+    cap = shell_capacity(key)
+    nval = nvalence(key)
+    return min(nval, cap - nval)

@@ -2,6 +2,7 @@
 
 from .core import (
     Element,
+    bonding_capacity,
     covalent_radius,
     from_key,
     group,
@@ -14,6 +15,7 @@ from .core import (
 
 __all__ = [
     "Element",
+    "bonding_capacity",
     "covalent_radius",
     "from_key",
     "group",

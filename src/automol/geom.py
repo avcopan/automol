@@ -789,7 +789,7 @@ def adjacency_matrix(
     geo: Geometry,
     *,
     delta: float = 0.5,
-    override_valence: dict[str, int] | None = None,
+    override_bonding_capacities: dict[str, int] | None = None,
 ) -> ArrayLike:
     """Determine neighboring atoms."""
     dmat = distance_matrix(geo)
@@ -799,17 +799,15 @@ def adjacency_matrix(
     amat = dmat <= r_cov_matrix
     np.fill_diagonal(amat, 0)  # Atoms don't neighbor themselves
 
-    max_vals = [element.nvalence(s, override=override_valence) for s in geo.symbols]
+    caps = [
+        element.bonding_capacity(s, override=override_bonding_capacities)
+        for s in geo.symbols
+    ]
     vals = np.sum(amat, axis=0)
 
-    for i, symb in enumerate(geo.symbols):
-        max_val = max_vals[i]
-        if max_val is not None:
-            max_bonds = 8 - max_val if symb != "H" else 1
-            if vals[i] > max_bonds:
-                msg = (
-                    f"Atom {symb}:{i} exceeds allowable number of bonds ({max_bonds})."
-                )
-                raise NotImplementedError(msg)
+    for i, (symb, val, cap) in enumerate(zip(geo.symbols, vals, caps, strict=True)):
+        if val > cap:
+            msg = f"Atom {symb}:{i} degree ({val}) exceeds bonding capacity ({cap})."
+            raise NotImplementedError(msg)
 
     return amat
