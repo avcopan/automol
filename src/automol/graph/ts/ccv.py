@@ -8,20 +8,28 @@ from functools import cached_property
 
 import more_itertools as mit
 
-from ..core import Atom, Bond, BondKey, Graph, is_isomorphic, isomorphisms, remove_bonds
-from .core import Change, TransBond, from_bond_changes
+from ..core import (
+    Atom,
+    BondKey,
+    Graph,
+    MolGraph,
+    is_isomorphic,
+    isomorphisms,
+    remove_bonds,
+)
+from .core import Change, TransGraph, from_bond_changes
 
 BondSymbol = tuple[str, str]
 
 
 # From
 def all_from_reactants_and_products(
-    rct_gra: Graph[Atom, Bond],
-    prd_gra: Graph[Atom, Bond],
+    rct_gra: MolGraph,
+    prd_gra: MolGraph,
     *,
     extra: int = 2,
     isomorphs: bool = False,
-) -> Iterator[Graph[Atom, TransBond]]:
+) -> Iterator[TransGraph]:
     """Fewest-bonds-first constructive count vector mappings.
 
     Parameters
@@ -48,8 +56,8 @@ def all_from_reactants_and_products(
 class CCV:
     """CCV Reaction Mapping helper class."""
 
-    reactants: Graph[Atom, Bond]
-    products: Graph[Atom, Bond]
+    reactants: MolGraph
+    products: MolGraph
     _seen_bond_changes: list[dict[BondKey, Change]] = field(default_factory=list)
 
     @cached_property
@@ -74,7 +82,7 @@ class CCV:
 
     def filtered(
         self, *, extra: int = 2, isomorphs: bool = False
-    ) -> Iterator[tuple[Graph[Atom, TransBond], dict[int, int]]]:
+    ) -> Iterator[tuple[TransGraph, dict[int, int]]]:
         """Yield filtered CCV algorithm results.
 
         Parameters
@@ -96,9 +104,7 @@ class CCV:
                 seen_gras.append(gra)
                 yield gra, mapping
 
-    def results(
-        self, *, extra: int = 2
-    ) -> Iterator[tuple[Graph[Atom, TransBond], dict[int, int]]]:
+    def results(self, *, extra: int = 2) -> Iterator[tuple[TransGraph, dict[int, int]]]:
         """Yield all CCV algorithm results.
 
         Parameters
@@ -161,7 +167,7 @@ class CCV:
 
     def _distinct_transition_graphs_with_reaction_mappings(
         self, break_bonds1: Sequence[BondKey], break_bonds2: Sequence[BondKey]
-    ) -> Iterator[tuple[Graph[Atom, TransBond], dict[int, int]]]:
+    ) -> Iterator[tuple[TransGraph, dict[int, int]]]:
         """Iterate over reverse_isomorphisms with distinct bond changes."""
         gra1 = remove_bonds(self.reactants, break_bonds1)
         gra2 = remove_bonds(self.products, break_bonds2)

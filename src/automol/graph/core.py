@@ -60,21 +60,10 @@ BondT = TypeVar("BondT", bound=Bond)
 
 
 class Graph[AtomT: Atom, BondT: Bond](nx.Graph):
-    """Graph representation with Atom and Bond data validation."""
+    """Generic chemical graph."""
 
     atom_type: type[AtomT]
     bond_type: type[BondT]
-
-    def __init__(
-        self,
-        *,
-        atom_type: type[AtomT],
-        bond_type: type[BondT],
-        **kwargs: dict[str, Any],
-    ) -> None:
-        super().__init__(**kwargs)
-        self.atom_type = atom_type
-        self.bond_type = bond_type
 
     def validate(self) -> None:
         """Validate against atom and bond classes."""
@@ -85,8 +74,15 @@ class Graph[AtomT: Atom, BondT: Bond](nx.Graph):
             self.bond_type.model_validate(data)
 
 
+class MolGraph(Graph[Atom, Bond]):
+    """Molecular graph."""
+
+    atom_type = Atom
+    bond_type = Bond
+
+
 # Conversions from other types
-def from_smiles(smi: str) -> Graph[Atom, Bond]:
+def from_smiles(smi: str) -> MolGraph:
     """
     Instantiate Graph from SMILES string.
 
@@ -97,14 +93,14 @@ def from_smiles(smi: str) -> Graph[Atom, Bond]:
 
     Returns
     -------
-    Graph
-        Graph.
+    MolGraph
+        MolGraph.
     """
     mol = rd.mol.from_smiles(smi, with_coords=False)
     return from_rdkit_mol(mol)
 
 
-def from_inchi(chi: str) -> Graph[Atom, Bond]:
+def from_inchi(chi: str) -> MolGraph:
     """
     Instantiate Graph from InChI string.
 
@@ -115,14 +111,14 @@ def from_inchi(chi: str) -> Graph[Atom, Bond]:
 
     Returns
     -------
-    Graph
-        Graph.
+    MolGraph
+        MolGraph.
     """
     mol = rd.mol.from_inchi(chi, with_coords=False)
     return from_rdkit_mol(mol)
 
 
-def from_rdkit_mol(mol: Mol) -> Graph[Atom, Bond]:
+def from_rdkit_mol(mol: Mol) -> MolGraph:
     """
     Instantiate Graph from RKit molecule.
 
@@ -133,10 +129,10 @@ def from_rdkit_mol(mol: Mol) -> Graph[Atom, Bond]:
 
     Returns
     -------
-    Graph
-        Graph.
+    MolGraph
+        MolGraph.
     """
-    gra = Graph[Atom, Bond](atom_type=Atom, bond_type=Bond)
+    gra = MolGraph(atom_type=Atom, bond_type=Bond)
 
     for rd_atom in mol.GetAtoms():
         atom = Atom(symbol=rd_atom.GetSymbol())
@@ -152,14 +148,14 @@ def from_rdkit_mol(mol: Mol) -> Graph[Atom, Bond]:
 
 
 # Conversions to other types
-def inchi(gra: Graph[Atom, Bond]) -> str:
+def inchi(gra: MolGraph) -> str:
     """
     Provide InChI string from Graph.
 
     Parameters
     ----------
     gra
-        Graph object.
+        MolGraph object.
 
     Returns
     -------
@@ -208,7 +204,7 @@ def remove_bonds[AtomT: Atom, BondT: Bond](
     bonds: Collection[tuple[int, int]],
     *,
     in_place: bool = False,
-) -> Graph:
+) -> Graph[AtomT, BondT]:
     """Return a copy of the graph with specified bonds removed."""
     gra = gra if in_place else copy.deepcopy(gra)
     gra.remove_edges_from(bonds)
