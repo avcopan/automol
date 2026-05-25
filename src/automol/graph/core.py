@@ -10,12 +10,15 @@ from collections.abc import Collection, Iterator
 from typing import Any, TypeVar
 
 import networkx as nx
+from networkx.algorithms.isomorphism import GraphMatcher
 from pydantic import BaseModel
 from pydantic._internal._model_construction import ModelMetaclass
 from rdkit.Chem import rdchem
 from rdkit.Chem.rdchem import Mol, RWMol
 
 from .. import rd
+
+BondKey = tuple[int, int]
 
 
 class _CustomBaseModelMeta(ModelMetaclass):
@@ -213,15 +216,15 @@ def remove_bonds[AtomT: Atom, BondT: Bond](
 
 
 # Algorithms
-def isomorphisms(
-    gra1: Graph[Atom, Bond], gra2: Graph[Atom, Bond]
+def isomorphisms[AtomT: Atom, BondT: Bond](
+    gra1: Graph[AtomT, BondT], gra2: Graph[AtomT, BondT]
 ) -> Iterator[dict[int, int]]:
     """Check if two graphs are isomorphic."""
-    return nx.vf2pp_all_isomorphisms(gra1, gra2, node_label=Atom.symbol)
+    return graph_matcher(gra1, gra2).isomorphisms_iter()
 
 
-def isomorphism(
-    gra1: Graph[Atom, Bond], gra2: Graph[Atom, Bond]
+def isomorphism[AtomT: Atom, BondT: Bond](
+    gra1: Graph[AtomT, BondT], gra2: Graph[AtomT, BondT]
 ) -> dict[int, int] | None:
     """Check if two graphs are isomorphic.
 
@@ -231,6 +234,24 @@ def isomorphism(
 
 
 # Comparisons
-def is_isomorphic(gra1: Graph[Atom, Bond], gra2: Graph[Atom, Bond]) -> bool:
+def is_isomorphic[AtomT: Atom, BondT: Bond](
+    gra1: Graph[AtomT, BondT], gra2: Graph[AtomT, BondT]
+) -> bool:
     """Check if two graphs are isomorphic."""
-    return isomorphism(gra1, gra2) is not None
+    return graph_matcher(gra1, gra2).is_isomorphic()
+
+
+def graph_matcher[AtomT: Atom, BondT: Bond](
+    gra1: Graph[AtomT, BondT], gra2: Graph[AtomT, BondT]
+) -> GraphMatcher:
+    """Check if two graphs are isomorphic."""
+    atom_fields = gra1.atom_type.model_fields.keys()
+    bond_fields = gra1.bond_type.model_fields.keys()
+
+    def atom_match(n1: dict[str, Any], n2: dict[str, Any]) -> bool:
+        return all(n1[field] == n2[field] for field in atom_fields)
+
+    def bond_match(e1: dict[str, Any], e2: dict[str, Any]) -> bool:
+        return all(e1[field] == e2[field] for field in bond_fields)
+
+    return GraphMatcher(gra1, gra2, node_match=atom_match, edge_match=bond_match)

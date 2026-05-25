@@ -1,43 +1,17 @@
-"""Core molecular graph functions.
-
-Uses NetworkX for graph representation, with Atom and Bond data validation.
-
-Does not include bond order information.
-"""
+"""Constructive Count Vector (CCV) reaction mapping algorithm."""
 
 import itertools
 from collections import Counter, defaultdict
 from collections.abc import Iterator, Sequence
 from dataclasses import dataclass, field
-from enum import StrEnum
 from functools import cached_property
-from typing import Any
 
 import more_itertools as mit
-import networkx as nx
-from rdkit.Chem import rdchem
 
-from .core import Atom, Bond, Graph, isomorphisms, remove_bonds
+from ..core import Atom, Bond, BondKey, Graph, is_isomorphic, isomorphisms, remove_bonds
+from .core import Change, TransBond, from_bond_changes
 
-
-class Change(StrEnum):
-    """Changes."""
-
-    FORMED = "formed"
-    BROKEN = "broken"
-    FLEETING = "fleeting"
-
-
-class TransBond(Bond):
-    """Represents a bond between two atoms in a molecule."""
-
-    change: Change | None
-
-    def to_rdkit_bond_type(self) -> rdchem.BondType:
-        """Convert to an RDKit Bond Type."""
-        if self.change is not None:
-            return rdchem.BondType.HYDROGEN
-        return rdchem.BondType.SINGLE
+BondSymbol = tuple[str, str]
 
 
 # From
@@ -67,93 +41,6 @@ def all_from_reactants_and_products(
     """
     ccv = CCV(rct_gra, prd_gra)
     yield from (gra for gra, _ in ccv.filtered(extra=extra, isomorphs=isomorphs))
-
-
-# Algorithms
-def is_isomorphic[AtomT: Atom, BondT: Bond](
-    gra1: Graph[AtomT, BondT], gra2: Graph[AtomT, BondT]
-) -> bool:
-    """Check if two graphs are isomorphic."""
-    atom_fields = gra1.atom_type.model_fields.keys()
-    bond_fields = gra1.bond_type.model_fields.keys()
-
-    def atom_match(n1: dict[str, Any], n2: dict[str, Any]) -> bool:
-        return all(n1[field] == n2[field] for field in atom_fields)
-
-    def bond_match(e1: dict[str, Any], e2: dict[str, Any]) -> bool:
-        return all(e1[field] == e2[field] for field in bond_fields)
-
-    return nx.is_isomorphic(gra1, gra2, node_match=atom_match, edge_match=bond_match)
-
-
-# Transition state graphs
-BondKey = tuple[int, int]
-BondSymbol = tuple[str, str]
-FORMED_BOND = TransBond(change=Change.FORMED)
-BROKEN_BOND = TransBond(change=Change.BROKEN)
-
-
-def from_bond_changes(
-    gra: Graph[Atom, Bond], bond_changes: dict[BondKey, Change]
-) -> Graph[Atom, TransBond]:
-    """Construct a transition graph from a graph and bond changes."""
-    ts_gra = Graph(atom_type=Atom, bond_type=TransBond)
-    ts_gra.add_nodes_from(gra.nodes(data=True))
-    ts_gra.add_edges_from(gra.edges(), change=None)
-    formed_bonds = {k for k, c in bond_changes.items() if c == Change.FORMED}
-    broken_bonds = {k for k, c in bond_changes.items() if c == Change.BROKEN}
-    ts_gra.add_edges_from(formed_bonds, change=Change.FORMED)
-    ts_gra.add_edges_from(broken_bonds, change=Change.BROKEN)
-    ts_gra.validate()
-    return ts_gra
-
-
-def bond_changes(
-    gra: Graph[Atom, TransBond],
-) -> dict[BondKey, Change]:
-    """Extract the formed and broken bonds from a transition graph."""
-    change = nx.get_edge_attributes(gra, TransBond.change)
-    return {k: v for k, v in change.items() if v is not None}
-
-
-def formed_bonds(gra: Graph[Atom, TransBond]) -> set[BondKey]:
-    """Extract the formed bonds from a transition graph."""
-    changes = bond_changes(gra)
-    return {k for k, v in changes.items() if v == Change.FORMED}
-
-
-def broken_bonds(gra: Graph[Atom, TransBond]) -> set[BondKey]:
-    """Extract the broken bonds from a transition graph."""
-    changes = bond_changes(gra)
-    return {k for k, v in changes.items() if v == Change.BROKEN}
-
-
-def reverse(gra: Graph[Atom, TransBond]) -> Graph[Atom, TransBond]:
-    """Reverse the direction of a transition graph."""
-    changes = bond_changes(gra)
-    changes = {
-        k: Change.FORMED if v == Change.BROKEN else Change.BROKEN
-        for k, v in changes.items()
-    }
-    return from_bond_changes(gra, changes)
-
-
-def reactants_graph(gra: Graph[Atom, TransBond]) -> Graph[Atom, Bond]:
-    """Extract the reactant graph from a transition graph."""
-    rct_gra = Graph(atom_type=Atom, bond_type=Bond)
-    rct_gra.add_nodes_from(gra.nodes(data=True))
-    rct_gra.add_edges_from(gra.edges(data=True))
-    rct_gra.remove_edges_from(formed_bonds(gra))
-    return rct_gra
-
-
-def products_graph(gra: Graph[Atom, TransBond]) -> Graph[Atom, Bond]:
-    """Extract the product graph from a transition graph."""
-    prd_gra = Graph(atom_type=Atom, bond_type=Bond)
-    prd_gra.add_nodes_from(gra.nodes(data=True))
-    prd_gra.add_edges_from(gra.edges(data=True))
-    prd_gra.remove_edges_from(broken_bonds(gra))
-    return prd_gra
 
 
 # Reaction mapping
