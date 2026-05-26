@@ -1,6 +1,6 @@
 """Transition graph submodule."""
 
-from .ccv import all_from_reactants_and_products
+from .ccv import CCV, all_from_reactants_and_products
 from .core import (
     Change,
     TransBond,
@@ -14,6 +14,7 @@ from .core import (
 )
 
 __all__ = [
+    "CCV",
     "all_from_reactants_and_products",
     "Change",
     "TransBond",

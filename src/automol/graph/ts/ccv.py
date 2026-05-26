@@ -3,7 +3,7 @@
 import itertools
 from collections import Counter, defaultdict
 from collections.abc import Iterator, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from functools import cached_property
 
 import more_itertools as mit
@@ -15,20 +15,24 @@ from ..core import (
     MolGraph,
     is_isomorphic,
     isomorphisms,
+    open_valences,
     remove_bonds,
 )
-from .core import Change, TransGraph, from_bond_changes
+from .core import (
+    Change,
+    TransGraph,
+    formed_bonds,
+    from_bond_changes,
+    reactants_graph,
+    reverse,
+)
 
 BondSymbol = tuple[str, str]
 
 
 # From
 def all_from_reactants_and_products(
-    rct_gra: MolGraph,
-    prd_gra: MolGraph,
-    *,
-    extra: int = 2,
-    isomorphs: bool = False,
+    rct_gra: MolGraph, prd_gra: MolGraph
 ) -> Iterator[TransGraph]:
     """Fewest-bonds-first constructive count vector mappings.
 
@@ -38,17 +42,13 @@ def all_from_reactants_and_products(
         Reactant graph
     prd_gra
         Product graph
-    extra
-        Maximum number of additional breakable bonds to traverse, by default 2
-    isomorphs
-        Whether to retain isomorphs (True) or filter them out (False)
 
     Yields
     ------
         Transition state graphs
     """
     ccv = CCV(rct_gra, prd_gra)
-    yield from (gra for gra, _ in ccv.filtered(extra=extra, isomorphs=isomorphs))
+    yield from (gra for gra, _ in ccv.results())
 
 
 # Reaction mapping
@@ -58,7 +58,6 @@ class CCV:
 
     reactants: MolGraph
     products: MolGraph
-    _seen_bond_changes: list[dict[BondKey, Change]] = field(default_factory=list)
 
     @cached_property
     def reactant_bond_symbols(self) -> dict[BondKey, BondSymbol]:
@@ -80,46 +79,83 @@ class CCV:
         """Extract the CCV bond count vector from the product graph."""
         return Counter(self.product_bond_symbols.values())
 
-    def filtered(
-        self, *, extra: int = 2, isomorphs: bool = False
+    def results(
+        self,
+        *,
+        extra_breaks: int = 2,
+        unique_isomorphs: bool = True,
+        unique_bond_changes: bool = True,
+        maximum_bond_score: bool = True,
     ) -> Iterator[tuple[TransGraph, dict[int, int]]]:
-        """Yield filtered CCV algorithm results.
+        """Yield CCV algorithm results, with optional filtering.
 
         Parameters
         ----------
-        extra
+        extra_breaks
             Maximum number of additional breakable bonds to traverse, by default 2
-        isomorphs
-            Whether to retain isomorphs (True) or filter them out (False)
-        bond_score
-            Whether to assign bond scores and return only the lowest-scoring result(s)
+        unique_isomorphs
+            Whether to include only the unique isomorphs
+        unique_bond_changes
+            Whether to include only results with unique bond changes
+        maximum_bond_score
+            Whether to assign bond scores and include only results with the
+            maximum score.  Higher scores use more open valences (radical sites
+            and double bonds) for bond formation.
 
         Yields
         ------
             Transition state graphs and reaction mappings
         """
-        seen_gras = []
-        for gra, mapping in self.results(extra=extra):
-            if isomorphs or not any(is_isomorphic(gra, g) for g in seen_gras):
-                seen_gras.append(gra)
-                yield gra, mapping
+        # Determine maximum bond score if filtering by bond score
+        max_score = None
+        if maximum_bond_score:
+            max_score = max(
+                bonding_score(gra)
+                for gra, _ in self.all_results(
+                    extra_breaks=extra_breaks, unique_bond_changes=True
+                )
+            )
 
-    def results(self, *, extra: int = 2) -> Iterator[tuple[TransGraph, dict[int, int]]]:
+        seen_gras = []
+        for gra, mapping in self.all_results(
+            extra_breaks=extra_breaks, unique_bond_changes=unique_bond_changes
+        ):
+            score = bonding_score(gra) if maximum_bond_score else None
+
+            # 1. Check for maximum bond score if filtering by bond score
+            if maximum_bond_score and (score != max_score):
+                continue
+
+            # 2. Check for isomorphism if removing isomorphs
+            if unique_isomorphs and any(is_isomorphic(gra, g) for g in seen_gras):
+                continue
+
+            seen_gras.append(gra)
+            yield gra, mapping
+
+    def all_results(
+        self, *, extra_breaks: int = 2, unique_bond_changes: bool = False
+    ) -> Iterator[tuple[TransGraph, dict[int, int]]]:
         """Yield all CCV algorithm results.
 
         Parameters
         ----------
-        extra
+        extra_breaks
             Maximum number of additional breakable bonds to traverse, by default 2
+        unique_bond_changes
+            Whether to include only results with unique bond changes
 
         Yields
         ------
             Transition state graphs and reaction mappings
         """
-        for num_extra in range(extra + 1):
+        seen_changes = [] if unique_bond_changes else None
+        for num_extra in range(extra_breaks + 1):
             for extra_cv in self._extra_breaking_bond_count_vectors(num_extra):
                 results = itertools.chain.from_iterable(
-                    self._distinct_transition_graphs_with_reaction_mappings(b1, b2)
+                    self._distinct_transition_graphs_with_reaction_mappings(
+                        b1, b2, seen_changes=seen_changes
+                    )
                     for b1, b2 in self._breaking_bond_patterns(extra_cv)
                 )
 
@@ -166,19 +202,26 @@ class CCV:
         )
 
     def _distinct_transition_graphs_with_reaction_mappings(
-        self, break_bonds1: Sequence[BondKey], break_bonds2: Sequence[BondKey]
+        self,
+        break_bonds1: Sequence[BondKey],
+        break_bonds2: Sequence[BondKey],
+        seen_changes: list[dict[BondKey, Change]] | None = None,
     ) -> Iterator[tuple[TransGraph, dict[int, int]]]:
         """Iterate over reverse_isomorphisms with distinct bond changes."""
         gra1 = remove_bonds(self.reactants, break_bonds1)
         gra2 = remove_bonds(self.products, break_bonds2)
         for mapping in isomorphisms(gra1, gra2):
-            bond_changes = bond_changes_from_mapping_and_break_pattern(
+            changes = bond_changes_from_mapping_and_break_pattern(
                 mapping, break_bonds1, break_bonds2
             )
-            if bond_changes not in self._seen_bond_changes:
-                self._seen_bond_changes.append(bond_changes)
-                gra = from_bond_changes(self.reactants, bond_changes)
-                yield gra, mapping
+            if seen_changes is not None:
+                if changes in seen_changes:
+                    continue
+
+                seen_changes.append(changes)
+
+            gra = from_bond_changes(self.reactants, changes)
+            yield gra, mapping
 
 
 def bond_symbols(G: Graph) -> dict[BondKey, BondSymbol]:  # noqa: N803
@@ -236,3 +279,22 @@ def bond_changes_from_mapping_and_break_pattern(
         **dict.fromkeys(break_bonds, Change.BROKEN),
         **dict.fromkeys(form_bonds, Change.FORMED),
     }
+
+
+def forward_bonding_score(gra: TransGraph) -> int:
+    """Calculate the forward bonding score for a graph.
+
+    Defined as the sum of the open valences of the atoms involved in forming
+    bonds, from the reactants side.
+    """
+    rgra = reactants_graph(gra)
+    form_keys = list(set(itertools.chain.from_iterable(formed_bonds(gra))))
+    return sum(open_valences(rgra, form_keys))
+
+
+def bonding_score(gra: TransGraph) -> int:
+    """Calculate the total bonding score for a graph.
+
+    Defined as the sum of forward and reverse bonding scores.
+    """
+    return forward_bonding_score(gra) + forward_bonding_score(reverse(gra))
