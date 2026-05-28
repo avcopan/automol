@@ -177,9 +177,19 @@ def rdkit_mol(geo: Geometry) -> Mol:
     Mol
         rdkit Mol instance.
     """
+    if geo.charge != 0:
+        msg = f"Determining bond connectivity with charges not implemented.\n{geo = }"
+        raise NotImplementedError(msg)
+
     raw_mol = Chem.MolFromXYZBlock(xyz_block(geo))
     conn_mol = Chem.Mol(raw_mol)
-    rdDetermineBonds.DetermineConnectivity(conn_mol)
+    rdDetermineBonds.DetermineBonds(conn_mol, charge=-geo.spin)
+
+    for a in conn_mol.GetAtoms():
+        charge = a.GetFormalCharge()
+        a.SetNumRadicalElectrons(abs(charge))
+        a.SetFormalCharge(0)
+
     return conn_mol
 
 
@@ -207,6 +217,24 @@ def from_rdkit_mol(mol: Mol) -> Geometry:
     )
 
 
+def smiles(geo: Geometry) -> str:
+    """
+    Provide SMILES string from Geometry.
+
+    Parameters
+    ----------
+    geo
+        Geometry object.
+
+    Returns
+    -------
+    smiles
+        SMILES formatted string.
+    """
+    mol = rdkit_mol(geo)
+    return rd.mol.smiles(mol)
+
+
 def from_smiles(smi: str) -> Geometry:
     """
     Instantiate Geometry from SMILES string.
@@ -227,7 +255,7 @@ def from_smiles(smi: str) -> Geometry:
 
 def inchi(geo: Geometry) -> str:
     """
-    Provide InChI string from Geometry.
+    Provide InChI string from Geometry through RDKit.
 
     Parameters
     ----------
@@ -236,11 +264,29 @@ def inchi(geo: Geometry) -> str:
 
     Returns
     -------
-    xyz
-        Formatted xyz block.
+    inchi
+        InChI formatted string.
     """
     mol = rdkit_mol(geo)
     return rd.mol.inchi(mol)
+
+
+def from_inchi(inchi: str) -> Geometry:
+    """
+    Instantiate Geometry from InChI string.
+
+    Parameters
+    ----------
+    smi
+        SMILES formatted string.
+
+    Returns
+    -------
+    xyz
+        Formatted xyz block.
+    """
+    mol = rd.mol.from_inchi(inchi)
+    return from_rdkit_mol(mol)
 
 
 # Properties
