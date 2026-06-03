@@ -60,7 +60,6 @@ root_package = "automol"
 name = "Module Layering"
 type = "layers"
 layers = [
-    "automol.qc",
     "automol.geom",
     "automol.rd",
     "automol.types | automol.element",

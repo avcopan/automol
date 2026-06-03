@@ -1,8 +1,9 @@
 """Molecular geometries."""
 
+import functools
 import hashlib
 import itertools
-from collections.abc import Collection, Sequence
+from collections.abc import Callable, Collection, Sequence
 from pathlib import Path
 
 import numpy as np
@@ -13,6 +14,7 @@ import scipy
 from numpy.typing import ArrayLike
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pyparsing import pyparsing_common as ppc
+from qcdata import Structure
 from rdkit import Chem
 from rdkit.Chem import Mol, rdDetermineBonds
 from scipy.spatial.transform import Rotation
@@ -20,8 +22,30 @@ from scipy.spatial.transform import Rotation
 from . import element, rd
 from .types import CoordinatesField, FloatArray
 
+try:
+    from qcdata import Structure
+
+    _HAS_QC = True
+
+except ImportError:
+    _HAS_QC = False
+
+
 RADIANS_TO_DEGREES = pint.Quantity("radian").m_as("degree")
 DEGREES_TO_RADIANS = 1 / RADIANS_TO_DEGREES
+
+
+def requires_qcdata[**P, R](func: Callable[P, R]) -> Callable[P, R]:
+    """Raise if qcdata is unavailable."""
+
+    @functools.wraps(func)
+    def _wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        if not _HAS_QC:
+            msg = f"Function '{func.__name__}' requires qcdata."  # ty:ignore[unresolved-attribute]
+            raise RuntimeError(msg)
+        return func(*args, **kwargs)
+
+    return _wrapper
 
 
 class Geometry(BaseModel):
@@ -214,6 +238,50 @@ def from_rdkit_mol(mol: Mol) -> Geometry:
         coordinates=rd.mol.coordinates(mol),
         charge=rd.mol.charge(mol),
         spin=rd.mol.spin(mol),
+    )
+
+
+@requires_qcdata
+def qc_structure(geo: Geometry) -> Structure:
+    """
+    Instantiate a qc Structure from a Geometry.
+
+    Parameters
+    ----------
+    geo
+        Geometry object.
+
+    Returns
+    -------
+    Structure
+    """
+    return Structure(
+        symbols=geo.symbols,
+        geometry=np.array(geo.coordinates) * pint.Quantity("angstrom").m_as("bohr"),
+        charge=geo.charge,
+        multiplicity=geo.spin + 1,
+    )
+
+
+@requires_qcdata
+def from_qc_structure(struc: Structure) -> Geometry:
+    """
+    Instantiate Geometry from qc Structure.
+
+    Parameters
+    ----------
+    struc
+        qc Structure.
+
+    Returns
+    -------
+    Geometry
+    """
+    return Geometry(
+        symbols=struc.symbols,
+        coordinates=struc.geometry * pint.Quantity("bohr").m_as("angstrom"),
+        charge=struc.charge,
+        spin=struc.multiplicity - 1,
     )
 
 

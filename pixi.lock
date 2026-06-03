@@ -142,7 +142,6 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/rlpycairo-0.4.0-pyh6c17108_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/stack_data-0.6.3-pyhd8ed1ab_1.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-w-1.2.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/traitlets-5.14.3-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing-extensions-4.15.0-h396c80c_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing-inspection-0.4.2-pyhcf101f3_2.conda
@@ -154,8 +153,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/4f/c8/3834050d3efe80c592aaa9a93ef8b4f8dc9a90f3f445ddad851ed5eb034a/qcdata-0.17.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/93/d7/f12f520a35d8ff5cd647d37627bcf1be98f701c4ab69b520164214ba7e77/qcconst-0.2.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/cf/22/fdc2e30d43ff853720042fa15baa3e6122722be1a7950a98233ebb55cd71/eval_type_backport-0.3.1-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/d8/aa/d95279e7a0edcea470ee3ccf964a089c7a96b0d266a0730a3504e99a7d93/qccodec-0.10.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/ee/2e/08e9874d1f6adcf103444a2e05aee7d44551864689c61c6f09fa1d4f3291/qccompute-0.13.1-py3-none-any.whl
       osx-64:
       - conda: https://conda.anaconda.org/conda-forge/noarch/annotated-types-0.7.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/asttokens-3.0.1-pyhd8ed1ab_0.conda
@@ -199,7 +196,6 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/rlpycairo-0.4.0-pyh6c17108_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/stack_data-0.6.3-pyhd8ed1ab_1.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-w-1.2.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/traitlets-5.14.3-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing-extensions-4.15.0-h396c80c_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing-inspection-0.4.2-pyhcf101f3_2.conda
@@ -290,8 +286,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/4f/c8/3834050d3efe80c592aaa9a93ef8b4f8dc9a90f3f445ddad851ed5eb034a/qcdata-0.17.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/93/d7/f12f520a35d8ff5cd647d37627bcf1be98f701c4ab69b520164214ba7e77/qcconst-0.2.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/cf/22/fdc2e30d43ff853720042fa15baa3e6122722be1a7950a98233ebb55cd71/eval_type_backport-0.3.1-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/d8/aa/d95279e7a0edcea470ee3ccf964a089c7a96b0d266a0730a3504e99a7d93/qccodec-0.10.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/ee/2e/08e9874d1f6adcf103444a2e05aee7d44551864689c61c6f09fa1d4f3291/qccompute-0.13.1-py3-none-any.whl
       osx-arm64:
       - conda: https://conda.anaconda.org/conda-forge/noarch/annotated-types-0.7.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/asttokens-3.0.1-pyhd8ed1ab_0.conda
@@ -335,7 +329,6 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/rlpycairo-0.4.0-pyh6c17108_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/six-1.17.0-pyhe01879c_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/stack_data-0.6.3-pyhd8ed1ab_1.conda
-      - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-w-1.2.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/traitlets-5.14.3-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing-extensions-4.15.0-h396c80c_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing-inspection-0.4.2-pyhcf101f3_2.conda
@@ -426,8 +419,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/4f/c8/3834050d3efe80c592aaa9a93ef8b4f8dc9a90f3f445ddad851ed5eb034a/qcdata-0.17.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/93/d7/f12f520a35d8ff5cd647d37627bcf1be98f701c4ab69b520164214ba7e77/qcconst-0.2.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/cf/22/fdc2e30d43ff853720042fa15baa3e6122722be1a7950a98233ebb55cd71/eval_type_backport-0.3.1-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/d8/aa/d95279e7a0edcea470ee3ccf964a089c7a96b0d266a0730a3504e99a7d93/qccodec-0.10.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/ee/2e/08e9874d1f6adcf103444a2e05aee7d44551864689c61c6f09fa1d4f3291/qccompute-0.13.1-py3-none-any.whl
   dev:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
@@ -708,8 +699,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/4f/c8/3834050d3efe80c592aaa9a93ef8b4f8dc9a90f3f445ddad851ed5eb034a/qcdata-0.17.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/93/d7/f12f520a35d8ff5cd647d37627bcf1be98f701c4ab69b520164214ba7e77/qcconst-0.2.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/cf/22/fdc2e30d43ff853720042fa15baa3e6122722be1a7950a98233ebb55cd71/eval_type_backport-0.3.1-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/d8/aa/d95279e7a0edcea470ee3ccf964a089c7a96b0d266a0730a3504e99a7d93/qccodec-0.10.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/ee/2e/08e9874d1f6adcf103444a2e05aee7d44551864689c61c6f09fa1d4f3291/qccompute-0.13.1-py3-none-any.whl
       osx-64:
       - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/accessible-pygments-0.0.5-pyhd8ed1ab_1.conda
@@ -974,8 +963,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/4f/c8/3834050d3efe80c592aaa9a93ef8b4f8dc9a90f3f445ddad851ed5eb034a/qcdata-0.17.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/93/d7/f12f520a35d8ff5cd647d37627bcf1be98f701c4ab69b520164214ba7e77/qcconst-0.2.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/cf/22/fdc2e30d43ff853720042fa15baa3e6122722be1a7950a98233ebb55cd71/eval_type_backport-0.3.1-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/d8/aa/d95279e7a0edcea470ee3ccf964a089c7a96b0d266a0730a3504e99a7d93/qccodec-0.10.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/ee/2e/08e9874d1f6adcf103444a2e05aee7d44551864689c61c6f09fa1d4f3291/qccompute-0.13.1-py3-none-any.whl
       osx-arm64:
       - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/accessible-pygments-0.0.5-pyhd8ed1ab_1.conda
@@ -1240,8 +1227,6 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/4f/c8/3834050d3efe80c592aaa9a93ef8b4f8dc9a90f3f445ddad851ed5eb034a/qcdata-0.17.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/93/d7/f12f520a35d8ff5cd647d37627bcf1be98f701c4ab69b520164214ba7e77/qcconst-0.2.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/cf/22/fdc2e30d43ff853720042fa15baa3e6122722be1a7950a98233ebb55cd71/eval_type_backport-0.3.1-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/d8/aa/d95279e7a0edcea470ee3ccf964a089c7a96b0d266a0730a3504e99a7d93/qccodec-0.10.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/ee/2e/08e9874d1f6adcf103444a2e05aee7d44551864689c61c6f09fa1d4f3291/qccompute-0.13.1-py3-none-any.whl
 packages:
 - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
   build_number: 20
@@ -8201,28 +8186,3 @@ packages:
   requires_dist:
   - pytest ; extra == 'tests'
   requires_python: '>=3.7'
-- pypi: https://files.pythonhosted.org/packages/d8/aa/d95279e7a0edcea470ee3ccf964a089c7a96b0d266a0730a3504e99a7d93/qccodec-0.10.0-py3-none-any.whl
-  name: qccodec
-  version: 0.10.0
-  sha256: ab2e0bf8bbc779b0ce027d6b8fa9ccc269bcd037c6f49b47d38c21fedd4415e4
-  requires_dist:
-  - qcconst>=0.2.1
-  - qcdata>=0.17.0
-  - tomli-w>=1.0.0
-  requires_python: '>=3.10'
-- pypi: https://files.pythonhosted.org/packages/ee/2e/08e9874d1f6adcf103444a2e05aee7d44551864689c61c6f09fa1d4f3291/qccompute-0.13.1-py3-none-any.whl
-  name: qccompute
-  version: 0.13.1
-  sha256: e4ec3cb093743f6626804189f645731a25c0593c0c2866d6fb848a1f950663ed
-  requires_dist:
-  - qccodec>=0.10.0
-  - qcdata>=0.17.0
-  - tomli-w>=1.0.0,<2
-  - geometric>=1.0.1,<2 ; extra == 'all'
-  - qcelemental>=0.26.0,<0.27 ; extra == 'all'
-  - qcengine>=0.27.0,<0.28 ; extra == 'all'
-  - tcpb>=0.16.0 ; extra == 'all'
-  - geometric>=1.0.1,<2 ; extra == 'geometric'
-  - qcelemental>=0.26.0,<0.27 ; extra == 'qcengine'
-  - qcengine>=0.27.0,<0.28 ; extra == 'qcengine'
-  requires_python: '>=3.10'
