@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+
+## [0.0.13] - 2026-06-03
 - Implemented Identity class with boilerplate for handling conversions between Geometry and chemical identifiers such as InChI / SMILES.
 - Converted qcdata to an optional dependency with conversion methods placed in geom.py.
 - Implemented a decorator for optional qc data dependency.
