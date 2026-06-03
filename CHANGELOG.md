@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+- Implemented Identity class with boilerplate for handling conversions between Geometry and chemical identifiers such as InChI / SMILES.
+- Converted qcdata to an optional dependency with conversion methods placed in geom.py.
+- Implemented a decorator for optional qc data dependency.
+- Dropped qccompute from pixi.toml pypi-dependency list.
 
 ## [0.0.12] - 2026-05-20
 - geom.is_similar() checks InChI first, no longer considers moment of inertia deviation, and ensures that geometry symbols are identically ordered between geo1 and geo2 (kabsch implentation is order dependent).

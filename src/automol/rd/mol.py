@@ -91,7 +91,7 @@ def smiles(mol: Mol) -> str:
     -------
         SMILES
     """
-    return Chem.MolToSmiles(mol)
+    return Chem.MolToSmiles(Chem.RemoveHs(mol))
 
 
 def inchi(mol: Mol) -> str:
