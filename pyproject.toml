@@ -7,7 +7,7 @@ authors = [
 ]
 requires-python = ">= 3.12"
 dependencies = [
-    "automatics==0.0.1",
+    "automatics==0.0.4",
     "more-itertools>=10.0",
     "networkx>=3.3",
     "numpy>=2.0",

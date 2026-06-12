@@ -5,7 +5,7 @@ preview = ["pixi-build"]
 
 [dependencies]
 automol = { path = "." }
-automatics = "==0.0.1" # local:false
+automatics = "==0.0.4" # local:false
 # automatics = { path = "../automatics" } # local:true
 
 [package]

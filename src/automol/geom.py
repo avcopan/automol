@@ -7,7 +7,7 @@ import numpy as np
 import pint
 import scipy
 from automatics import Geometry, Identity, element
-from automatics.types import FloatArray
+from automatics.utils.types import FloatArray
 from numpy.typing import ArrayLike
 from scipy.spatial.transform import Rotation
 

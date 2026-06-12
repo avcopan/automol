@@ -13,7 +13,7 @@ def water() -> Geometry:
     """Water geometry fixture."""
     return Geometry(
         symbols=["O", "H", "H"],
-        coordinates=[[0, 0, 0], [1, 0, 0], [0, 1, 0]],
+        coordinates=[[0, 0, 0], [1, 0, 0], [0, 1, 0]],  # ty:ignore[invalid-argument-type]
         charge=0,
         spin=0,
     )
@@ -24,7 +24,7 @@ def peroxide() -> Geometry:
     """Peroxide geometry fixture."""
     return Geometry(
         symbols=["H", "O", "O", "H"],
-        coordinates=[[0, 0, 1], [0, 0, 0], [0, 1, 0], [1, 1, 0]],
+        coordinates=[[0, 0, 1], [0, 0, 0], [0, 1, 0], [1, 1, 0]],  # ty:ignore[invalid-argument-type]
         charge=0,
         spin=0,
     )
@@ -79,9 +79,12 @@ def test__to_eckart_frame(water: Geometry) -> None:
 def test__concat(water: Geometry) -> None:
     """Test geometry concatenation."""
     geo1 = Geometry(
-        symbols=["O", "H"], coordinates=[[0, 0, 0], [1, 0, 0]], charge=0, spin=0
+        symbols=["O", "H"],
+        coordinates=[[0, 0, 0], [1, 0, 0]],  # ty:ignore[invalid-argument-type]
+        charge=0,
+        spin=0,
     )
-    geo2 = Geometry(symbols=["H"], coordinates=[[0, 1, 0]], charge=0, spin=0)
+    geo2 = Geometry(symbols=["H"], coordinates=[[0, 1, 0]], charge=0, spin=0)  # ty:ignore[invalid-argument-type]
 
     concat_geo = geom.concat([geo1, geo2])
     assert water.symbols == concat_geo.symbols
