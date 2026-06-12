@@ -1,9 +1,13 @@
 [project]
 name = "automol"
 version = "0.0.13"
-authors = [{name = "Andreas V. Copan", email = "avcopan@uga.edu"}]
+authors = [
+    {name = "Andreas V. Copan", email = "avcopan@uga.edu"},
+    {name = "Troy N. Smith", email = "troy.smith@uga.edu"}
+]
 requires-python = ">= 3.12"
 dependencies = [
+    "automatics==0.0.4",
     "more-itertools>=10.0",
     "networkx>=3.3",
     "numpy>=2.0",
@@ -60,9 +64,7 @@ root_package = "automol"
 name = "Module Layering"
 type = "layers"
 layers = [
-    "automol.geom",
-    "automol.rd",
-    "automol.types | automol.element",
+    "automol.geom | automol.graph",
 ]
 
 # Pytest configurations

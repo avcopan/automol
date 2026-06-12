@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+### Added
+- Dependency on automatics (0.0.4).
+
+### Changed
+- Update tests to reflect refactors.
+
+### Removed
+- Geometry, Identity, and View relocated to automatics for consistent source of truth in autosuite.
+- Miscellaneous utility scripts pertaining to Geometry, Identity, and View.
+
 
 ## [0.0.13] - 2026-06-03
 - Implemented Identity class with boilerplate for handling conversions between Geometry and chemical identifiers such as InChI / SMILES.
