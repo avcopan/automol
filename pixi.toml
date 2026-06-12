@@ -10,7 +10,7 @@ automatics = "==0.0.4" # local:false
 
 [package]
 name = "automol"
-version = "0.0.13"
+version = "0.0.14"
 
 [package.build]
 backend = { name = "pixi-build-python", version = "*" }
