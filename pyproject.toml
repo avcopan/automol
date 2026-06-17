@@ -7,7 +7,7 @@ authors = [
 ]
 requires-python = ">= 3.12"
 dependencies = [
-    "automatics==0.0.4",
+    "automatics==0.0.5",
     "more-itertools>=10.0",
     "networkx>=3.3",
     "numpy>=2.0",
@@ -64,6 +64,7 @@ root_package = "automol"
 name = "Module Layering"
 type = "layers"
 layers = [
+    "automol.geoms",
     "automol.geom | automol.graph",
 ]
 
