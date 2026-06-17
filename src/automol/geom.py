@@ -4,15 +4,13 @@ import itertools
 from collections.abc import Collection, Sequence
 
 import numpy as np
-import pint
-import scipy
-from automatics import Geometry, Identity, element
+import numpy.typing as npt
+from automatics import Geometry, element
+from automatics.utils import constants
 from automatics.utils.types import FloatArray
 from numpy.typing import ArrayLike
+from scipy import spatial
 from scipy.spatial.transform import Rotation
-
-RADIANS_TO_DEGREES = pint.Quantity("radian").m_as("degree")
-DEGREES_TO_RADIANS = 1 / RADIANS_TO_DEGREES
 
 
 def center_of_mass(geo: Geometry) -> FloatArray:
@@ -46,7 +44,7 @@ def distance_matrix(geo: Geometry) -> FloatArray:
     FloatArray
         Distance matrix of geometry.
     """
-    return scipy.spatial.distance_matrix(geo.coordinates, geo.coordinates)
+    return spatial.distance_matrix(geo.coordinates, geo.coordinates)
 
 
 def dihedral_angle(
@@ -79,17 +77,6 @@ def dihedral_angle(
     r34 = r4 - r3
     n123 = np.cross(r12, r23)
 
-    # Form coordinate system with x upward in plane, y along plane normal, and z
-    # away along central bond:
-    #
-    #     x
-    #     ^
-    #     1
-    #     |
-    #     2/3   > y
-    #      \
-    #       4
-    #
     z = r23 / np.linalg.norm(r23)
     y = n123 / np.linalg.norm(n123)
     x = np.cross(y, z)
@@ -99,7 +86,7 @@ def dihedral_angle(
     vx = np.dot(v, x)
     vy = np.dot(v, y)
     angle = np.arctan2(vy, vx)
-    return angle * RADIANS_TO_DEGREES if degrees else angle
+    return angle * constants.RADIANS_TO_DEGREES if degrees else angle
 
 
 def inertia_tensor(geo: Geometry) -> FloatArray:
@@ -170,6 +157,21 @@ def rotation_to_inertia_axes(geo: Geometry) -> Rotation:
     return Rotation.from_matrix(evecs.T)
 
 
+def mass_weight_vector(geo: Geometry) -> np.ndarray:
+    """Get the mass-weighting vector of a geometry.
+
+    Parameters
+    ----------
+    geo
+        Instance of a Geometry
+
+    Returns
+    -------
+    mass-weighting vector
+    """
+    return np.sqrt(np.repeat(geo.masses, 3))
+
+
 def rotational_analysis(geo: Geometry) -> tuple[FloatArray, FloatArray]:
     """Calculate rotational analysis of a geometry.
 
@@ -177,8 +179,6 @@ def rotational_analysis(geo: Geometry) -> tuple[FloatArray, FloatArray]:
     ----------
     geo
         Geometry.
-    drop_null
-        Whether to drop null eigenvalues.
 
     Returns
     -------
@@ -192,115 +192,129 @@ def rotational_analysis(geo: Geometry) -> tuple[FloatArray, FloatArray]:
     return evals, evecs
 
 
-# Comparison
-def kabsch(
-    geo1: Geometry, geo2: Geometry, *, heavy_only: bool = False
-) -> tuple[FloatArray, FloatArray, float]:
-    """
-    Compute the optimal rotation / translation to align two Geometries and their RMSD.
-
-    For more information on the numerical method, see https://hunterheidenreich.com/posts/kabsch-algorithm/
+def translational_normal_modes(
+    geo: Geometry, *, mass_weighted: bool = True
+) -> np.ndarray:
+    """Calculate translational normal modes of a geometry.
 
     Parameters
     ----------
-    geo1
-        Geometry object.
-    geo2
-        Geometry object.
-    heavy_only
-        If True, only consider heavy atoms.
-
-    Returns
-    -------
-    FloatArray
-        Optimal rotation of geo2 onto geo1
-    FloatArray
-        Optimal translation of geo2 onto geo1
-    float
-        RMSD
+    geo
+        Instance of a Geometry
+    mass_weighted
+        If True, return mass-weighted normal modes.
     """
-    p = np.array(geo1.coordinates)
-    q = np.array(geo2.coordinates)
-    p_masses = geo1.masses
-    q_masses = geo2.masses
+    trans_coos = np.tile(np.eye(3), (geo.atom_count, 1))
 
-    if heavy_only:
-        mask_p = np.array([s != "H" for s in geo1.symbols])
-        mask_q = np.array([s != "H" for s in geo2.symbols])
-        # Contrapositive of "If no heavy atoms exist (e.g., H2, H), skip masking"
-        if np.any(mask_p):
-            p, q = p[mask_p], q[mask_q]
+    if mass_weighted:
+        trans_coos *= np.sqrt(mass_weight_vector(geo))[:, np.newaxis]
 
-            p_masses = np.asanyarray(p_masses)
-            q_masses = np.asanyarray(q_masses)
-
-            p_masses, q_masses = p_masses[mask_p], q_masses[mask_q]
-
-    if p.shape != q.shape:
-        msg = f"""
-        Input arrays must have same number of dimensions.\n
-        {p.shape = }\n
-        {q.shape = }\n
-        """
-        raise ValueError(msg)
-
-    # --- Optimal translation -------------------
-    centroid_p = center_of_mass(geo1)
-    centroid_q = center_of_mass(geo2)
-    t = centroid_p - centroid_q  # Optimal translation
-    # Center the coordinates
-    p = p - centroid_p
-    q = q - centroid_q
-
-    # --- Optimal rotation ----------------------
-    H = np.dot(p.T, q)  # Covariance matrix  # noqa: N806
-    U, _, Vt = np.linalg.svd(H)  # noqa: N806
-
-    if np.linalg.det(np.dot(Vt.T, U.T)) < 0.0:  # Validate right-handed coordinates
-        Vt[-1, :] *= -1.0
-
-    R = np.dot(Vt.T, U.T)  # Optimal rotation  # noqa: N806
-
-    # --- RMSD ----------------------------------
-    rmsd = np.sqrt(np.sum(np.square(np.dot(p, R.T) - q)) / p.shape[0])
-
-    return R, t, rmsd
+    return trans_coos
 
 
-def is_similar(geo1: Geometry, geo2: Geometry) -> bool:
-    """
-    Determine whether two geometries are similar.
+def rotational_normal_modes(geo: Geometry, *, mass_weighted: bool = True) -> np.ndarray:
+    """Calculate rotational normal modes of a geometry.
 
     Parameters
     ----------
-    geo1
-        Geometry object.
-    geo2
-        Geometry object.
+    geo
+        Instance of a Geometry
+    mass_weighted
+        If True, return mass-weighted normal modes.
+    """
+    _, rot_axes = rotational_analysis(geo)
+    coords = (geo.coordinates - center_of_mass(geo)) * constants.ANGSTROM_TO_BOHR
+    rot_coos = [
+        np.concatenate([np.cross(xyz, rot_axis) for xyz in coords])
+        for rot_axis in rot_axes
+    ]
+    rot_coos = np.transpose(rot_coos)
+
+    if mass_weighted:
+        rot_coos *= np.sqrt(mass_weight_vector(geo))[:, np.newaxis]
+
+    return rot_coos
+
+
+def normal_mode_projection(
+    geo: Geometry, *, trans: bool = False, rot: bool = False
+) -> np.ndarray:
+    """Get the matrix for projecting onto a subset of normal modes.
+
+    Parameters
+    ----------
+    geo
+        Instance of a Geometry.
+    trans
+        If True, keep translational modes.
+    rot
+        If True, keep rotational modes.
+    """
+    coos = []
+    if not trans:
+        coos.append(translational_normal_modes(geo, mass_weighted=True))
+
+    if not rot:
+        coos.append(rotational_normal_modes(geo, mass_weighted=True))
+
+    if not coos:
+        return np.eye(geo.atom_count * 3)
+
+    coos = np.hstack(coos)
+    dim = np.shape(coos)[-1]
+    coo_basis, *_ = np.linalg.svd(coos, full_matrices=True)
+
+    return coo_basis[:, dim:]
+
+
+def vibrational_analysis(
+    geo: Geometry, hess: list[list[float]], *, trans: bool = False, rot: bool = False
+) -> tuple[tuple[float, ...], npt.NDArray]:
+    """Calculate frequencies and vibrational modes from a Hessian matrix.
+
+    Parameters
+    ----------
+    geo
+        Instance of a Geometry
+    hess
+        `(3N, 3N)` array of hessian values.
+    trans
+        If True, keep translational modes.
+    rot
+        If True, keep rotational modes.
 
     Returns
     -------
-    bool
-        Whether the two geometries are similar.
+    frequencies
+        Vibrational frequencies.
+    modes
+        Vibrational modes.
+
+    Raises
+    ------
+    ValueError
+        `Hessian shape is not (3N, 3N)`.
     """
-    # --- Geometry Hash ---
-    if geo1.hash == geo2.hash:
-        return True
-
-    # --- InChI    ---
-    inchi1 = Identity.from_geometry(geo1, algorithm="rdkit inchi")
-    inchi2 = Identity.from_geometry(geo1, algorithm="rdkit inchi")
-
-    if inchi1.value != inchi2.value:
-        return False
-
-    # --- Heavy Atom RMSD ---
-    if geo1.symbols != geo2.symbols:
-        msg = "Atomic symbols do not map onto each other. RMSD cannot be computed."
+    exp_dim = 3 * geo.atom_count
+    if len(hess) != exp_dim or len(hess[0]) != exp_dim:
+        msg = f"Hessian shape ({len(hess)}, {len(hess[0])}) is not (3N, 3N)."
         raise ValueError(msg)
 
-    msg = "Not implemented until canonical ordering is established."
-    raise NotImplementedError(msg)
+    masses = mass_weight_vector(geo)
+    hess_mw = hess / np.outer(masses, masses)
+
+    proj = normal_mode_projection(geo, trans=trans, rot=rot)
+    hess_proj = proj.T @ hess_mw @ proj
+
+    evals, evecs = np.linalg.eigh(hess_proj)
+
+    norm_coos = np.dot(proj, evecs) / masses[:, np.newaxis]
+    norm_coos /= np.linalg.norm(norm_coos, axis=0)
+
+    freqs = np.sqrt(np.complex128(evals)) * constants.AU_TO_INV_CM
+    freqs = tuple(map(float, np.real(freqs) - np.imag(freqs)))
+
+    return freqs, norm_coos
 
 
 # Transformation

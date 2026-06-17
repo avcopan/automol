@@ -95,3 +95,15 @@ def test__adjacency_matrix(water: Geometry) -> None:
     """Test adjacency matrix."""
     amat = geom.adjacency_matrix(geo=water)
     assert np.array_equal(amat, [[0, 1, 1], [1, 0, 0], [1, 0, 0]])
+
+
+def test__vibrational_analysis(
+    propyl_oxirane: Geometry,
+    propyl_oxirane_hessian: list[list[float]],
+    orca_frequencies_propyl_oxirane: list[float],
+) -> None:
+    """Test vibrational analysis."""
+    freqs, _ = geom.vibrational_analysis(propyl_oxirane, propyl_oxirane_hessian)
+
+    assert len(freqs) == len(orca_frequencies_propyl_oxirane[6:])
+    assert np.allclose(freqs, orca_frequencies_propyl_oxirane[6:], rtol=0.05)
