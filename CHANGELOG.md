@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+### Added
+- `geom.vibrational_analysis()` and corresponding functions to calculate frequencies from a `Geometry` and its Hessian.
+
+### Changed
+- Unit conversions import from `automatics`.
+- `kabsch()` and `is_similar()` relocated from `geom` to `geoms`.
+
+### Fixed
+- Bump `automatics` to v0.0.5.
+- Layering to incorporate new `geoms` module.
+
+### Removed
+- Minor comments in src files.
 
 ## [0.0.14] - 2026-06-12
 ### Added
