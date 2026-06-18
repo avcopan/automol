@@ -1,1 +1,1 @@
-"""Tests for the pixi_example package."""
+"""Tests for the automol package."""

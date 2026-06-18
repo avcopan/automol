@@ -1,11 +1,15 @@
 """Geometry tests."""
 
+from pathlib import Path
+
 import numpy as np
 import pytest
 from automatics import Geometry
 from scipy.spatial.transform import Rotation
 
 from automol import geom
+
+DATA_DIR = Path(__file__).parent / "data"
 
 
 @pytest.fixture
@@ -28,6 +32,24 @@ def peroxide() -> Geometry:
         charge=0,
         spin=0,
     )
+
+
+@pytest.fixture
+def propyl_oxirane() -> Geometry:
+    """Propyl oxirane geometry fixture."""
+    return Geometry.from_xyz_file(DATA_DIR / "propyl_oxirane.xyz", charge=0, spin=1)
+
+
+@pytest.fixture
+def propyl_oxirane_hessian() -> list[list[float]]:
+    """Propyl oxirane Hessian fixture."""
+    return np.loadtxt(DATA_DIR / "propyl_oxirane_hessian.gz").tolist()
+
+
+@pytest.fixture
+def orca_frequencies_propyl_oxirane() -> list[float]:
+    """Fixture for orca freqencies of propyl oxirane test data."""
+    return np.loadtxt(DATA_DIR / "propyl_oxirane_frequencies.gz").tolist()
 
 
 def test__center_of_mass(water: Geometry) -> None:
