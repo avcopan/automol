@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+### Added
+- `automatics.geom` module exports within `automol.geom` to avoid namespace clash.
+- `harmonic_zpv` (harmonic zero point vibrational energy) method.
+- `xyzrender` as a developer / optional dependency.
+
+### Changed
+- Propyl oxirane test fixtures to read objects from data files.
+- Bump `automatics` to v0.0.6.
 
 ## [0.0.15] - 2026-06-17
 ### Added
