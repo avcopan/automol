@@ -15,9 +15,9 @@ from .core import (
 
 __all__ = [
     "CCV",
-    "all_from_reactants_and_products",
     "Change",
     "TransBond",
+    "all_from_reactants_and_products",
     "bond_changes",
     "broken_bonds",
     "formed_bonds",

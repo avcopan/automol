@@ -22,7 +22,6 @@ from .core import (
 )
 
 __all__ = [
-    "ts",
     "Atom",
     "Bond",
     "Graph",
@@ -40,4 +39,5 @@ __all__ = [
     "rdkit_mol",
     "remove_bonds",
     "symbols",
+    "ts",
 ]

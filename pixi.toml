@@ -5,7 +5,7 @@ preview = ["pixi-build"]
 
 [dependencies]
 automol = { path = "." }
-automatics = "==0.0.5" # local:false
+automatics = "==0.0.6" # local:false
 # automatics = { path = "../automatics" } # local:true
 
 [package]
@@ -37,6 +37,7 @@ mendeleev = "*"
 
 [feature.dev.pypi-dependencies]
 keepachangelog = "*"
+xyzrender = ">=0.3.1, <0.4"
 
 [feature.docs.dependencies]
 sphinx = "*"

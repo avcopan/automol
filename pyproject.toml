@@ -7,7 +7,7 @@ authors = [
 ]
 requires-python = ">= 3.12"
 dependencies = [
-    "automatics==0.0.5",
+    "automatics==0.0.6",
     "more-itertools>=10.0",
     "networkx>=3.3",
     "numpy>=2.0",
@@ -34,7 +34,6 @@ exclude = [
 select = ["ALL"]
 ignore = [
     "COM812",   # missing trailing comma (handled by format)
-    "RUF022",   # `__all__` is not sorted
     "TID252",   # relative import
     "D203",     # confict: incorrect blank line before class (uses D211 instead)
     "D213",     # conflict: multi-line summary second line (uses D212 instead)

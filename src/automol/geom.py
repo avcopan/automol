@@ -6,11 +6,62 @@ from collections.abc import Collection, Sequence
 import numpy as np
 import numpy.typing as npt
 from automatics import Geometry, element
+from automatics.geom import (
+    from_qc_structure,
+    from_rdkit_mol,
+    from_xyz_block,
+    from_xyz_file,
+    geometry_hash,
+    qc_structure,
+    rdkit_mol,
+    render_gif,
+    render_svg,
+    view,
+    xyz_block,
+    xyz_file,
+)
 from automatics.utils import constants
 from automatics.utils.types import FloatArray
 from numpy.typing import ArrayLike
 from scipy import spatial
 from scipy.spatial.transform import Rotation
+
+__all__ = [
+    "Geometry",
+    "adjacency_matrix",
+    "center_of_mass",
+    "concat",
+    "dihedral_angle",
+    "distance_matrix",
+    "from_qc_structure",
+    "from_rdkit_mol",
+    "from_xyz_block",
+    "from_xyz_file",
+    "geometry_hash",
+    "harmonic_zpv",
+    "inertia_axes",
+    "inertia_moments",
+    "inertia_tensor",
+    "mass_weight_vector",
+    "normal_mode_projection",
+    "qc_structure",
+    "rdkit_mol",
+    "reflect",
+    "render_gif",
+    "render_svg",
+    "rotate",
+    "rotation_to_inertia_axes",
+    "rotational_analysis",
+    "rotational_normal_modes",
+    "set_distance",
+    "to_eckart_frame",
+    "translate",
+    "translational_normal_modes",
+    "vibrational_analysis",
+    "view",
+    "xyz_block",
+    "xyz_file",
+]
 
 
 def center_of_mass(geo: Geometry) -> FloatArray:
@@ -311,10 +362,24 @@ def vibrational_analysis(
     norm_coos = np.dot(proj, evecs) / masses[:, np.newaxis]
     norm_coos /= np.linalg.norm(norm_coos, axis=0)
 
-    freqs = np.sqrt(np.complex128(evals)) * constants.AU_TO_INV_CM
+    freqs = (
+        np.sqrt(np.complex128(evals)) * constants.VIBRATIONAL_FORCE_TO_INV_CM_FREQUENCY
+    )
     freqs = tuple(map(float, np.real(freqs) - np.imag(freqs)))
 
     return freqs, norm_coos
+
+
+def harmonic_zpv(
+    geo: Geometry, hess: list[list[float]], *, freqs: tuple[float, ...] | None = None
+) -> float:
+    """Calculate the harmonic zero point vibrational energy of a geometry."""
+    if freqs is None:
+        freqs, _ = vibrational_analysis(geo, hess)
+
+    zpe_wavenumbers = 0.5 * sum([f for f in freqs if f > 0.0])
+
+    return zpe_wavenumbers * constants.WAVENUMBER_TO_HARTREE
 
 
 # Transformation
