@@ -93,92 +93,23 @@ class Geometry(BaseModel):
         """Get numbers of valence electrons."""
         return list(map(element.valence, self.symbols))
 
-    def xyz_block(self, comment: str | None = None) -> str:
-        """Return Geometry as a formatted xyz block."""
-        lines = [f"{len(self.symbols)}", comment or ""]
-        for sym, (x, y, z) in zip(self.symbols, self.coordinates, strict=True):
-            lines.append(f"{sym:<4} {x:12.8f} {y:12.8f} {z:12.8f}")
-
-        return "\n".join(lines)
+    def xyz_block(self, *, comment: str | None = None) -> str:
+        """Return Geometry as a formatted xyz block with optional comment."""
+        return xyz_block(self, comment=comment)
 
     @classmethod
-    def from_xyz_block(
-        cls, xyz_block: str, *, charge: int | None = None, spin: int | None = None
-    ) -> Self:
+    def from_xyz_block(cls, xyz_block: str, *, charge: int, spin: int) -> "Geometry":
         """Instantiate Geometry from a formatted xyz block."""
-        lines = xyz_block.strip().splitlines()[2:]
+        return from_xyz_block(xyz_block, charge=charge, spin=spin)
 
-        if not lines:
-            msg = "The provided xyz block is empty."
-            raise XYZFormatError(msg)
-
-        symbs, coords = zip(
-            *[XYZ_LINE.parse_string(line).as_list() for line in lines], strict=True
-        )
-
-        return cls(
-            symbols=list(symbs), coordinates=np.array(coords), charge=charge, spin=spin
-        )
-
-    def rdkit_mol(self) -> Mol:
-        """Instantiate an rdkit Mol from a Geometry."""
-        if self.charge != 0:
-            msg = "Determining bond connectivity with charges not implemented."
-            raise GeometryConversionError(msg)
-
-        if self.spin is None:
-            msg = (
-                "Cannot determine bond connectivity without an assigned value for spin."
-            )
-            raise GeometryConversionError(msg)
-
-        raw_mol = Chem.MolFromXYZBlock(xyzBlock=self.xyz_block())
-        conn_mol = Chem.Mol(raw_mol)
-        rdDetermineBonds.DetermineBonds(
-            conn_mol, useHueckel=True, charge=-self.spin, allowChargedFragments=False
-        )
-
-        for a in conn_mol.GetAtoms():
-            charge = a.GetFormalCharge()
-            a.SetNumRadicalElectrons(abs(charge))
-            a.SetFormalCharge(0)
-
-        return conn_mol
+    def xyz_file(self, *, path: str | Path, comment: str | None = None) -> None:
+        """Write Geometry as a formatted xyz file with optional comment."""
+        xyz_file(self, path=path, comment=comment)
 
     @classmethod
-    def from_rdkit_mol(cls, mol: Mol) -> Self:
-        """
-        Instantiate a Geometry from an rdkit molecule.
-
-        Parameters
-        ----------
-        mol
-            `rdkit.Chem.Mol` instance
-
-        Returns
-        -------
-            `Geometry` instance.
-        """
-        if not rd.mol.has_coordinates(mol):
-            mol = rd.mol.add_coordinates(mol)
-
-        return cls(
-            symbols=rd.mol.symbols(mol),
-            coordinates=rd.mol.coordinates(mol),
-            charge=rd.mol.charge(mol),
-            spin=rd.mol.spin(mol),
-        )
-
-    def xyz_file(self, path: str | Path) -> None:
-        """Write Geometry to a formatted xyz file."""
-        Path(path).write_text(self.xyz_block())
-
-    @classmethod
-    def from_xyz_file(
-        cls, path: str | Path, *, charge: int | None = None, spin: int | None = None
-    ) -> Self:
+    def from_xyz_file(cls, path: str | Path, *, charge: int, spin: int) -> "Geometry":
         """Instantiate Geometry from a formatted xyz file."""
-        return cls.from_xyz_block(Path(path).read_text(), charge=charge, spin=spin)
+        return from_xyz_file(path, charge=charge, spin=spin)
 
     @model_validator(mode="after")
     def populate_hash(self) -> Self:
@@ -189,6 +120,103 @@ class Geometry(BaseModel):
                 self.hash = geometry_hash(self, decimals=6)
                 self.model_fields_set.add("hash")
         return self
+
+
+def xyz_block(geo: Geometry, *, comment: str | None = None) -> str:
+    """Return Geometry as a formatted xyz block with optional comment."""
+    lines = [str(geo.atom_count), comment or ""]
+    for sym, (x, y, z) in zip(geo.symbols, geo.coordinates, strict=True):
+        lines.append(f"{sym:<4} {x:12.8f} {y:12.8f} {z:12.8f}")
+
+    return "\n".join(lines)
+
+
+def from_xyz_block(xyz_block: str, *, charge: int, spin: int) -> Geometry:
+    """Instantiate Geometry from a formatted xyz block."""
+    lines = xyz_block.strip().splitlines()[2:]
+
+    if not lines:
+        msg = "The provided xyz block is empty."
+        raise XYZFormatError(msg)
+
+    symbs, coords = zip(
+        *[XYZ_LINE.parse_string(line).as_list() for line in lines], strict=True
+    )
+
+    return Geometry(
+        symbols=list(symbs), coordinates=np.array(coords), charge=charge, spin=spin
+    )
+
+
+def xyz_file(geo: Geometry, *, path: str | Path, comment: str | None = None) -> None:
+    """Write a Geometry to a formatted xyz file with optional comment."""
+    Path(path).write_text(xyz_block(geo, comment=comment))
+
+
+def from_xyz_file(path: str | Path, *, charge: int, spin: int) -> Geometry:
+    """Instantiate Geometry from a formatted xyz file."""
+    return from_xyz_block(Path(path).read_text(), charge=charge, spin=spin)
+
+
+def rdkit_mol(geo: Geometry) -> Mol:
+    """Instantiate an rdkit Mol from a Geometry."""
+    if geo.spin is None:
+        msg = "Cannot determine bond connectivity without an assigned spin."
+        raise GeometryConversionError(msg)
+
+    if geo.charge is None:
+        msg = "Cannot determine bond connectivity without an assigned charge."
+        raise GeometryConversionError(msg)
+
+    raw_mol = Chem.MolFromXYZBlock(xyzBlock=xyz_block(geo))
+    conn_mol = Chem.Mol(raw_mol)
+
+    # Determine connectivity (graph) only -- independent of charge/spin.
+    rdDetermineBonds.DetermineConnectivity(conn_mol, useHueckel=True)
+
+    # Try the true charge first; some radicals still resolve
+    # if RDKit leaves deficiencies as implicit-Hs.
+    last_err: Exception | None = None
+    for trial_charge in (
+        geo.charge,
+        geo.charge - geo.spin,
+        geo.charge + geo.spin,
+    ):
+        trial_mol = Chem.Mol(conn_mol)
+        try:
+            rdDetermineBonds.DetermineBondOrders(
+                trial_mol, charge=trial_charge, allowChargedFragments=True
+            )
+        except ValueError as err:
+            last_err = err
+            continue
+
+        n_placed = 0
+        for a in trial_mol.GetAtoms():
+            charge = a.GetFormalCharge()
+            if charge != 0:
+                a.SetNumRadicalElectrons(abs(charge))
+                a.SetFormalCharge(0)
+                n_placed += abs(charge)
+
+        if n_placed == geo.spin:
+            return trial_mol
+
+    msg = f"Could not determine bond orders with {geo.charge = }, {geo.spin = }."
+    raise GeometryConversionError(msg) from last_err
+
+
+def from_rdkit_mol(mol: Mol) -> Geometry:
+    """Instantiate a Geometry from an rdkit molecule."""
+    if not rd.mol.has_coordinates(mol):
+        mol = rd.mol.add_coordinates(mol)
+
+    return Geometry(
+        symbols=rd.mol.symbols(mol),
+        coordinates=rd.mol.coordinates(mol),
+        charge=rd.mol.charge(mol),
+        spin=rd.mol.spin(mol),
+    )
 
 
 # Properties
@@ -288,7 +316,7 @@ def render_svg(
     out = Path(out).with_suffix(".svg") if out else out
 
     tmp_file = Path.cwd() / ".tmp.xyz"
-    geo.xyz_file(tmp_file)
+    xyz_file(geo, path=tmp_file)
     mol = xyzrender.load(tmp_file)
 
     tmp_file.unlink()
@@ -327,7 +355,7 @@ def render_gif(
     out = Path(out).with_suffix(".gif") if out else out
 
     tmp_file = Path.cwd() / ".tmp.xyz"
-    geo.xyz_file(tmp_file)
+    xyz_file(geo, path=tmp_file)
     mol = xyzrender.load(tmp_file)
 
     tmp_file.unlink()

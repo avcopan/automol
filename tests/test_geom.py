@@ -80,8 +80,8 @@ def test__deterministic_hash(water: Geometry) -> None:
 
 def test__rdkit_roundtrip(water: Geometry) -> None:
     """Test Geometry to mol roundtrip."""
-    mol = water.rdkit_mol()
-    geo_rt = Geometry.from_rdkit_mol(mol)
+    mol = geom.rdkit_mol(water)
+    geo_rt = geom.from_rdkit_mol(mol)
 
     assert water.hash == geo_rt.hash
 
@@ -89,7 +89,7 @@ def test__rdkit_roundtrip(water: Geometry) -> None:
 def test__xyz_roundtrip(water: Geometry) -> None:
     """Test Geometry to xyz string roundtrip."""
     xyz = water.xyz_block()
-    geo_rt = Geometry.from_xyz_block(xyz)
+    geo_rt = geom.from_xyz_block(xyz, charge=0, spin=0)
 
     assert water.symbols == geo_rt.symbols
     assert np.allclose(water.coordinates, geo_rt.coordinates)
