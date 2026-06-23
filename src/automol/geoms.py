@@ -1,10 +1,12 @@
 """analyze geometries."""
 
 import numpy as np
-from automatics import Geometry, Identity
-from automatics.utils.types import FloatArray
+
+from automol.utils.types import FloatArray
 
 from . import geom
+from .geom import Geometry
+from .ident import Identity
 
 
 # Comparison

@@ -4,10 +4,10 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from automatics import Geometry
 from scipy.spatial.transform import Rotation
 
-from automol import geom
+from automol import Geometry, geom
+from automol.utils.exc import HashGenerationError
 
 DATA_DIR = Path(__file__).parent / "data"
 
@@ -50,6 +50,49 @@ def propyl_oxirane_hessian() -> list[list[float]]:
 def orca_frequencies_propyl_oxirane() -> list[float]:
     """Fixture for orca freqencies of propyl oxirane test data."""
     return np.loadtxt(DATA_DIR / "propyl_oxirane_frequencies.gz").tolist()
+
+
+def test__hash(water: Geometry) -> None:
+    """Test geometry hashing."""
+    exp_hash = "67eecf41909c735495d035b556a1adf51f9fb9e1c5a6219be36a2b31a2dd3fa4"
+    assert geom.geometry_hash(water) == exp_hash
+
+
+def test__unhashable() -> None:
+    """Test that geometry hashing raises exception without necessary fields."""
+    geo = Geometry(
+        symbols=["H"], coordinates=np.array([[0, 0, 0]]), charge=None, spin=None
+    )
+    with pytest.raises(HashGenerationError):
+        geom.geometry_hash(geo)
+
+
+def test__deterministic_hash(water: Geometry) -> None:
+    """Test deterministic geometry hashing."""
+    water2 = Geometry(
+        symbols=["O", "H", "H"],
+        coordinates=np.array([[0, 0, 0], [1, 0, 0], [0, 1.000000000000001, 0]]),
+        charge=0,
+        spin=0,
+    )
+    assert geom.geometry_hash(water) == geom.geometry_hash(water2)
+
+
+def test__rdkit_roundtrip(water: Geometry) -> None:
+    """Test Geometry to mol roundtrip."""
+    mol = water.rdkit_mol()
+    geo_rt = Geometry.from_rdkit_mol(mol)
+
+    assert water.hash == geo_rt.hash
+
+
+def test__xyz_roundtrip(water: Geometry) -> None:
+    """Test Geometry to xyz string roundtrip."""
+    xyz = water.xyz_block()
+    geo_rt = Geometry.from_xyz_block(xyz)
+
+    assert water.symbols == geo_rt.symbols
+    assert np.allclose(water.coordinates, geo_rt.coordinates)
 
 
 def test__center_of_mass(water: Geometry) -> None:
@@ -106,7 +149,12 @@ def test__concat(water: Geometry) -> None:
         charge=0,
         spin=0,
     )
-    geo2 = Geometry(symbols=["H"], coordinates=[[0, 1, 0]], charge=0, spin=0)  # ty:ignore[invalid-argument-type]
+    geo2 = Geometry(
+        symbols=["H"],
+        coordinates=[[0, 1, 0]],  # ty:ignore[invalid-argument-type]
+        charge=0,
+        spin=0,
+    )
 
     concat_geo = geom.concat([geo1, geo2])
     assert water.symbols == concat_geo.symbols

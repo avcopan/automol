@@ -1,67 +1,339 @@
 """Molecular geometry functions."""
 
+import contextlib
+import hashlib
 import itertools
 from collections.abc import Collection, Sequence
+from pathlib import Path
+from typing import Self
 
 import numpy as np
 import numpy.typing as npt
-from automatics import Geometry, element
-from automatics.geom import (
-    from_qc_structure,
-    from_rdkit_mol,
-    from_xyz_block,
-    from_xyz_file,
-    geometry_hash,
-    qc_structure,
-    rdkit_mol,
-    render_gif,
-    render_svg,
-    view,
-    xyz_block,
-    xyz_file,
-)
-from automatics.utils import constants
-from automatics.utils.types import FloatArray
+import py3Dmol
+import pyparsing as pp
+import xyzrender
 from numpy.typing import ArrayLike
+from pydantic import BaseModel, ConfigDict, model_validator
+from pyparsing import pyparsing_common as ppc
+from rdkit import Chem
+from rdkit.Chem import Mol, rdDetermineBonds
 from scipy import spatial
 from scipy.spatial.transform import Rotation
 
-__all__ = [
-    "Geometry",
-    "adjacency_matrix",
-    "center_of_mass",
-    "concat",
-    "dihedral_angle",
-    "distance_matrix",
-    "from_qc_structure",
-    "from_rdkit_mol",
-    "from_xyz_block",
-    "from_xyz_file",
-    "geometry_hash",
-    "harmonic_zpv",
-    "inertia_axes",
-    "inertia_moments",
-    "inertia_tensor",
-    "mass_weight_vector",
-    "normal_mode_projection",
-    "qc_structure",
-    "rdkit_mol",
-    "reflect",
-    "render_gif",
-    "render_svg",
-    "rotate",
-    "rotation_to_inertia_axes",
-    "rotational_analysis",
-    "rotational_normal_modes",
-    "set_distance",
-    "to_eckart_frame",
-    "translate",
-    "translational_normal_modes",
-    "vibrational_analysis",
-    "view",
-    "xyz_block",
-    "xyz_file",
-]
+from . import element, rd
+from .utils import constants
+from .utils.exc import GeometryConversionError, HashGenerationError, XYZFormatError
+from .utils.types import CoordinatesField, FloatArray
+
+CHAR = pp.Char(pp.alphas)
+SYMBOL = pp.Combine(CHAR + pp.Opt(CHAR))
+XYZ_LINE = SYMBOL + pp.Group(ppc.fnumber * 3) + pp.Suppress(... + pp.LineEnd())
+
+
+class Geometry(BaseModel):
+    """
+    Molecular geometry.
+
+    Parameters
+    ----------
+    symbols
+        Atomic symbols in order (e.g., ``["H", "O", "H"]``).
+        The length of ``symbols`` must match the number of atoms.
+    coordinates
+        Cartesian coordinates of the atoms in Angstroms.
+        Shape is ``(len(symbols), 3)`` and the ordering corresponds to ``symbols``.
+    charge
+        Total molecular charge.
+    spin
+        Number of unpaired electrons, i.e. two times the spin quantum number (``2S``).
+
+    Example
+    -------
+    ```
+    h2o = Geometry(
+        symbols = ["H", "O", "H"],
+        coordinates = [[0.0, 0.0, -0.74], [0.0, 0.0, 0.0], [0.0, 0.0, 0.74]],
+        charge = 0,
+        spin = 0,
+    )
+    ```
+    """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    symbols: list[str]
+    coordinates: CoordinatesField
+    charge: int | None
+    spin: int | None
+
+    hash: str | None = None
+
+    @property
+    def atom_count(self) -> int:
+        """Get number of atoms."""
+        return len(self.symbols)
+
+    @property
+    def masses(self) -> list[float]:
+        """Get isotopic masses."""
+        return list(map(element.mass, self.symbols))
+
+    @property
+    def atomic_numbers(self) -> list[int]:
+        """Get atomic numbers."""
+        return list(map(element.number, self.symbols))
+
+    @property
+    def covalent_radii(self) -> list[float]:
+        """Get Pyykko covalent radii in A."""
+        return list(map(element.covalent_radius, self.symbols))
+
+    @property
+    def valences(self) -> list[int]:
+        """Get numbers of valence electrons."""
+        return list(map(element.valence, self.symbols))
+
+    def xyz_block(self, comment: str | None = None) -> str:
+        """Return Geometry as a formatted xyz block."""
+        lines = [f"{len(self.symbols)}", comment or ""]
+        for sym, (x, y, z) in zip(self.symbols, self.coordinates, strict=True):
+            lines.append(f"{sym:<4} {x:12.8f} {y:12.8f} {z:12.8f}")
+
+        return "\n".join(lines)
+
+    @classmethod
+    def from_xyz_block(
+        cls, xyz_block: str, *, charge: int | None = None, spin: int | None = None
+    ) -> Self:
+        """Instantiate Geometry from a formatted xyz block."""
+        lines = xyz_block.strip().splitlines()[2:]
+
+        if not lines:
+            msg = "The provided xyz block is empty."
+            raise XYZFormatError(msg)
+
+        symbs, coords = zip(
+            *[XYZ_LINE.parse_string(line).as_list() for line in lines], strict=True
+        )
+
+        return cls(
+            symbols=list(symbs), coordinates=np.array(coords), charge=charge, spin=spin
+        )
+
+    def rdkit_mol(self) -> Mol:
+        """Instantiate an rdkit Mol from a Geometry."""
+        if self.charge != 0:
+            msg = "Determining bond connectivity with charges not implemented."
+            raise GeometryConversionError(msg)
+
+        if self.spin is None:
+            msg = (
+                "Cannot determine bond connectivity without an assigned value for spin."
+            )
+            raise GeometryConversionError(msg)
+
+        raw_mol = Chem.MolFromXYZBlock(xyzBlock=self.xyz_block())
+        conn_mol = Chem.Mol(raw_mol)
+        rdDetermineBonds.DetermineBonds(
+            conn_mol, useHueckel=True, charge=-self.spin, allowChargedFragments=False
+        )
+
+        for a in conn_mol.GetAtoms():
+            charge = a.GetFormalCharge()
+            a.SetNumRadicalElectrons(abs(charge))
+            a.SetFormalCharge(0)
+
+        return conn_mol
+
+    @classmethod
+    def from_rdkit_mol(cls, mol: Mol) -> Self:
+        """
+        Instantiate a Geometry from an rdkit molecule.
+
+        Parameters
+        ----------
+        mol
+            `rdkit.Chem.Mol` instance
+
+        Returns
+        -------
+            `Geometry` instance.
+        """
+        if not rd.mol.has_coordinates(mol):
+            mol = rd.mol.add_coordinates(mol)
+
+        return cls(
+            symbols=rd.mol.symbols(mol),
+            coordinates=rd.mol.coordinates(mol),
+            charge=rd.mol.charge(mol),
+            spin=rd.mol.spin(mol),
+        )
+
+    def xyz_file(self, path: str | Path) -> None:
+        """Write Geometry to a formatted xyz file."""
+        Path(path).write_text(self.xyz_block())
+
+    @classmethod
+    def from_xyz_file(
+        cls, path: str | Path, *, charge: int | None = None, spin: int | None = None
+    ) -> Self:
+        """Instantiate Geometry from a formatted xyz file."""
+        return cls.from_xyz_block(Path(path).read_text(), charge=charge, spin=spin)
+
+    @model_validator(mode="after")
+    def populate_hash(self) -> Self:
+        """Populate hash after model is validated."""
+        # Only populate if hash wasn't explicitly provided
+        if self.hash is None:
+            with contextlib.suppress(HashGenerationError):
+                self.hash = geometry_hash(self, decimals=6)
+                self.model_fields_set.add("hash")
+        return self
+
+
+# Properties
+def geometry_hash(geo: Geometry, decimals: int = 6) -> str:
+    """Generate a deterministic geometry hash string.
+
+    Parameters
+    ----------
+    decimals
+        Number of decimal places to round the coordinates before hashing.
+
+    Returns
+    -------
+        Geometry hash string.
+    """
+    # Check that all hash fields are present
+    if geo.charge is None or geo.spin is None:
+        msg = "Geometry charge and spin must be present for hashing."
+        raise HashGenerationError(msg, geo)
+    # 1. Convert symbols and coordinates to integers
+    numbers = geo.atomic_numbers
+    icoords = np.rint(geo.coordinates * 10**decimals)
+    # 2. Generate bytes representation of each field
+    numbers_bytes = np.asarray(numbers, dtype=np.dtype("<i8")).tobytes("C")
+    icoords_bytes = icoords.astype(np.dtype("<i8")).tobytes("C")
+    charge_bytes = geo.charge.to_bytes(1, byteorder="little", signed=True)
+    spin_bytes = geo.spin.to_bytes(1, byteorder="little", signed=True)
+    # 3. Combine all bytes and generate hash
+    geo_bytes = b"|".join([numbers_bytes, icoords_bytes, charge_bytes, spin_bytes])
+    return hashlib.sha256(geo_bytes).hexdigest()
+
+
+# Visualization
+def view(
+    geo: Geometry, *, view: py3Dmol.view | None = None, label: bool = False
+) -> py3Dmol.view:
+    """View a geometry with py3Dmol.
+
+    Parameters
+    ----------
+    geo
+        Geometry.
+    view
+        py3Dmol view.
+    label
+        Whether to add atom labels to the view.
+
+    Returns
+    -------
+        py3Dmol view.
+    """
+    view = py3Dmol.view(width=400, height=400) if view is None else view
+    xyz_str = geo.xyz_block()
+    view.addModel(xyz_str, "xyz")
+    view.setStyle({"stick": {}, "sphere": {"scale": 0.3}})
+    if label:
+        for key in range(len(geo.symbols)):
+            view.addLabel(
+                key,
+                {
+                    "backgroundOpacity": 0.0,
+                    "fontColor": "black",
+                    "alignment": "center",
+                    "inFront": True,
+                },
+                {"index": key},
+            )
+    return view
+
+
+def render_svg(
+    geo: Geometry,
+    *,
+    out: str | Path | None = None,
+    config: str | xyzrender.RenderConfig = "default",
+    include_h: bool = True,
+) -> xyzrender.SVGResult:
+    """Render geometry in .svg format.
+
+    Results display inlay automatically.
+
+    Parameters
+    ----------
+    geo
+        Geometry.
+    out
+        Output path for rendered image.
+    config
+        xyzrender RenderConfig settings.
+    include_h
+        If True, include hydrogen atoms in render.
+
+    Returns
+    -------
+    SVGResult
+    """
+    out = Path(out).with_suffix(".svg") if out else out
+
+    tmp_file = Path.cwd() / ".tmp.xyz"
+    geo.xyz_file(tmp_file)
+    mol = xyzrender.load(tmp_file)
+
+    tmp_file.unlink()
+    return xyzrender.render(mol, config=config, hy=include_h, output=out)
+
+
+def render_gif(
+    geo: Geometry,
+    *,
+    out: str | Path | None = None,
+    config: str | xyzrender.RenderConfig = "default",
+    include_h: bool = True,
+    rotation_axis: str = "x",
+) -> xyzrender.GIFResult:
+    """Render geometry rotating about an axis in .gif format.
+
+    Results display inlay automatically.
+
+    Parameters
+    ----------
+    geo
+        Geometry.
+    out
+        Output path for rendered gif.
+    config
+        xyzrender RenderConfig settings.
+    include_h
+        If True, include hydrogen atoms in render.
+    rotation_axis
+        Axis to rotate about in animation.
+
+    Returns
+    -------
+    GIFResult
+    """
+    out = Path(out).with_suffix(".gif") if out else out
+
+    tmp_file = Path.cwd() / ".tmp.xyz"
+    geo.xyz_file(tmp_file)
+    mol = xyzrender.load(tmp_file)
+
+    tmp_file.unlink()
+    return xyzrender.render_gif(
+        mol, config=config, hy=include_h, output=out, gif_rot=rotation_axis
+    )
 
 
 def center_of_mass(geo: Geometry) -> FloatArray:

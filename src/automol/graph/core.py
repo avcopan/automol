@@ -11,12 +11,13 @@ from typing import Any, TypeVar
 
 import networkx as nx
 import numpy as np
-from automatics import element, rd
 from networkx.algorithms.isomorphism import GraphMatcher
 from pydantic import BaseModel
 from pydantic._internal._model_construction import ModelMetaclass
 from rdkit.Chem import rdchem
 from rdkit.Chem.rdchem import Mol, RWMol
+
+from .. import element, rd
 
 BondKey = tuple[int, int]
 
