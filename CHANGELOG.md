@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+### Added
+- `elements`, `constants`, and `ident` from `automatics` (package discontinued).
+- `canonical_frame` to `geom` module for expanding `eckart_frame` logic to include sign choices.
+- `canonical_sorting` to `geom` module for initial implementation of standardized atom sorting.
+
+### Changed
+- `geom.py` -> `geom/*` to better organize growing codebase.
+
+### Fixed
+- `tests` to reflect changes in update.
+
+### Removed
+- `is_similar` due to canonical framing and sorting.
 
 ## [0.0.16] - 2026-06-18
 ### Added

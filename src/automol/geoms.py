@@ -1,10 +1,14 @@
 """analyze geometries."""
 
+import itertools
+from collections.abc import Sequence
+
 import numpy as np
-from automatics import Geometry, Identity
-from automatics.utils.types import FloatArray
+
+from automol.utils.types import FloatArray
 
 from . import geom
+from .geom import Geometry
 
 
 # Comparison
@@ -82,37 +86,21 @@ def kabsch(
     return R, t, rmsd
 
 
-def is_similar(geo1: Geometry, geo2: Geometry) -> bool:
-    """
-    Determine whether two geometries are similar.
+# Multi-geometry operations
+def concat(geos: Sequence[Geometry]) -> Geometry:
+    """Concatenate geometries.
 
     Parameters
     ----------
-    geo1
-        Geometry object.
-    geo2
-        Geometry object.
+    geos
+        List of geometries.
 
     Returns
     -------
-    bool
-        Whether the two geometries are similar.
+        Geometry.
     """
-    # --- Geometry Hash ---
-    if geo1.hash == geo2.hash:
-        return True
-
-    # --- InChI    ---
-    inchi1 = Identity.from_geometry(geo1, algorithm="rdkit inchi")
-    inchi2 = Identity.from_geometry(geo1, algorithm="rdkit inchi")
-
-    if inchi1.value != inchi2.value:
-        return False
-
-    # --- Heavy Atom RMSD ---
-    if geo1.symbols != geo2.symbols:
-        msg = "Atomic symbols do not map onto each other. RMSD cannot be computed."
-        raise ValueError(msg)
-
-    msg = "Not implemented until canonical ordering is established."
-    raise NotImplementedError(msg)
+    symbols = list(itertools.chain.from_iterable(geo.symbols for geo in geos))
+    coordinates = np.vstack([geo.coordinates for geo in geos])
+    charge = sum(geo.charge for geo in geos)
+    spin = sum(geo.spin for geo in geos)
+    return Geometry(symbols=symbols, coordinates=coordinates, charge=charge, spin=spin)

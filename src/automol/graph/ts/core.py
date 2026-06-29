@@ -51,10 +51,10 @@ def from_bond_changes(gra: MolGraph, bond_changes: dict[BondKey, Change]) -> Tra
     """Construct a transition graph from a graph and bond changes."""
     ts_gra = TransGraph()
     ts_gra.add_nodes_from(gra.nodes(data=True))
-    ts_gra.add_edges_from(gra.edges(), change=None)
+    ts_gra.add_edges_from(gra.edges(data=True), change=None)
     formed_bonds = {k for k, c in bond_changes.items() if c == Change.FORMED}
     broken_bonds = {k for k, c in bond_changes.items() if c == Change.BROKEN}
-    ts_gra.add_edges_from(formed_bonds, change=Change.FORMED)
+    ts_gra.add_edges_from(formed_bonds, change=Change.FORMED, distance=None)
     ts_gra.add_edges_from(broken_bonds, change=Change.BROKEN)
     ts_gra.validate()
     return ts_gra
