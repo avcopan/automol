@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+
+## [0.0.17] - 2026-06-29
 ### Added
 - `elements`, `constants`, and `ident` from `automatics` (package discontinued).
 - `canonical_frame` to `geom` module for expanding `eckart_frame` logic to include sign choices.
