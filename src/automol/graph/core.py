@@ -18,6 +18,7 @@ from rdkit.Chem import rdchem
 from rdkit.Chem.rdchem import Mol, RWMol
 
 from .. import element, rd
+from ..utils.types import FloatArray
 
 BondKey = tuple[int, int]
 
@@ -39,7 +40,35 @@ class CustomBaseModel(BaseModel, metaclass=_CustomBaseModelMeta):
 class Atom(CustomBaseModel):
     """Represents an atom in a molecule."""
 
+    model_config = {"arbitrary_types_allowed": True}
+
     symbol: str
+    coords: FloatArray | None = None
+
+    @property
+    def atomic_number(self) -> int:
+        """Get atomic number."""
+        return element.number(self.symbol)
+
+    @property
+    def mass(self) -> float:
+        """Get isotopic mass."""
+        return element.mass(self.symbol)
+
+    @property
+    def covalent_radius(self) -> float:
+        """Get covalent radius."""
+        return element.covalent_radius(self.symbol)
+
+    @property
+    def valence(self) -> float:
+        """Get number of valence electrons."""
+        return element.valence(self.symbol)
+
+    @property
+    def is_heavy(self) -> bool:
+        """Whether the atom is heavy."""
+        return self.symbol != "H"
 
     def to_rdkit_atom(self) -> rdchem.Atom:
         """Convert to an RDKit Atom."""
@@ -50,6 +79,8 @@ class Atom(CustomBaseModel):
 
 class Bond(CustomBaseModel):
     """Represents a bond between two atoms in a molecule."""
+
+    distance: float | None = None
 
     def to_rdkit_bond_type(self) -> rdchem.BondType:
         """Convert to an RDKit Bond Type."""
@@ -290,3 +321,20 @@ def rdkit_mol_with_index_map[AtomT: Atom, BondT: Bond](
 
     to_key = dict(map(reversed, to_idx.items()))
     return rw_mol.GetMol(), to_key
+
+
+def heavy_subgraph(gra: MolGraph) -> nx.Graph:
+    """Return a subgraph containing only heavy atoms from the graph.
+
+    Parameters
+    ----------
+    gra
+        Molecular graph.
+
+    Returns
+    -------
+    nx.Graph
+        Heavy atom graph.
+    """
+    heavy_nodes = [n for n, attr in gra.nodes(data=True) if attr[Atom.is_heavy]]
+    return gra.subgraph(heavy_nodes).copy()

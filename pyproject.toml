@@ -65,7 +65,8 @@ layers = [
     "automol.view",
     "automol.geoms",
     "automol.ident",
-    "automol.geom | automol.graph",
+    "automol.geom",
+    "automol.graph",
     "automol.rd",
     "automol.utils | automol.element",
 ]

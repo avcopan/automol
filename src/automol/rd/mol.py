@@ -1,6 +1,7 @@
 """RDKit molecule interface."""
 
 from collections.abc import Mapping
+from typing import cast
 
 import numpy as np
 from rdkit import Chem
@@ -270,3 +271,57 @@ def add_atom_numbers(
         atom.SetProp("atomLabel", f"{symbol}{number}")
 
     return mol
+
+
+def canonical_ranks(mol: Mol, *, break_ties: bool = True) -> list[int]:
+    """Return the canonical ranking.
+
+    Parameters
+    ----------
+    mol
+        RDKit molecule object.
+    break_ties
+        If `True`, force breaking of ranked ties.
+
+    Returns
+    -------
+        List of canonical ranks.
+    """
+    ranks = Chem.CanonicalRankAtoms(mol=mol, breakTies=break_ties)
+    return cast("list[int]", ranks)
+
+
+def assign_stereochemistry(mol: Mol, *, in_place: bool = False) -> Mol:
+    """Assign stereochemistry from 3D coordinates.
+
+    Parameters
+    ----------
+    mol
+        RDKit molecule object.
+    in_place
+        If `True`, modify the molecule in place.
+        If `False` (default), return a new molecule.
+
+    Returns
+    -------
+        RDKit molecule object with stereochemistry tags.
+    """
+    mol = mol if in_place else Mol(mol)
+    Chem.AssignStereochemistryFrom3D(mol)
+    return mol
+
+
+def chiral_centers(mol: Mol) -> list[tuple[int, str]]:
+    """Return chiral center indices with R/S labels.
+
+    Parameters
+    ----------
+    mol
+        RDKit molecule object.
+
+    Returns
+    -------
+        List of (index, label) for all chiral centers.
+    """
+    mol = assign_stereochemistry(mol)
+    return Chem.FindMolChiralCenters(mol, useLegacyImplementation=False)

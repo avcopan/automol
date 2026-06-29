@@ -65,7 +65,7 @@ class AlgorithmRegistry:
     @classmethod
     def register(
         cls, name: str, kind: str
-    ) -> Callable[type[AlgorithmFns], type[AlgorithmFns]]:
+    ) -> Callable[type[AlgorithmFns], type[AlgorithmFns]]:  # pyright: ignore[reportInvalidTypeForm]
         """Register identity_fn and geometry_fn as an AlgorithmDef."""
 
         def decorator(cls_: type[AlgorithmFns]) -> type[AlgorithmFns]:
