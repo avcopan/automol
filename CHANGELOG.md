@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+### Added
+
+### Changed
+- `Geometry.canonical_form(self, *, in_place=True)` -> `.canonical_form(self, *, delta ...)` to support method chaining and discourage in-place operations on SQLModel subclasses.
+- `_float_array_validator(...)` returns `np.array(obj, dtype...)` instead of `np.asarray(obj, dtype...)` due to instantiation concerns when hashing.
+
+### Fixed
+- Bug with `... for targets in nx.all_pairs_shortest_path...` exposed when operating on purely cyclic molecules.
+- Premature raise on `Geometry.validate_coordinates_shape(...)` model validator exposed when validating SQLModel subclasses.
+- Premature hash setting on `Geometry.set_hash()` model validator exposed when validating SQLModel subclasses.
+- Instance building on `Geometry.canonical_form()` exposed when canonicalizing SQLModel subclasses.
+- `test__deterministic_canonical_order(...)` to reflect updates.
+
+### Removed
+- `Geometry.sort()`.
 
 ## [0.0.17] - 2026-06-29
 ### Added

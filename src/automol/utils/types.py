@@ -12,7 +12,7 @@ FloatArray = npt.NDArray[np.float64]
 
 # Float array field
 def _float_array_validator(obj: object) -> FloatArray:
-    return np.asarray(obj, dtype=np.float64)
+    return np.array(obj, dtype=np.float64)
 
 
 def _float_array_serializer(arr: FloatArray) -> list:

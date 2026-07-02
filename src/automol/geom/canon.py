@@ -265,7 +265,7 @@ def _best_parent(gra: MolGraph, *, decimals: int = 4) -> list[int]:
     else:
         paths = [
             p
-            for targets in nx.all_pairs_shortest_path(heavy_gra).values()
+            for _, targets in nx.all_pairs_shortest_path(heavy_gra)
             for p in targets.values()
         ]
 
