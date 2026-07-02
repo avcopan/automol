@@ -84,17 +84,18 @@ def test__deterministic_canonical_frame(propyl_oxirane: Geometry) -> None:
 
 def test__determinisitic_canonical_order(propyl_oxirane: Geometry) -> None:
     """Test deterministic canonicalization of atom ordering."""
-    geo1 = propyl_oxirane.sort(
-        rng.permutation(propyl_oxirane.atom_count).tolist(), in_place=False
-    )
-    geo1.canonical_form(in_place=True)
+    perm1 = rng.permutation(propyl_oxirane.atom_count).tolist()
+    propyl_oxirane.symbols = [propyl_oxirane.symbols[i] for i in perm1]
+    propyl_oxirane.coordinates = propyl_oxirane.coordinates[perm1]
+    canon1 = propyl_oxirane.canonical_form()
 
-    geo2 = propyl_oxirane.sort(
-        rng.permutation(propyl_oxirane.atom_count).tolist(), in_place=False
-    )
-    geo2.canonical_form(in_place=True)
+    perm1 = rng.permutation(propyl_oxirane.atom_count).tolist()
+    propyl_oxirane.symbols = [propyl_oxirane.symbols[i] for i in perm1]
+    propyl_oxirane.coordinates = propyl_oxirane.coordinates[perm1]
+    assert propyl_oxirane.symbols != canon1.symbols
+    canon2 = propyl_oxirane.canonical_form()
 
-    assert geo1.hash == geo2.hash
+    assert canon1.hash == canon2.hash
 
 
 def test__rdkit_roundtrip(water: Geometry) -> None:

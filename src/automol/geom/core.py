@@ -6,7 +6,13 @@ from typing import Self
 
 import numpy as np
 import pyparsing as pp
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+)
 from pyparsing import pyparsing_common as ppc
 from rdkit import Chem
 from rdkit.Chem import Mol, rdDetermineBonds
@@ -14,7 +20,7 @@ from rdkit.Chem import Mol, rdDetermineBonds
 from .. import element, rd
 from ..utils.exc import GeometryConversionError, XYZFormatError
 from ..utils.types import CoordinatesField
-from .canon import canonical_sorting
+from .canon import canonical_frame, canonical_sorting
 
 CHAR = pp.Char(pp.alphas)
 SYMBOL = pp.Combine(CHAR + pp.Opt(CHAR))
@@ -58,17 +64,31 @@ class Geometry(BaseModel):
     spin: int
     hash: str | None = None
 
-    @model_validator(mode="after")
-    def validate_and_hash(self) -> Self:
-        """Populate hash after model validation."""
-        if len(self.symbols) != self.coordinates.shape[0]:
+    @field_validator("coordinates")
+    @classmethod
+    def validate_coordinates_shape(
+        cls: Self, v: CoordinatesField, info: ValidationInfo
+    ) -> CoordinatesField:
+        """Validate shape of geometry coordinates."""
+        symbols = info.data.get("symbols")
+        if symbols is not None and v is not None and len(symbols) != v.shape[0]:
             msg = (
-                f"Number of symbols ({len(self.symbols)}) does not match coordinates"
-                f"{self.coordinates.shape[0]}."
+                f"Number of symbols ({len(symbols)}) does not match coordinates"
+                f"{v.shape[0]}."
             )
             raise ValueError(msg)
 
-        # Bypass validation on the hash (avoid infinite recursion)
+        return v
+
+    @model_validator(mode="after")
+    def set_hash(self) -> Self:
+        """Populate hash after model validation."""
+        if not all(
+            getattr(self, field, None) is not None
+            for field in ("symbols", "coordinates", "charge", "spin")
+        ):
+            return self
+
         object.__setattr__(self, "hash", geometry_hash(self, decimals=4))
         return self
 
@@ -97,46 +117,46 @@ class Geometry(BaseModel):
         """Get numbers of valence electrons."""
         return list(map(element.valence, self.symbols))
 
-    def canonical_form(self: Self, *, in_place: bool = False) -> Self:
+    def canonical_form(
+        self: Self, *, delta: float = 1.4, decimals: int = 4, truncate: bool = True
+    ) -> Self:
         """Return a canonical form of the geometry.
 
         Parameters
         ----------
-        in_place
-            If False, return a copy of the geometry.
+        delta
+            Factor to scale covalent matrices for bond consideration.
+            `bond_cutoff = delta * (r_covalent1 + r_covalent2)`
+        decimals
+            Number of decimal places to consider in sort tie-breaking.
+        truncate
+            If True, truncate hypervalent bonds by highest covalent radius deviation.
 
         Returns
         -------
         Self
             Canonical form of the geometry.
         """
-        geo = self.model_copy(deep=True) if not in_place else self
-        canonical_idxs = canonical_sorting(self)
-        geo.sort(canonical_idxs, in_place=True)
+        # Resort indices by canonical ordering
+        canon_idxs = canonical_sorting(
+            self, delta=delta, decimals=decimals, truncate=truncate
+        )
+        temp_geo = Geometry(
+            symbols=[self.symbols[i] for i in canon_idxs],
+            coordinates=self.coordinates[canon_idxs],
+            charge=self.charge,
+            spin=self.spin,
+        )
 
-        return geo
+        # Re-orient the coordinates by canonical framing
+        canon_geo = canonical_frame(temp_geo, decimals=decimals)
 
-    def sort(self: Self, idxs: list[int], *, in_place: bool = False) -> Self:
-        """Sort the geometry by given indices.
-
-        Parameters
-        ----------
-        idxs
-            Indices to sort by.
-        in_place
-            If False, return a copy of the geometry.
-
-        Returns
-        -------
-        Self
-            Sorted copy of self.
-        """
-        geo = self if in_place else self.model_copy(deep=True)
-
-        geo.symbols = [self.symbols[i] for i in idxs]
-        geo.coordinates = self.coordinates[idxs]
-
-        return geo
+        return type(self)(
+            symbols=canon_geo.symbols,
+            coordinates=canon_geo.coordinates,
+            charge=canon_geo.charge,
+            spin=canon_geo.spin,
+        )
 
     def xyz_block(self, *, comment: str | None = None) -> str:
         """Return Geometry as a formatted xyz block with optional comment."""
