@@ -16,6 +16,7 @@ dependencies = [
     "pyparsing>=3.3.2",
     "rdkit>=2025",
     "scipy>=1.13",
+    "stereomolgraph>=0.0.22b0",
 ]
 
 [build-system]

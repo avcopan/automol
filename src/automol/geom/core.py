@@ -1,26 +1,20 @@
 """Molecular geometry functions."""
 
-import hashlib
+from collections import Counter
 from pathlib import Path
 from typing import Self
 
 import numpy as np
 import pyparsing as pp
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    ValidationInfo,
-    field_validator,
-    model_validator,
-)
+from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
 from pyparsing import pyparsing_common as ppc
-from rdkit import Chem
-from rdkit.Chem import Mol, rdDetermineBonds
+from rdkit.Chem import Mol
+from stereomolgraph import StereoMolGraph
+from stereomolgraph.coords import Geometry as SMGeometry
 
 from .. import element, rd
-from ..utils.exc import GeometryConversionError, XYZFormatError
+from ..utils.exc import XYZFormatError
 from ..utils.types import CoordinatesField
-from .canon import canonical_frame, canonical_sorting
 
 CHAR = pp.Char(pp.alphas)
 SYMBOL = pp.Combine(CHAR + pp.Opt(CHAR))
@@ -62,7 +56,6 @@ class Geometry(BaseModel):
     coordinates: CoordinatesField
     charge: int
     spin: int
-    hash: str | None = None
 
     @field_validator("coordinates")
     @classmethod
@@ -79,18 +72,6 @@ class Geometry(BaseModel):
             raise ValueError(msg)
 
         return v
-
-    @model_validator(mode="after")
-    def set_hash(self) -> Self:
-        """Populate hash after model validation."""
-        if not all(
-            getattr(self, field, None) is not None
-            for field in ("symbols", "coordinates", "charge", "spin")
-        ):
-            return self
-
-        object.__setattr__(self, "hash", geometry_hash(self, decimals=4))
-        return self
 
     @property
     def atom_count(self) -> int:
@@ -117,47 +98,6 @@ class Geometry(BaseModel):
         """Get numbers of valence electrons."""
         return list(map(element.valence, self.symbols))
 
-    def canonical_form(
-        self: Self, *, delta: float = 1.4, decimals: int = 4, truncate: bool = True
-    ) -> Self:
-        """Return a canonical form of the geometry.
-
-        Parameters
-        ----------
-        delta
-            Factor to scale covalent matrices for bond consideration.
-            `bond_cutoff = delta * (r_covalent1 + r_covalent2)`
-        decimals
-            Number of decimal places to consider in sort tie-breaking.
-        truncate
-            If True, truncate hypervalent bonds by highest covalent radius deviation.
-
-        Returns
-        -------
-        Self
-            Canonical form of the geometry.
-        """
-        # Resort indices by canonical ordering
-        canon_idxs = canonical_sorting(
-            self, delta=delta, decimals=decimals, truncate=truncate
-        )
-        temp_geo = Geometry(
-            symbols=[self.symbols[i] for i in canon_idxs],
-            coordinates=self.coordinates[canon_idxs],
-            charge=self.charge,
-            spin=self.spin,
-        )
-
-        # Re-orient the coordinates by canonical framing
-        canon_geo = canonical_frame(temp_geo, decimals=decimals)
-
-        return type(self)(
-            symbols=canon_geo.symbols,
-            coordinates=canon_geo.coordinates,
-            charge=canon_geo.charge,
-            spin=canon_geo.spin,
-        )
-
     def xyz_block(self, *, comment: str | None = None) -> str:
         """Return Geometry as a formatted xyz block with optional comment."""
         return xyz_block(self, comment=comment)
@@ -182,34 +122,6 @@ class Geometry(BaseModel):
         """Instantiate Geometry from a formatted xyz file."""
         path = Path(path)
         return cls.from_xyz_block(path.read_text(), charge=charge, spin=spin)
-
-
-def geometry_hash(geo: Geometry, decimals: int = 4) -> str:
-    """Generate a deterministic geometry hash string.
-
-    Parameters
-    ----------
-    decimals
-        Number of decimal places to round the coordinates before hashing.
-
-    Returns
-    -------
-        Geometry hash string.
-    """
-    # 1. Convert symbols and coordinates to integers
-    numbers = geo.atomic_numbers
-    icoords = np.rint(geo.coordinates * 10**decimals)
-
-    # 2. Generate bytes representation of each field
-    numbers_bytes = np.asarray(numbers, dtype=np.dtype("<i8")).tobytes("C")
-    icoords_bytes = icoords.astype(np.dtype("<i8")).tobytes("C")
-    charge_bytes = geo.charge.to_bytes(1, byteorder="little", signed=True)
-    spin_bytes = geo.spin.to_bytes(1, byteorder="little", signed=True)
-
-    # 3. Combine all bytes and generate hash
-    geo_bytes = b"|".join([numbers_bytes, icoords_bytes, charge_bytes, spin_bytes])
-
-    return hashlib.sha256(geo_bytes).hexdigest()
 
 
 def xyz_block(geo: Geometry, *, comment: str | None = None) -> str:
@@ -250,42 +162,8 @@ def from_xyz_file(path: str | Path, *, charge: int, spin: int) -> Geometry:
 
 def rdkit_mol(geo: Geometry) -> Mol:
     """Instantiate an rdkit Mol from a Geometry."""
-    raw_mol = Chem.MolFromXYZBlock(xyzBlock=xyz_block(geo))
-    conn_mol = Chem.Mol(raw_mol)
-
-    # Determine connectivity (graph) only -- independent of charge/spin.
-    rdDetermineBonds.DetermineConnectivity(conn_mol, useHueckel=True)
-
-    # Try the true charge first; some radicals still resolve
-    # if RDKit leaves deficiencies as implicit-Hs.
-    last_err: Exception | None = None
-    for trial_charge in (
-        geo.charge,
-        geo.charge - geo.spin,
-        geo.charge + geo.spin,
-    ):
-        trial_mol = Chem.Mol(conn_mol)
-        try:
-            rdDetermineBonds.DetermineBondOrders(
-                trial_mol, charge=trial_charge, allowChargedFragments=True
-            )
-        except ValueError as err:
-            last_err = err
-            continue
-
-        n_placed = 0
-        for a in trial_mol.GetAtoms():
-            charge = a.GetFormalCharge()
-            if charge != 0:
-                a.SetNumRadicalElectrons(abs(charge))
-                a.SetFormalCharge(0)
-                n_placed += abs(charge)
-
-        if n_placed == geo.spin:
-            return trial_mol
-
-    msg = f"Could not determine bond orders with {geo.charge = }, {geo.spin = }."
-    raise GeometryConversionError(msg) from last_err
+    smg = stereo_mol_graph(geo)
+    return smg.to_rdmol(charge=geo.charge)
 
 
 def from_rdkit_mol(mol: Mol) -> Geometry:
@@ -299,3 +177,23 @@ def from_rdkit_mol(mol: Mol) -> Geometry:
         charge=rd.mol.charge(mol),
         spin=rd.mol.spin(mol),
     )
+
+
+def stereo_mol_graph(geo: Geometry) -> StereoMolGraph:
+    """Instantiate a StereoMolGraph from a Geometry."""
+    sm_geo = SMGeometry(atom_types=tuple(geo.symbols), coords=geo.coordinates)
+    return StereoMolGraph.from_geometry(sm_geo)  # ty:ignore[invalid-argument-type]
+
+
+def hill_formula(geo: Geometry) -> str:
+    """Render the molecular formula in Hill order."""
+    counts = Counter(s.capitalize() for s in geo.symbols)
+
+    ordered = []
+    if "C" in counts:
+        ordered.append(("C", counts.pop("C")))
+    if "H" in counts:
+        ordered.append(("H", counts.pop("H")))
+    ordered.extend(sorted(counts.items(), key=lambda x: x[0]))
+
+    return "".join(s if n == 1 else f"{s}{n}" for s, n in ordered)

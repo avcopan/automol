@@ -49,6 +49,9 @@ sphinx-autodoc2 = "*"
 default = { solve-group = "default" }
 dev = { features = ["dev", "docs"], solve-group = "default"}
 
+[pypi-dependencies]
+stereomolgraph = ">=0.0.22b0"
+
 [feature.dev.tasks]
 # Manage pyproject.toml with uv
 uv = "uv"
