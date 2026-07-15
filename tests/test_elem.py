@@ -2,7 +2,7 @@
 
 import pytest
 
-from automol import element
+from automol.utils import element
 
 
 @pytest.mark.parametrize(("key", "mass_number"), [("H", 1), (115, 287)])

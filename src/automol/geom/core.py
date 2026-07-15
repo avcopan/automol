@@ -6,13 +6,15 @@ from typing import Self
 
 import numpy as np
 import pyparsing as pp
+from ase import Atoms
 from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
 from pyparsing import pyparsing_common as ppc
 from rdkit.Chem import Mol
 from stereomolgraph import StereoMolGraph
 from stereomolgraph.coords import Geometry as SMGeometry
 
-from .. import element, rd
+from .. import rd
+from ..utils import element
 from ..utils.exc import XYZFormatError
 from ..utils.types import CoordinatesField
 
@@ -176,6 +178,15 @@ def from_rdkit_mol(mol: Mol) -> Geometry:
         coordinates=rd.mol.coordinates(mol),
         charge=rd.mol.charge(mol),
         spin=rd.mol.spin(mol),
+    )
+
+
+def to_ase(geo: Geometry) -> Atoms:
+    """Instantiate an ASE Atoms object from a Geometry."""
+    return Atoms(
+        symbols=geo.symbols,
+        positions=geo.coordinates,
+        info={"charge": geo.charge, "spin": geo.spin},
     )
 
 

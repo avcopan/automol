@@ -1,9 +1,10 @@
 [workspace]
 channels = ["conda-forge", "avcopan"]
-platforms = ["linux-64", "osx-64", "osx-arm64"]
+platforms = ["linux-64"]
 preview = ["pixi-build"]
 
 [dependencies]
+python = ">=3.12,<3.14"
 automol = { path = "." }
 automatics = "==0.0.6" # local:false
 # automatics = { path = "../automatics" } # local:true
@@ -25,7 +26,7 @@ uv = "*"
 [feature.dev.dependencies]
 uv = "*"
 ruff = "*"
-ty = "==0.0.31"
+ty = ">=0.0.59,<0.0.60"
 import-linter = "*"
 pytest = "*"
 pytest-cov = "*"
@@ -51,6 +52,7 @@ dev = { features = ["dev", "docs"], solve-group = "default"}
 
 [pypi-dependencies]
 stereomolgraph = ">=0.0.22b0"
+irmsd = "==0.1.1"
 
 [feature.dev.tasks]
 # Manage pyproject.toml with uv

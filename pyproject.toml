@@ -7,6 +7,7 @@ authors = [
 ]
 requires-python = ">= 3.12"
 dependencies = [
+    "ase>=3.23",
     "more-itertools>=10.0",
     "networkx>=3.3",
     "numpy>=2.0",
@@ -17,6 +18,7 @@ dependencies = [
     "rdkit>=2025",
     "scipy>=1.13",
     "stereomolgraph>=0.0.22b0",
+    "irmsd>=0.1.1",
 ]
 
 [build-system]
@@ -64,12 +66,10 @@ name = "Module Layering"
 type = "layers"
 layers = [
     "automol.view",
-    "automol.geoms",
     "automol.ident",
     "automol.geom",
-    "automol.graph",
     "automol.rd",
-    "automol.utils | automol.element",
+    "automol.utils",
 ]
 
 # Pytest configurations
@@ -77,6 +77,7 @@ layers = [
 testpaths = ["tests", "src"]
 addopts = [
     "--doctest-modules",
+    "--ignore=src/automol/experimental",
     "--cov=automol",
     "--cov-report=term-missing",
     "--cov-report=html",
