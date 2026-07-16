@@ -1,6 +1,7 @@
 """Geometry module."""
 
 from . import transform
+from .comparison import is_duplicate_conformer
 from .core import (
     Geometry,
     from_rdkit_mol,
@@ -25,6 +26,7 @@ __all__ = [
     "from_xyz_block",
     "from_xyz_file",
     "hill_formula",
+    "is_duplicate_conformer",
     "rdkit_mol",
     "stereo_mol_graph",
     "to_ase",
