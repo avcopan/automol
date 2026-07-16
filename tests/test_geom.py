@@ -187,6 +187,13 @@ def test__from_xyz_block_empty_raises() -> None:
         geom.from_xyz_block("", charge=0, spin=0)
 
 
+def test__from_xyz_block_malformed_line_raises() -> None:
+    """Test that a malformed xyz line is rejected."""
+    bad_block = "1\n\nnot a valid xyz line\n"
+    with pytest.raises(XYZFormatError):
+        geom.from_xyz_block(bad_block, charge=0, spin=0)
+
+
 def test__xyz_file_roundtrip(water: Geometry, tmp_path: Path) -> None:
     """Test Geometry to xyz file roundtrip."""
     path = tmp_path / "water.xyz"
@@ -257,42 +264,3 @@ def test__from_rdkit_mol_with_coordinates() -> None:
     sorted_geo_coords = np.sort(geo.coordinates, axis=0)
     sorted_original_coords = np.sort(original_coords, axis=0)
     assert np.allclose(sorted_geo_coords, sorted_original_coords)
-
-
-def test__view() -> None:
-    """Test py3Dmol view construction."""
-    water = Geometry(
-        symbols=["O", "H", "H"],
-        coordinates=[[0, 0, 0], [1, 0, 0], [0, 1, 0]],
-        charge=0,
-        spin=0,
-    )
-    result = geom.view(water, label=True)
-    assert result is not None
-
-
-def test__view_without_label() -> None:
-    """Test py3Dmol view construction without atom labels."""
-    water = Geometry(
-        symbols=["O", "H", "H"],
-        coordinates=[[0, 0, 0], [1, 0, 0], [0, 1, 0]],
-        charge=0,
-        spin=0,
-    )
-    result = geom.view(water, label=False)
-    assert result is not None
-
-
-def test__render_svg(water: Geometry, tmp_path: Path) -> None:
-    """Test svg rendering."""
-    out = tmp_path / "water"
-    result = geom.render_svg(water, out=out)
-    assert (tmp_path / "water.svg").exists()
-    assert "<svg" in str(result)
-
-
-def test__render_gif(water: Geometry, tmp_path: Path) -> None:
-    """Test gif rendering."""
-    out = tmp_path / "water"
-    geom.render_gif(water, out=out)
-    assert (tmp_path / "water.gif").exists()

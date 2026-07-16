@@ -5,12 +5,13 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import TYPE_CHECKING, Any, ClassVar, Self
+from typing import TYPE_CHECKING, ClassVar, Self
 
 from pydantic import BaseModel, model_validator
 from rdkit import Chem
 
 from . import geom
+from .utils.exc import AlgorithmAlreadyRegisteredError, UnknownAlgorithmError
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -59,8 +60,8 @@ class AlgorithmDef:
 
     algorithm: Algorithm
 
-    identity_fn: Callable[[Any], str]
-    geometry_fn: Callable[[Any], Geometry] | None = None
+    identity_fn: Callable[[Geometry], str]
+    geometry_fn: Callable[[str], Geometry] | None = None
 
 
 class AlgorithmFns(ABC):
@@ -92,7 +93,7 @@ class AlgorithmRegistry:
         def decorator(cls_: type[AlgorithmFns]) -> type[AlgorithmFns]:
             if algorithm in cls._algorithms:
                 msg = f"Algorithm {algorithm!r} is already registered."
-                raise ValueError(msg)
+                raise AlgorithmAlreadyRegisteredError(msg)
             cls._algorithms[algorithm] = AlgorithmDef(
                 algorithm=algorithm,
                 identity_fn=staticmethod(cls_.identity_fn),
@@ -107,7 +108,7 @@ class AlgorithmRegistry:
         """Directly register an AlgorithmDef instance."""
         if alg.algorithm in cls._algorithms:
             msg = f"Algorithm {alg.algorithm!r} is already registered."
-            raise ValueError(msg)
+            raise AlgorithmAlreadyRegisteredError(msg)
         cls._algorithms[alg.algorithm] = alg
 
     @classmethod
@@ -118,7 +119,7 @@ class AlgorithmRegistry:
         except KeyError:
             available = ", ".join(sorted(cls._algorithms))
             msg = f"Unknown algorithm {algorithm!r}. Available: {available}"
-            raise KeyError(msg) from None
+            raise UnknownAlgorithmError(msg) from None
 
     @classmethod
     def all_algorithms(cls) -> list[Algorithm]:
@@ -158,6 +159,9 @@ class Identity(BaseModel):
                 f"Algorithm {self.algorithm!r} belongs to kind "
                 f"{self.algorithm.kind!r}, not {self.kind!r}."
             )
+            # Pydantic only wraps ValueError/TypeError/AssertionError from
+            # model validators into a ValidationError; anything else bypasses
+            # that pipeline entirely, so this must stay a plain ValueError.
             raise ValueError(msg)
         return self
 

@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from ..exc import ElementNotFoundError
+
 
 @dataclass(frozen=True, slots=True)
 class Element:
@@ -13,14 +15,22 @@ class Element:
 
     Attributes
     ----------
-    Z :
+    Z
         Atomic number.
-    A :
+    A
         Mass number.
-    symbol :
+    group
+        Group number.
+    period
+        Period number.
+    symbol
         Chemical symbol.
-    mass :
+    mass
         Atomic mass.
+    covalent_radius
+        Pyykko covalent radius, in Angstroms.
+    valence
+        Number of valence electrons.
     """
 
     Z: int
@@ -30,7 +40,7 @@ class Element:
     symbol: str
     mass: float
     covalent_radius: float
-    nvalence: int
+    valence: int
 
 
 ELEMENT_BY_NUMBER: dict[int, Element] = {}
@@ -59,7 +69,7 @@ def from_key(key: int | str) -> Element:
 
     Parameters
     ----------
-    key :
+    key
         Atomic number (int) or symbol (str).
 
     Returns
@@ -70,12 +80,21 @@ def from_key(key: int | str) -> Element:
     ------
     TypeError
         If key is not int or str.
+    ElementNotFoundError
+        If no element matches the given atomic number or symbol.
     """
     if isinstance(key, int):
+        if key not in ELEMENT_BY_NUMBER:
+            msg = f"No element with atomic number {key!r}."
+            raise ElementNotFoundError(msg)
         return ELEMENT_BY_NUMBER[key]
 
     if isinstance(key, str):
-        return ELEMENT_BY_SYMBOL[key.casefold()]
+        symb = key.casefold()
+        if symb not in ELEMENT_BY_SYMBOL:
+            msg = f"No element with symbol {key!r}."
+            raise ElementNotFoundError(msg)
+        return ELEMENT_BY_SYMBOL[symb]
 
     msg = f"Element key must be int or str, got {type(key).__name__}"
     raise TypeError(msg)
@@ -87,7 +106,7 @@ def number(key: int | str) -> int:
 
     Parameters
     ----------
-    key :
+    key
         Atomic number (int) or symbol (str).
 
     Returns
@@ -103,7 +122,7 @@ def mass_number(key: int | str) -> int:
 
     Parameters
     ----------
-    key :
+    key
         Atomic number (int) or symbol (str).
 
     Returns
@@ -119,7 +138,7 @@ def symbol(key: int | str) -> str:
 
     Parameters
     ----------
-    key :
+    key
         Atomic number (int) or symbol (str).
 
     Returns
@@ -135,7 +154,7 @@ def mass(key: int | str) -> float:
 
     Parameters
     ----------
-    key :
+    key
         Atomic number (int) or symbol (str).
 
     Returns
@@ -151,7 +170,7 @@ def covalent_radius(key: int | str) -> float:
 
     Parameters
     ----------
-    key :
+    key
         Atomic number (int) or symbol (str).
 
     Returns
@@ -167,7 +186,7 @@ def group(key: int | str) -> int:
 
     Parameters
     ----------
-    key :
+    key
         Atomic number (int) or symbol (str).
 
     Returns
@@ -183,7 +202,7 @@ def period(key: int | str) -> int:
 
     Parameters
     ----------
-    key :
+    key
         Atomic number (int) or symbol (str).
 
     Returns
@@ -210,7 +229,7 @@ def shell_capacity(key: int | str) -> int:
 
     Parameters
     ----------
-    key :
+    key
         Atomic number (int) or symbol (str).
 
     Returns
@@ -226,9 +245,9 @@ def valence(key: int | str, *, override: dict[str, int] | None = None) -> int:
 
     Parameters
     ----------
-    key :
+    key
         Atomic number (int) or symbol (str).
-    override :
+    override
         Dictionary of valence overrides by atomic symbol.
 
     Returns
@@ -239,7 +258,7 @@ def valence(key: int | str, *, override: dict[str, int] | None = None) -> int:
         symb = from_key(key).symbol
         if symb in override:
             return override[symb]
-    return from_key(key).nvalence
+    return from_key(key).valence
 
 
 def bonding_capacity(key: int | str, *, override: dict[str, int] | None = None) -> int:
@@ -248,9 +267,9 @@ def bonding_capacity(key: int | str, *, override: dict[str, int] | None = None) 
 
     Parameters
     ----------
-    key :
+    key
         Atomic number (int) or symbol (str).
-    override :
+    override
         Dictionary of bonding capacity overrides by atomic symbol.
 
     Returns

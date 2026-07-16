@@ -8,6 +8,7 @@ from rdkit import Chem
 from rdkit.Chem import Descriptors, Mol, rdDetermineBonds
 from rdkit.Chem.rdDistGeom import EmbedMolecule
 
+from ..utils.exc import GeometryConversionError
 from ..utils.types import FloatArray
 
 
@@ -157,12 +158,12 @@ def coordinates(mol: Mol) -> FloatArray:
 
     Raises
     ------
-    ValueError
+    GeometryConversionError
         If the molecule has no coordinates.
     """
     if not has_coordinates(mol):
         msg = "Molecule has no coordinates. Did you forget to add them?"
-        raise ValueError(msg)
+        raise GeometryConversionError(msg)
 
     natms = mol.GetNumAtoms()
     conf = mol.GetConformer()

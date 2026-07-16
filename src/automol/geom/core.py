@@ -143,9 +143,13 @@ def from_xyz_block(xyz_block: str, *, charge: int, spin: int) -> Geometry:
         msg = "The provided xyz block is empty."
         raise XYZFormatError(msg)
 
-    symbs, coords = zip(
-        *[XYZ_LINE.parse_string(line).as_list() for line in lines], strict=True
-    )
+    try:
+        symbs, coords = zip(
+            *[XYZ_LINE.parse_string(line).as_list() for line in lines], strict=True
+        )
+    except pp.ParseException as exc:
+        msg = f"Failed to parse xyz line: {exc.line!r}"
+        raise XYZFormatError(msg) from exc
 
     return Geometry(
         symbols=list(symbs), coordinates=np.array(coords), charge=charge, spin=spin

@@ -4,6 +4,7 @@ import pytest
 from rdkit.Chem import Mol
 
 from automol.rd import mol
+from automol.utils.exc import GeometryConversionError
 
 
 @pytest.fixture
@@ -43,3 +44,10 @@ def test__add_atom_numbers(water: Mol) -> None:
 
     for a in water.GetAtoms():
         assert a.GetProp("atomLabel")
+
+
+def test__coordinates_without_coordinates_raises() -> None:
+    """Test that reading coordinates from a Mol without them is rejected."""
+    no_coords = mol.from_smiles("O", with_coords=False)
+    with pytest.raises(GeometryConversionError, match="no coordinates"):
+        mol.coordinates(no_coords)

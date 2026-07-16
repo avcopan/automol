@@ -58,7 +58,7 @@ with engine.connect() as conn:
             "symbol": row.symbol,
             "mass": row.mass,
             "covalent_radius": row.covalent_radius_pyykko / 100,
-            "nvalence": mendeleev_element(row.atomic_number).nvalence(),
+            "valence": mendeleev_element(row.atomic_number).nvalence(),
         }
         for row in result
     ]

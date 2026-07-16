@@ -3,6 +3,8 @@
 import pytest
 
 from automol import Algorithm, Identity
+from automol.ident import AlgorithmRegistry
+from automol.utils.exc import AlgorithmAlreadyRegisteredError, UnknownAlgorithmError
 
 
 @pytest.fixture
@@ -39,3 +41,16 @@ def test__kind_mismatch_raises() -> None:
     """Test that an explicit mismatched kind is rejected."""
     with pytest.raises(ValueError, match="belongs to kind"):
         Identity(algorithm=Algorithm.RDKIT_INCHI, value="x", kind="conformer")
+
+
+def test__duplicate_registration_raises() -> None:
+    """Test that re-registering an algorithm is rejected."""
+    existing = AlgorithmRegistry.get(Algorithm.RDKIT_INCHI)
+    with pytest.raises(AlgorithmAlreadyRegisteredError):
+        AlgorithmRegistry.register_def(existing)
+
+
+def test__unknown_algorithm_raises() -> None:
+    """Test that looking up an unregistered algorithm is rejected."""
+    with pytest.raises(UnknownAlgorithmError):
+        AlgorithmRegistry.get("not-a-real-algorithm")  # ty: ignore[invalid-argument-type]
