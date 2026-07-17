@@ -5,8 +5,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 ### Added
-- `Algorithm.IRMSD` for tagging conformer-group identities (unregistered algorithm;
-  built directly via `Identity.from_value` rather than `from_geometry`).
+- `Algorithm.IRMSD` for tagging conformer-group identities (unregistered algorithm; built directly via `Identity.from_value` rather than `from_geometry`).
+- `geom.comparison.is_duplicate_conformer()` for iRMSD-based conformer matching.
+- `geom.adjacency_matrix(..., flood_fill=True)` option for connectivity-based flood filling.
+- `rd.mol.set_coordinates()` for replacing an RDKit mol's conformer coordinates.
+- `geom.inertia`, `geom.internal`, `geom.vibration` modules (experimental): moments of inertia, internal coordinates, and vibrational analysis.
+- `docs/source/*` pages (geometry, identity, interoperability, visualization, installation) and expanded README.
+
+### Changed
+- `automol.element` -> `automol.utils.element` to fit module layering.
+- `automol.view` -> `automol.geom.view` since it consumes `Geometry` directly.
+- `tests/test_geom.py` -> `tests/{test_core,test_properties,test_transform,test_comparison}.py` + `tests/conftest.py` to organize growing test suite.
+
+### Removed
+- `automol.geom.canon`, `automol.geoms`, `automol.graph` (including `graph.ts`) — superseded by current `geom`/`ident` design.
 
 ## [0.0.18] - 2026-07-02
 ### Added
