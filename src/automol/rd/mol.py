@@ -221,6 +221,33 @@ def has_coordinates(mol: Mol) -> bool:
 
 
 # Transformations
+def set_coordinates(mol: Mol, coords: FloatArray, *, in_place: bool = False) -> Mol:
+    """
+    Set atom coordinates, replacing any existing conformer.
+
+    Parameters
+    ----------
+    mol
+        RDKit molecule object.
+    coords
+        Atomic coordinates as an (N, 3) array.
+    in_place, optional
+        If `True`, modify the molecule in place.
+        If `False` (default), return a new molecule.
+
+    Returns
+    -------
+        RDKit molecule object with the given coordinates.
+    """
+    mol = mol if in_place else Mol(mol)
+    conf = Chem.Conformer(mol.GetNumAtoms())
+    for i, (x, y, z) in enumerate(coords):
+        conf.SetAtomPosition(i, (float(x), float(y), float(z)))
+    mol.RemoveAllConformers()
+    mol.AddConformer(conf, assignId=True)
+    return mol
+
+
 def add_coordinates(mol: Mol, *, in_place: bool = False) -> Mol:
     """
     Add coordinates, if missing.

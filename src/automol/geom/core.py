@@ -194,7 +194,8 @@ def from_xyz_file(path: str | Path, *, charge: int, spin: int) -> Geometry:
 def rdkit_mol(geo: Geometry) -> Mol:
     """Instantiate an rdkit Mol from a Geometry."""
     smg = stereo_mol_graph(geo)
-    return smg.to_rdmol(charge=geo.charge)
+    mol = smg.to_rdmol(charge=geo.charge)
+    return rd.mol.set_coordinates(mol, geo.coordinates, in_place=True)
 
 
 def from_rdkit_mol(mol: Mol) -> Geometry:
