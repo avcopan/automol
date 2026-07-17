@@ -73,7 +73,6 @@ layers = [
 testpaths = ["tests", "src"]
 addopts = [
     "--doctest-modules",
-    "--ignore=src/automol/experimental",
     "--cov=automol",
     "--cov-report=term-missing",
     "--cov-report=html",
