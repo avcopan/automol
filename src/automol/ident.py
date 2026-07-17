@@ -40,6 +40,7 @@ class Algorithm(StrEnum):
 
     RDKIT_INCHI = ("rdkit inchi", "stereoisomer")
     RDKIT_SMILES = ("rdkit smiles", "stereoisomer")
+    IRMSD = ("irmsd", "conformer")
 
 
 @dataclass

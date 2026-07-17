@@ -54,3 +54,15 @@ def test__unknown_algorithm_raises() -> None:
     """Test that looking up an unregistered algorithm is rejected."""
     with pytest.raises(UnknownAlgorithmError):
         AlgorithmRegistry.get("not-a-real-algorithm")  # ty: ignore[invalid-argument-type]
+
+
+def test__irmsd_algorithm_kind() -> None:
+    """Test that IRMSD is tagged with the conformer kind and needs no registry entry."""
+    assert Algorithm.IRMSD.kind == "conformer"
+
+    ident = Identity.from_value("3", algorithm=Algorithm.IRMSD)
+    assert ident.kind == "conformer"
+    assert ident.value == "3"
+
+    with pytest.raises(UnknownAlgorithmError):
+        AlgorithmRegistry.get(Algorithm.IRMSD)
