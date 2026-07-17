@@ -90,10 +90,19 @@ def test__adjacency_matrix(water: Geometry) -> None:
     assert np.array_equal(amat, [[0, 1, 1], [1, 0, 0], [1, 0, 0]])
 
 
-def test__adjacency_matrix_flood_fill_not_implemented(water: Geometry) -> None:
-    """Test that flood_fill is not yet implemented."""
-    with pytest.raises(NotImplementedError):
-        geom.adjacency_matrix(geo=water, flood_fill=True)
+def test__adjacency_matrix_flood_fill(water: Geometry) -> None:
+    """Test adjacency matrix flood fill."""
+    amat = geom.adjacency_matrix(geo=water, flood_fill=True)
+    assert np.array_equal(amat, [[0, 1, 1], [1, 0, 0], [1, 0, 0]])
+
+    disconnected = Geometry(
+        symbols=["H", "H"],
+        coordinates=[[0, 0, 0], [2, 0, 0]],
+        charge=0,
+        spin=0,
+    )
+    amat = geom.adjacency_matrix(geo=disconnected, flood_fill=True)
+    assert np.array_equal(amat, [[0, 1], [1, 0]])
 
 
 def test__distance_keys(water: Geometry) -> None:

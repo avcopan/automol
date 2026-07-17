@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 from scipy import spatial
+from scipy.sparse.csgraph import connected_components
 
 from ..utils import element
 from ..utils.types import FloatArray
@@ -71,13 +72,19 @@ def adjacency_matrix(
     radii = np.array(geo.covalent_radii)
     dmat = distance_matrix(geo)
 
-    umat = sigma * (radii[:, None] + radii[None, :])
-    amat = (dmat < umat).astype(int)
+    while True:
+        umat = sigma * (radii[:, None] + radii[None, :])
+        amat = (dmat < umat).astype(int)
+        np.fill_diagonal(amat, 0)
 
-    if flood_fill:
-        raise NotImplementedError
+        if not flood_fill:
+            break
 
-    np.fill_diagonal(amat, 0)
+        n_components, _ = connected_components(amat, directed=False)
+        if n_components <= 1:
+            break
+        sigma += 0.05
+
     return amat
 
 
