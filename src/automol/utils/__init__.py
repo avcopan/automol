@@ -1,5 +1,5 @@
 """Automol utilities."""
 
-from . import constants, exc, types
+from . import constants, element, exc, types
 
-__all__ = ["constants", "exc", "types"]
+__all__ = ["constants", "element", "exc", "types"]

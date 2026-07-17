@@ -1,11 +1,8 @@
 # Contributing to automol
 
 Thank you for your interest in contributing to **automol**!
-Contributions of all kinds are welcome, including bug reports,
-documentation improvements, and new features.
 
-This document outlines the basic development workflow and coding
-conventions used in the project.
+Contributions of all kinds are welcome, including bug reports, documentation improvements, and new features.
 
 ## Development workflow
 
@@ -13,149 +10,93 @@ To get set up:
 1. Install [Pixi](https://pixi.prefix.dev/latest/installation/)
 2. Fork the repository
 3. Clone the repository and run `pixi run init` inside it
-To contribute code, submit pull requests with clear descriptions of the changes.
-For larger contributions, create an issue first to propose your idea.
+
+To contribute code, submit pull requests with clear descriptions of the changes. For larger contributions, create an issue first to propose your idea.
+
+All tasks run through Pixi (`pixi run <task>`), defined in `pixi.toml` under `[feature.dev.tasks]`:
+
+- `pixi run fmt` — format with Ruff
+- `pixi run lint` — lint with Ruff (`--fix`)
+- `pixi run types` — static type-check with `ty`
+- `pixi run imports` — enforce module layering with `lint-imports` (import-linter)
+- `pixi run test` — run the full pytest suite
+- `pixi run pre-commit` — run all of the above via lefthook, in order (fmt → lint → types → imports → test), then check the tree is clean
+- `pixi run cov-view` — open the HTML coverage report
+
+To run a single test, invoke `pytest` directly inside the pixi env rather than through the `pixi run test` task, e.g.:
+
+```bash
+pixi run -e dev pytest tests/geom/test_core.py::test_foo
+```
+
+pytest is configured with `--doctest-modules`, so doctests in `src/` docstrings are collected and run as part of the suite. Coverage must stay ≥80% (`fail_under = 80` in `pyproject.toml`).
 
 ## Coding standards
 
-Coding standards are largely enforced by the pre-commit hooks, which perform
-formatting and linting ([Ruff](https://github.com/charliermarsh/ruff)),
-import linting ([Lint-Imports](https://import-linter.readthedocs.io/en/stable/)),
-static type-checking ([Ty](https://github.com/astral-sh/ty)),
-and testing ([PyTest](https://docs.pytest.org/en/latest/))
-with code coverage reports [CodeCov](https://docs.codecov.com/docs).
+Coding standards are largely enforced by the pre-commit hooks, which perform formatting and linting ([Ruff](https://github.com/charliermarsh/ruff)), import linting ([Lint-Imports](https://import-linter.readthedocs.io/en/stable/)), static type-checking ([Ty](https://github.com/astral-sh/ty)), and testing ([PyTest](https://docs.pytest.org/en/latest/)) with code coverage reports [CodeCov](https://docs.codecov.com/docs).
 
-Docstrings follow the
-[NumPy docstring standard](https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard).
+Docstrings follow the [NumPy docstring standard](https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard). Doctest examples embedded in docstrings are executed as part of the test suite (`--doctest-modules`), so keep them runnable and accurate — a docstring example that no longer works is treated as a test failure, not just stale documentation.
 
----
+## Architecture
 
-## Naming conventions
+### Module layering
 
-This project follows consistent naming conventions to clearly
-distinguish **modules**, **types**, and **data-valued variables**. The
-goal is to keep scientific code concise, readable, and free of name
-collisions.
+`pyproject.toml` defines a strict layer contract, enforced by `lint-imports` (`pixi run imports`).
+Higher layers may depend on lower ones, never the reverse:
 
-### Modules
-
-Submodules are named after molecular data *domains* using short,
-singular nouns:
 ```
+automol.ident   (highest)
 automol.geom
-automol.graph
-automol.smiles
-```
-Modules act as **namespaces for algorithms and utilities**, not as
-variable names.
-
-**Rule:** Module names must not be used for data-valued variables.
-
----
-
-### Types (data models)
-
-Data structures are defined as singular, capitalized class names:
-
-``` python
-Geometry
-Graph
-Smiles
+automol.rd
+automol.utils   (lowest)
 ```
 
-These classes represent molecular data objects and define their schema
-and validation.
+`automol.rd` (RDKit interop) sits below `automol.geom`, which is itself below `automol.ident` (InChI/SMILES generation). Adding an import that violates this order will fail `pixi run imports`.
 
----
+3D visualization (`automol.geom.view`) lives inside `automol.geom` rather than as its own layer, since it consumes `Geometry` directly (via `Geometry._repr_html_`) and would otherwise create a reverse dependency from `automol.geom` up to a sibling `automol.view`.
 
-### Variables (instances of data types)
+### "If you own the data, you own the interface"
 
-Variables holding instances of molecular data types use **short,
-unambiguous abbreviations**, rather than full words or module names.
+Each core data model (e.g. `Geometry`) is owned by the module that defines it, and that module owns the conversion logic to/from external formats or libraries, not the bridge sub-package:
 
-  Type              |Variable name
-  ------------------|---------------
-  `Geometry`        |`geo`
-  `Graph`           |`gra`
-  `Smiles`          |`smi`
+- Bridge/interop sub-packages (e.g. `automol.rd`) stay "pure" — zero knowledge of the core models. `automol.rd.mol` only deals in RDKit `Mol` objects (plus primitive types), never `Geometry`. This follows directly from the layering contract: `automol.rd` sits *below* `automol.geom`, so it cannot import `Geometry` even if it wanted to.
+- The core model's own module imports the lower-layer bridge and owns the conversion, e.g. `geom/core.py` imports `automol.rd` and defines `rdkit_mol()` / `from_rdkit_mol()` to convert to/from RDKit `Mol` objects, rather than `automol.rd` knowing about `Geometry`.
+- When another package in the suite (e.g. AutoStore) needs to convert an automol `Geometry`, it calls automol's own conversion function rather than reimplementing the mapping.
 
-Example:
+Conversions are standalone module-level functions, not methods on the Pydantic model, so the model itself stays free of optional/heavy dependencies.
 
-``` python
+### Current module map
+
+- `automol.geom` — the `Geometry` core model (`core.py`), plus `properties.py` (center of mass, distance matrix/keys, adjacency matrix), `transform.py`, `comparison.py` (e.g. `is_duplicate_conformer`, via `irmsd`), and `view.py` (`View`, 3D visualization, py3Dmol-based).
+- `automol.rd` — RDKit bridge (`rd/mol.py`) for `Geometry` ↔ RDKit mol conversion.
+- `automol.ident` — `Algorithm`/`Identity` for InChI/SMILES generation from a `Geometry`.
+- `automol.utils` — shared low-level helpers: `constants.py`, `types.py`, `exc.py`, `utils/element/`.
+
+## Conventions
+
+automol distinguishes **modules**, **types**, and **data-valued variables** to keep scientific code concise and free of name collisions:
+
+- **Modules** are short, singular domain nouns and act only as namespaces for algorithms, e.g. `automol.geom`, `automol.ident`. Never use a module name as a variable name.
+- **Types** are singular, capitalized data models, e.g. `Geometry`.
+- **Variables** holding instances use short abbreviations distinct from the module name, e.g. a `Geometry` instance is `geo` (not `geom`, which is the module).
+- **Algorithms are module-level functions**, not instance methods, e.g. `center_of_mass(geo: Geometry) -> FloatArray` in `automol.geom`.
+
+```python
 from automol import geom, Geometry
 
 geo = Geometry(["O", "H", "H"], coordinates)
 com = geom.center_of_mass(geo)
 ```
 
-**Rule:**
-- `geom` refers to the **module** - `geo` refers to a **geometry
-instance**
+This holds across sub-package boundaries too — the RDKit bridge follows the same pattern of module-level conversion functions rather than methods on `Geometry` or `Mol`:
 
-This distinction is used consistently throughout the codebase.
-
----
-
-### Functions vs methods
-
-Algorithms operating on molecular data are implemented as **module-level
-functions**, not instance methods:
-
-``` python
-def center_of_mass(geo: Geometry) -> FloatArray:
-    ...
-```
-
-This keeps data models lightweight and separates data representation
-from algorithms, following standard scientific Python practice.
-
----
-
-## Domain Ownership & Conversions
-
-To maintain a decoupled suite, we follow a **Domain-Driven Design** approach. Each package in the suite is the owner of its specific objects and is the sole authority on how to translate those objects to/from external standards (like qcio).
-
-### The Core Philosophy
-> **"If you own the data, you own the interface."**
->
-> Contributors should implement conversion logic within the package that defines the internal model. This prevents packages from needing to know the implementation details of every other tool in the suite.
-
-### Example Ownership
-| Package | Owned Object | Responsibility | Key Conversion Methods |
-|---------|--------------|----------------|------------------------|
-| **AutoMol** | `Geometry` | Coordinates, charge, spin, ... | ```from_geometry()``` ```to_geometry()``` |
-| **AutoStore** | `Calculation` | Calculation arguments, metadata, provenance, ... | ```from_calculation()``` ```to_calculation()``` |
-
-### Implementation Guidelines
-
-#### 1. Decoupled Conversions
-
-Conversion logic should be implemented as *standalone functions* rather than methods on the class. This keeps our core Pydantic/SQLModel objects lightweight and prevents external dependencies (like qcio or pint) from being required to instantiate a base model.
-
-#### 2. Using the Shared Interface
-
-When bridging objects between packages, always use the standalone conversion functions. For example, if AutoStore needs to generate a qcio `Structure` from an automol `Geometry`, it calls automol's geometry converter rather than manual dictionary mapping:
 ```python
-# Autostore leverages AutoMol's ownership of Geometry
-structure = automol.qc.structure.from_geometry(geo)
+from automol import geom, rd
+
+mol = rd.mol.from_smiles("O")
+geo = geom.from_rdkit_mol(mol)
 ```
-
-#### 3. Directory Structure & Abstraction Levels
-To keep the core of the packages stable and independent, we follow a **Provider Pattern**. Core objects (like `Geometry` and `Calculation`) must remain "pure"--they should have zero knowledge of sub-packages or external libraries like RDKit, qcio, ...
-
-Instead, the **sub-packages** provide bridges. They "import up" from the core and provide necessary translations.
-
-Dependencies should always flow from the specific (sub-packages) to the general (core models).
-
-* **Incorrect**: Putting `from_rdkit()` inside `geometry.py`. This forces the core to be dependent on RDKit.
-
-* **Correct**: Putting `to_geometry()` inside `src/autopilot/rd/mol.py`.
-
-**Rationale**: This allows the core packages to provide the framework for methods developed in this suite without bias towards specific software. Contributors can add support for new software by adding a new-subfolder without risking conflicts in the core model files or creating overly large core scripts.
-
----
 
 ## Questions
 
-If you have questions about contributing or design decisions, feel free
-to open an issue for discussion.
+If you have questions about contributing or design decisions, feel free to open an issue for discussion.

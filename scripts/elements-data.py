@@ -58,12 +58,12 @@ with engine.connect() as conn:
             "symbol": row.symbol,
             "mass": row.mass,
             "covalent_radius": row.covalent_radius_pyykko / 100,
-            "nvalence": mendeleev_element(row.atomic_number).nvalence(),
+            "valence": mendeleev_element(row.atomic_number).nvalence(),
         }
         for row in result
     ]
 
-elements_data_file = Path("src/automol/element/elements-data.json")
+elements_data_file = Path("src/automol/utils/element/elements-data.json")
 
 with elements_data_file.open("w", encoding="utf-8") as f:
     json.dump(elements_data, f, indent=2)

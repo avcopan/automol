@@ -1,50 +1,68 @@
 """Geometry module."""
 
-from . import transform
-from .canon import canonical_frame, canonical_sorting
+from . import transform, view
+from .comparison import is_duplicate_conformer
 from .core import (
     Geometry,
     from_rdkit_mol,
     from_xyz_block,
     from_xyz_file,
-    geometry_hash,
+    hill_formula,
     rdkit_mol,
+    stereo_mol_graph,
     xyz_block,
     xyz_file,
 )
-from .properties import (
-    adjacency_matrix,
-    center_of_mass,
-    dihedral_angle,
-    distance_matrix,
-    harmonic_zpv,
+from .inertia import (
+    eckart_frame,
     inertia_axes,
     inertia_moments,
     inertia_tensor,
+    rotation_to_inertia_axes,
+    rotational_analysis,
+)
+from .internal import angles, bonds, dihedrals, set_distance
+from .properties import adjacency_matrix, center_of_mass, distance_keys, distance_matrix
+from .vibration import (
+    harmonic_zpv,
+    mass_weight_vector,
+    normal_mode_projection,
+    rotational_normal_modes,
+    translational_normal_modes,
     vibrational_analysis,
 )
-from .view import render_gif, render_svg, view
+from .view import View
 
 __all__ = [
     "Geometry",
+    "View",
     "adjacency_matrix",
-    "canonical_frame",
-    "canonical_sorting",
+    "angles",
+    "bonds",
     "center_of_mass",
-    "dihedral_angle",
+    "dihedrals",
+    "distance_keys",
     "distance_matrix",
+    "eckart_frame",
     "from_rdkit_mol",
     "from_xyz_block",
     "from_xyz_file",
-    "geometry_hash",
     "harmonic_zpv",
+    "hill_formula",
     "inertia_axes",
     "inertia_moments",
     "inertia_tensor",
+    "is_duplicate_conformer",
+    "mass_weight_vector",
+    "normal_mode_projection",
     "rdkit_mol",
-    "render_gif",
-    "render_svg",
+    "rotation_to_inertia_axes",
+    "rotational_analysis",
+    "rotational_normal_modes",
+    "set_distance",
+    "stereo_mol_graph",
     "transform",
+    "translational_normal_modes",
     "vibrational_analysis",
     "view",
     "xyz_block",

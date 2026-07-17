@@ -2,7 +2,8 @@
 
 import pytest
 
-from automol import element
+from automol.utils import element
+from automol.utils.exc import ElementNotFoundError
 
 
 @pytest.mark.parametrize(("key", "mass_number"), [("H", 1), (115, 287)])
@@ -48,13 +49,13 @@ def test__shell_capacity(key: str | int, capacity: int) -> None:
 
 
 @pytest.mark.parametrize(
-    ("key", "override", "nvalence"), [("H", None, 1), (115, {"Mc": 4}, 4)]
+    ("key", "override", "valence"), [("H", None, 1), (115, {"Mc": 4}, 4)]
 )
-def test__nvalence(
-    key: str | int, override: dict[str, int] | None, nvalence: int
+def test__valence(
+    key: str | int, override: dict[str, int] | None, valence: int
 ) -> None:
-    """Test retrieval of element nvalence."""
-    assert element.valence(key, override=override) == nvalence
+    """Test retrieval of element valence."""
+    assert element.valence(key, override=override) == valence
 
 
 @pytest.mark.parametrize(
@@ -65,3 +66,16 @@ def test__bonding_capacity(
 ) -> None:
     """Test retrieval of element bonding capacity."""
     assert element.bonding_capacity(key, override=override) == capacity
+
+
+@pytest.mark.parametrize("key", [999, "Xx"])
+def test__from_key_not_found_raises(key: str | int) -> None:
+    """Test that an unknown atomic number or symbol is rejected."""
+    with pytest.raises(ElementNotFoundError):
+        element.from_key(key)
+
+
+def test__from_key_bad_type_raises() -> None:
+    """Test that a non-int, non-str key is rejected."""
+    with pytest.raises(TypeError, match="must be int or str"):
+        element.from_key(1.5)  # ty: ignore[invalid-argument-type]

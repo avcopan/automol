@@ -7,8 +7,6 @@ authors = [
 ]
 requires-python = ">= 3.12"
 dependencies = [
-    "more-itertools>=10.0",
-    "networkx>=3.3",
     "numpy>=2.0",
     "pint>=0.24",
     "py3dmol>=2.5",
@@ -16,6 +14,8 @@ dependencies = [
     "pyparsing>=3.3.2",
     "rdkit>=2025",
     "scipy>=1.13",
+    "stereomolgraph>=0.0.22b0",
+    "irmsd>=0.1.1",
 ]
 
 [build-system]
@@ -62,13 +62,10 @@ root_package = "automol"
 name = "Module Layering"
 type = "layers"
 layers = [
-    "automol.view",
-    "automol.geoms",
     "automol.ident",
     "automol.geom",
-    "automol.graph",
     "automol.rd",
-    "automol.utils | automol.element",
+    "automol.utils",
 ]
 
 # Pytest configurations

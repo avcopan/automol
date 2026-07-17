@@ -4,17 +4,43 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, ClassVar, Self
+from enum import StrEnum
+from typing import TYPE_CHECKING, ClassVar, Self
 
 from pydantic import BaseModel, model_validator
 from rdkit import Chem
 
 from . import geom
+from .utils.exc import AlgorithmAlreadyRegisteredError, UnknownAlgorithmError
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from .geom import Geometry
+
+
+class Algorithm(StrEnum):
+    """
+    Registered identity-generating algorithm, tagged with its kind.
+
+    Attributes
+    ----------
+    kind
+        Category of identity this algorithm produces (e.g., "stereoisomer").
+    """
+
+    kind: str
+
+    def __new__(cls, value: str, kind: str) -> Self:
+        """Construct an Algorithm member, attaching its kind."""
+        obj = str.__new__(cls, value)
+        obj._value_ = value
+        obj.kind = kind
+        return obj
+
+    RDKIT_INCHI = ("rdkit inchi", "stereoisomer")
+    RDKIT_SMILES = ("rdkit smiles", "stereoisomer")
+    IRMSD = ("irmsd", "conformer")
 
 
 @dataclass
@@ -24,10 +50,8 @@ class AlgorithmDef:
 
     Attributes
     ----------
-    kind
-        Category of identity (e.g., "stereoisomer", "conformer").
-    name
-        Name of the registered algorithm that produced this identity.
+    algorithm
+        Registered algorithm that produced this identity.
     identity_fn
         Callable function to generate string identifier from geometry.
     geometry_fn
@@ -35,11 +59,10 @@ class AlgorithmDef:
         `None` if the algorithm has no defined inverse.
     """
 
-    kind: str
-    name: str
+    algorithm: Algorithm
 
-    identity_fn: Callable[[Any], str]
-    geometry_fn: Callable[[Any], Geometry] | None = None
+    identity_fn: Callable[[Geometry], str]
+    geometry_fn: Callable[[str], Geometry] | None = None
 
 
 class AlgorithmFns(ABC):
@@ -60,21 +83,20 @@ class AlgorithmFns(ABC):
 class AlgorithmRegistry:
     """Central registry of all known identity algorithms."""
 
-    _algorithms: ClassVar[dict[str, AlgorithmDef]] = {}
+    _algorithms: ClassVar[dict[Algorithm, AlgorithmDef]] = {}
 
     @classmethod
     def register(
-        cls, name: str, kind: str
-    ) -> Callable[type[AlgorithmFns], type[AlgorithmFns]]:  # pyright: ignore[reportInvalidTypeForm]
+        cls, algorithm: Algorithm
+    ) -> Callable[[type[AlgorithmFns]], type[AlgorithmFns]]:
         """Register identity_fn and geometry_fn as an AlgorithmDef."""
 
         def decorator(cls_: type[AlgorithmFns]) -> type[AlgorithmFns]:
-            if name in cls._algorithms:
-                msg = f"Algorithm {name!r} is already registered."
-                raise ValueError(msg)
-            cls._algorithms[name] = AlgorithmDef(
-                name=name,
-                kind=kind,
+            if algorithm in cls._algorithms:
+                msg = f"Algorithm {algorithm!r} is already registered."
+                raise AlgorithmAlreadyRegisteredError(msg)
+            cls._algorithms[algorithm] = AlgorithmDef(
+                algorithm=algorithm,
                 identity_fn=staticmethod(cls_.identity_fn),
                 geometry_fn=staticmethod(cls_.geometry_fn),
             )
@@ -85,30 +107,30 @@ class AlgorithmRegistry:
     @classmethod
     def register_def(cls, alg: AlgorithmDef) -> None:
         """Directly register an AlgorithmDef instance."""
-        if alg.name in cls._algorithms:
-            msg = f"Algorithm {alg.name!r} is already registered."
-            raise ValueError(msg)
-        cls._algorithms[alg.name] = alg
+        if alg.algorithm in cls._algorithms:
+            msg = f"Algorithm {alg.algorithm!r} is already registered."
+            raise AlgorithmAlreadyRegisteredError(msg)
+        cls._algorithms[alg.algorithm] = alg
 
     @classmethod
-    def get(cls, name: str) -> AlgorithmDef:
+    def get(cls, algorithm: Algorithm) -> AlgorithmDef:
         """Get an algorithm from registry."""
         try:
-            return cls._algorithms[name]
+            return cls._algorithms[algorithm]
         except KeyError:
             available = ", ".join(sorted(cls._algorithms))
-            msg = f"Unknown algorithm {name!r}. Available: {available}"
-            raise KeyError(msg) from None
+            msg = f"Unknown algorithm {algorithm!r}. Available: {available}"
+            raise UnknownAlgorithmError(msg) from None
 
     @classmethod
-    def all_names(cls) -> list[str]:
+    def all_algorithms(cls) -> list[Algorithm]:
         """Return all registered algorithms."""
         return sorted(cls._algorithms)
 
     @classmethod
-    def names_for_kind(cls, kind: str) -> list[str]:
+    def algorithms_for_kind(cls, kind: str) -> list[Algorithm]:
         """Return all registered algorithms for a kind."""
-        return sorted(n for n, a in cls._algorithms.items() if a.kind == kind)
+        return sorted(a for a in cls._algorithms if a.kind == kind)
 
 
 class Identity(BaseModel):
@@ -117,32 +139,44 @@ class Identity(BaseModel):
 
     Parameters
     ----------
-    kind
-        Category of identity (e.g., "stereoisomer", "conformer").
     algorithm
-        Name of the registered algorithm that produced this identity.
+        Registered algorithm that produced this identity.
     value
         Resulting string identifier.
+    kind
+        Category of identity (e.g., "stereoisomer", "conformer"). Must match
+        `algorithm.kind`; prefer `from_geometry` or `from_value` over setting
+        this directly.
     """
 
-    kind: str
-    algorithm: str
+    algorithm: Algorithm
     value: str
+    kind: str
 
     @model_validator(mode="after")
     def _validate_algorithm_kind(self) -> Identity:
-        alg = AlgorithmRegistry.get(self.algorithm)  # raises if unknown
-        if alg.kind != self.kind:
-            msg = f"Algorithm {self.algorithm!r} belongs to kind {alg.kind!r}."
+        if self.kind != self.algorithm.kind:
+            msg = (
+                f"Algorithm {self.algorithm!r} belongs to kind "
+                f"{self.algorithm.kind!r}, not {self.kind!r}."
+            )
+            # Pydantic only wraps ValueError/TypeError/AssertionError from
+            # model validators into a ValidationError; anything else bypasses
+            # that pipeline entirely, so this must stay a plain ValueError.
             raise ValueError(msg)
         return self
 
     @classmethod
-    def from_geometry(cls, geo: Geometry, *, algorithm: str) -> Self:
-        """Return an Identity from a Geometry."""
+    def from_geometry(cls, geo: Geometry, *, algorithm: Algorithm) -> Self:
+        """Return an Identity from a Geometry, by algorithm alone."""
         alg = AlgorithmRegistry.get(algorithm)
         value = alg.identity_fn(geo)
-        return cls(kind=alg.kind, algorithm=algorithm, value=value)
+        return cls.from_value(value, algorithm=algorithm)
+
+    @classmethod
+    def from_value(cls, value: str, *, algorithm: Algorithm) -> Self:
+        """Return an Identity from an already-computed value, by algorithm alone."""
+        return cls(algorithm=algorithm, value=value, kind=algorithm.kind)
 
     def geometry(self) -> Geometry:
         """Return a Geometry from Identity instance."""
@@ -152,7 +186,7 @@ class Identity(BaseModel):
         raise NotImplementedError
 
 
-@AlgorithmRegistry.register(name="rdkit inchi", kind="stereoisomer")
+@AlgorithmRegistry.register(Algorithm.RDKIT_INCHI)
 class RDKitInChI(AlgorithmFns):
     """Identify geometry with InChI using RDKit."""
 
@@ -171,7 +205,7 @@ class RDKitInChI(AlgorithmFns):
         return geom.from_rdkit_mol(mol)
 
 
-@AlgorithmRegistry.register(name="rdkit smiles", kind="stereoisomer")
+@AlgorithmRegistry.register(Algorithm.RDKIT_SMILES)
 class RDKitSMILES(AlgorithmFns):
     """Identify or generate geometry with SMILES using RDKit."""
 

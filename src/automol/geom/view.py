@@ -1,5 +1,6 @@
 """View functions."""
 
+import tempfile
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -171,12 +172,11 @@ def render_svg(
     """
     out = Path(out).with_suffix(".svg") if out else out
 
-    tmp_file = Path.cwd() / ".tmp.xyz"
-    xyz_file(geo, path=tmp_file)
-    mol = xyzrender.load(tmp_file)
-
-    tmp_file.unlink()
-    return xyzrender.render(mol, config=config, hy=include_h, output=out)
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_file = Path(tmp_dir) / "geometry.xyz"
+        xyz_file(geo, path=tmp_file)
+        mol = xyzrender.load(tmp_file)
+        return xyzrender.render(mol, config=config, hy=include_h, output=out)
 
 
 def render_gif(
@@ -210,11 +210,10 @@ def render_gif(
     """
     out = Path(out).with_suffix(".gif") if out else out
 
-    tmp_file = Path.cwd() / ".tmp.xyz"
-    xyz_file(geo, path=tmp_file)
-    mol = xyzrender.load(tmp_file)
-
-    tmp_file.unlink()
-    return xyzrender.render_gif(
-        mol, config=config, hy=include_h, output=out, gif_rot=rotation_axis
-    )
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_file = Path(tmp_dir) / "geometry.xyz"
+        xyz_file(geo, path=tmp_file)
+        mol = xyzrender.load(tmp_file)
+        return xyzrender.render_gif(
+            mol, config=config, hy=include_h, output=out, gif_rot=rotation_axis
+        )

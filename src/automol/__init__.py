@@ -2,9 +2,16 @@
 
 __version__ = "0.0.18"
 
-from . import geom, geoms, graph
-from .geom import Geometry
-from .ident import Identity
-from .view import View
+from . import geom, rd
+from .geom import Geometry, View, view
+from .ident import Algorithm, Identity
 
-__all__ = ["Geometry", "Identity", "View", "geom", "geoms", "graph"]
+__all__ = [
+    "Algorithm",
+    "Geometry",
+    "Identity",
+    "View",
+    "geom",
+    "rd",
+    "view",
+]
