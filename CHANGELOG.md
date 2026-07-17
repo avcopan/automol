@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+
+## [0.0.19] - 2026-07-17
 ### Added
 - `Algorithm.IRMSD` for tagging conformer-group identities (unregistered algorithm; built directly via `Identity.from_value` rather than `from_geometry`).
 - `geom.comparison.is_duplicate_conformer()` for iRMSD-based conformer matching.
