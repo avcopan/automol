@@ -7,6 +7,7 @@ preview = ["pixi-build"]
 python = ">=3.12,<3.14"
 automol = { path = "." }
 automatics = "==0.0.6" # local:false
+ipython = ">=9.15.0,<10"
 # automatics = { path = "../automatics" } # local:true
 
 [package]

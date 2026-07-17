@@ -9,7 +9,7 @@ import py3Dmol
 import xyzrender
 from numpy.typing import ArrayLike
 
-from .geom import Geometry, xyz_file
+from .core import Geometry, xyz_file
 
 
 class View(py3Dmol.view):

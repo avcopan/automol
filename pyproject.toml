@@ -7,9 +7,6 @@ authors = [
 ]
 requires-python = ">= 3.12"
 dependencies = [
-    "ase>=3.23",
-    "more-itertools>=10.0",
-    "networkx>=3.3",
     "numpy>=2.0",
     "pint>=0.24",
     "py3dmol>=2.5",
@@ -65,7 +62,6 @@ root_package = "automol"
 name = "Module Layering"
 type = "layers"
 layers = [
-    "automol.view",
     "automol.ident",
     "automol.geom",
     "automol.rd",

@@ -1,6 +1,6 @@
 """Geometry module."""
 
-from . import transform
+from . import transform, view
 from .comparison import is_duplicate_conformer
 from .core import (
     Geometry,
@@ -10,14 +10,15 @@ from .core import (
     hill_formula,
     rdkit_mol,
     stereo_mol_graph,
-    to_ase,
     xyz_block,
     xyz_file,
 )
 from .properties import adjacency_matrix, center_of_mass, distance_keys, distance_matrix
+from .view import View
 
 __all__ = [
     "Geometry",
+    "View",
     "adjacency_matrix",
     "center_of_mass",
     "distance_keys",
@@ -29,8 +30,8 @@ __all__ = [
     "is_duplicate_conformer",
     "rdkit_mol",
     "stereo_mol_graph",
-    "to_ase",
     "transform",
+    "view",
     "xyz_block",
     "xyz_file",
 ]

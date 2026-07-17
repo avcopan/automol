@@ -229,4 +229,6 @@ __marimo__/
 # pixi build
 *.conda
 
-experimental/*
+experimental
+
+CLAUDE.md

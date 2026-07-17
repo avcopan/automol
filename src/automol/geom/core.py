@@ -6,7 +6,6 @@ from typing import Self
 
 import numpy as np
 import pyparsing as pp
-from ase import Atoms
 from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
 from pyparsing import pyparsing_common as ppc
 from rdkit.Chem import Mol
@@ -100,8 +99,23 @@ class Geometry(BaseModel):
         """Get numbers of valence electrons."""
         return list(map(element.valence, self.symbols))
 
+    def _repr_html_(self) -> str | None:
+        """Render geometry inline in Jupyter."""
+        from . import view  # noqa: PLC0415  (avoids circular import)
+
+        return view.view(self, label=True)._repr_html_()
+
+    def __repr__(self) -> str:
+        """Render Geometry as an xyz block instead of dumping raw fields."""
+        return self.xyz_block()
+
+    __str__ = __repr__
+
     def xyz_block(self, *, comment: str | None = None) -> str:
-        """Return Geometry as a formatted xyz block with optional comment."""
+        """Return Geometry as a formatted xyz block.
+
+        Defaults to a comment reporting the charge and spin, e.g. "Geometry(q=0, s=0)".
+        """
         return xyz_block(self, comment=comment)
 
     @classmethod
@@ -116,7 +130,10 @@ class Geometry(BaseModel):
         )
 
     def xyz_file(self, *, path: str | Path, comment: str | None = None) -> None:
-        """Write Geometry as a formatted xyz file with optional comment."""
+        """Write Geometry as a formatted xyz file.
+
+        Defaults to a comment reporting the charge and spin, e.g. "Geometry(q=0, s=0)".
+        """
         xyz_file(self, path=path, comment=comment)
 
     @classmethod
@@ -127,8 +144,13 @@ class Geometry(BaseModel):
 
 
 def xyz_block(geo: Geometry, *, comment: str | None = None) -> str:
-    """Return Geometry as a formatted xyz block with optional comment."""
-    lines = [str(geo.atom_count), comment or ""]
+    """Return Geometry as a formatted xyz block with optional comment.
+
+    Defaults to a comment reporting the charge and spin, e.g. "Geometry(q=0, s=0)".
+    """
+    if comment is None:
+        comment = f"Geometry(q={geo.charge}, s={geo.spin})"
+    lines = [str(geo.atom_count), comment]
     for sym, (x, y, z) in zip(geo.symbols, geo.coordinates, strict=True):
         lines.append(f"{sym:<4} {x:12.8f} {y:12.8f} {z:12.8f}")
 
@@ -157,7 +179,10 @@ def from_xyz_block(xyz_block: str, *, charge: int, spin: int) -> Geometry:
 
 
 def xyz_file(geo: Geometry, *, path: str | Path, comment: str | None = None) -> None:
-    """Write a Geometry to a formatted xyz file with optional comment."""
+    """Write a Geometry to a formatted xyz file.
+
+    Defaults to a comment reporting the charge and spin, e.g. "Geometry(q=0, s=0)".
+    """
     Path(path).write_text(xyz_block(geo, comment=comment))
 
 
@@ -182,15 +207,6 @@ def from_rdkit_mol(mol: Mol) -> Geometry:
         coordinates=rd.mol.coordinates(mol),
         charge=rd.mol.charge(mol),
         spin=rd.mol.spin(mol),
-    )
-
-
-def to_ase(geo: Geometry) -> Atoms:
-    """Instantiate an ASE Atoms object from a Geometry."""
-    return Atoms(
-        symbols=geo.symbols,
-        positions=geo.coordinates,
-        info={"charge": geo.charge, "spin": geo.spin},
     )
 
 

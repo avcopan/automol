@@ -36,6 +36,13 @@ class UnknownAlgorithmError(Exception):
         super().__init__(message)
 
 
+class XTBError(Exception):
+    """Raise an error when an xtb calculation fails."""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+
+
 class XYZFormatError(Exception):
     """Raise an error when xyz format fails to parse."""
 

@@ -47,16 +47,6 @@ def test__rdkit_roundtrip(water: Geometry) -> None:
     assert geo_rt.spin == water.spin
 
 
-def test__to_ase(water: Geometry) -> None:
-    """Test Geometry to ASE Atoms conversion."""
-    atoms = geom.to_ase(water)
-
-    assert atoms.get_chemical_symbols() == water.symbols
-    assert np.allclose(atoms.positions, water.coordinates)
-    assert atoms.info["charge"] == water.charge
-    assert atoms.info["spin"] == water.spin
-
-
 def test__xyz_roundtrip(water: Geometry) -> None:
     """Test Geometry to xyz string roundtrip."""
     xyz = water.xyz_block()

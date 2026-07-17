@@ -1,6 +1,6 @@
 # Visualization
 
-`automol.view` builds on [py3Dmol](https://3dmol.csb.pitt.edu/) for
+`automol.geom.view` builds on [py3Dmol](https://3dmol.csb.pitt.edu/) for
 interactive 3D viewing (e.g. in a Jupyter notebook) and on
 [xyzrender](https://pypi.org/project/xyzrender/) for static image and
 animation output.
