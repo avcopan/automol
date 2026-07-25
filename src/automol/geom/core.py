@@ -217,6 +217,12 @@ def stereo_mol_graph(geo: Geometry) -> StereoMolGraph:
     return StereoMolGraph.from_geometry(sm_geo)  # ty:ignore[invalid-argument-type]
 
 
+def from_stereo_mol_graph(smg: StereoMolGraph, *, charge: int = 0) -> Geometry:
+    """Instantiate a Geometry from a StereoMolGraph."""
+    mol = smg.to_rdmol(charge=charge)
+    return from_rdkit_mol(mol)
+
+
 def hill_formula(geo: Geometry) -> str:
     """Render the molecular formula in Hill order."""
     counts = Counter(s.capitalize() for s in geo.symbols)
