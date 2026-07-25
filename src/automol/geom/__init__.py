@@ -5,6 +5,7 @@ from .comparison import is_duplicate_conformer
 from .core import (
     Geometry,
     from_rdkit_mol,
+    from_stereo_mol_graph,
     from_xyz_block,
     from_xyz_file,
     hill_formula,
@@ -23,6 +24,7 @@ from .inertia import (
 )
 from .internal import angles, bonds, dihedrals, set_distance
 from .properties import adjacency_matrix, center_of_mass, distance_keys, distance_matrix
+from .transform import transition
 from .vibration import (
     harmonic_zpv,
     mass_weight_vector,
@@ -45,6 +47,7 @@ __all__ = [
     "distance_matrix",
     "eckart_frame",
     "from_rdkit_mol",
+    "from_stereo_mol_graph",
     "from_xyz_block",
     "from_xyz_file",
     "harmonic_zpv",
@@ -62,6 +65,7 @@ __all__ = [
     "set_distance",
     "stereo_mol_graph",
     "transform",
+    "transition",
     "translational_normal_modes",
     "vibrational_analysis",
     "view",

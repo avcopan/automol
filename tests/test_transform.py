@@ -1,6 +1,7 @@
 """Geometry transform tests."""
 
 import numpy as np
+import pytest
 from scipy.spatial.transform import Rotation
 
 from automol import Geometry, geom
@@ -58,3 +59,45 @@ def test__rotate_in_place(water: Geometry) -> None:
     result = geom.transform.rotate(water, rot, in_place=True)
     assert result is water
     assert np.allclose(water.coordinates, expected)
+
+
+def test__transition_raises_for_mismatched_spin(water: Geometry) -> None:
+    """Test that transition() rejects geometries with different spins."""
+    water_triplet = water.model_copy(update={"spin": 2})
+    assert water.spin != water_triplet.spin
+    with pytest.raises(ValueError, match="spin"):
+        geom.transform.transition(water, water_triplet)
+
+
+def test__transition_identity(water: Geometry) -> None:
+    """Test the (degenerate) transition between a geometry and itself."""
+    ts_geo = geom.transform.transition(water, water)
+    assert ts_geo.symbols == water.symbols
+    assert ts_geo.spin == water.spin
+    assert ts_geo.coordinates.shape == water.coordinates.shape
+    assert np.all(np.isfinite(ts_geo.coordinates))
+
+
+def test__transition_hydrogen_abstraction() -> None:
+    """Test the transition geometry for an H-abstraction reaction.
+
+    F-H + Cl -> F + H-Cl: the migrating H atom breaks its bond to F and forms
+    a new bond to Cl.
+    """
+    reactant = Geometry(
+        symbols=["F", "H", "Cl"],
+        coordinates=[[0, 0, 0], [0.92, 0, 0], [3.5, 0, 0]],
+        charge=0,
+        spin=0,
+    )
+    product = Geometry(
+        symbols=["F", "H", "Cl"],
+        coordinates=[[0, 0, 0], [3.0, 0, 0], [4.27, 0, 0]],
+        charge=0,
+        spin=0,
+    )
+    ts_geo = geom.transform.transition(reactant, product)
+    assert ts_geo.symbols == reactant.symbols
+    assert ts_geo.spin == reactant.spin
+    assert ts_geo.coordinates.shape == reactant.coordinates.shape
+    assert np.all(np.isfinite(ts_geo.coordinates))

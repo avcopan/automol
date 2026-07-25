@@ -36,7 +36,6 @@ ipykernel = "*"
 
 [feature.dev.pypi-dependencies]
 keepachangelog = "*"
-xyzrender = ">=0.3.1, <0.4"
 
 [feature.docs.dependencies]
 sphinx = "*"
@@ -51,6 +50,7 @@ dev = { features = ["dev", "docs"], solve-group = "default"}
 [pypi-dependencies]
 stereomolgraph = ">=0.0.22b0"
 irmsd = "==0.1.1"
+xyzrender = ">=0.3.1, <0.4"
 
 [feature.dev.tasks]
 # Manage pyproject.toml with uv
