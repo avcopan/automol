@@ -1,6 +1,6 @@
 """automol."""
 
-__version__ = "0.0.19"
+__version__ = "0.0.21"
 
 from . import geom, rd
 from .geom import Geometry, View, view
