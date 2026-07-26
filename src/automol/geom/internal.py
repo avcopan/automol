@@ -182,7 +182,7 @@ def dihedrals(
     return np.column_stack([i, j, k, l, phi])
 
 
-def set_distance(
+def set_bond(
     geo: "Geometry",
     *,
     idxs: Sequence[int],
@@ -191,7 +191,7 @@ def set_distance(
     in_place: bool = False,
 ) -> "Geometry":
     """
-    Set distance between two atoms.
+    Set bond distance between two atoms.
 
     Parameters
     ----------
@@ -210,20 +210,6 @@ def set_distance(
     -------
     Geometry
         Updated geometry.
-
-    Example
-    -------
-    >>> from automol import Geometry
-    >>> geo = Geometry(
-    ...     symbols=["O", "H", "H"],
-    ...     coordinates=[[0, 0, 0], [1, 0, 0], [0, 1, 0]],
-    ...     charge=0,
-    ...     spin=0,
-    ... )
-    >>> updated = set_distance(geo, idxs=[0, 1], val=1.2)
-    >>> dist = float(np.linalg.norm(updated.coordinates[1] - updated.coordinates[0]))
-    >>> round(dist, 6)
-    1.2
     """
     if len(idxs) != 2:  # noqa: PLR2004
         msg = f"Wrong number of indices provided ({len(idxs)} != 2)."

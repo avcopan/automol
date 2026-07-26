@@ -2,7 +2,7 @@
 
 import pytest
 
-from automol import Algorithm, Identity
+from automol import Algorithm, Geometry, Identity
 from automol.ident import AlgorithmRegistry
 from automol.utils.exc import AlgorithmAlreadyRegisteredError, UnknownAlgorithmError
 
@@ -66,3 +66,45 @@ def test__irmsd_algorithm_kind() -> None:
 
     with pytest.raises(UnknownAlgorithmError):
         AlgorithmRegistry.get(Algorithm.IRMSD)
+
+
+def test__smg_hash_identity_fn(water: Geometry) -> None:
+    """Test that SMG_HASH does not raise."""
+    ident = Identity.from_geometry(water, algorithm=Algorithm.SMG_HASH)
+
+    assert ident.kind == "conformer"
+    assert ident.value.isdigit()
+    assert (
+        ident.value == Identity.from_geometry(water, algorithm=Algorithm.SMG_HASH).value
+    )
+
+
+def test__smg_hash_invariant(water: Geometry) -> None:
+    """Test that SMG_HASH is order invariant."""
+    water2 = water.model_copy(deep=True)
+    water2.symbols = [water.symbols[i] for i in [2, 0, 1]]
+    water2.coordinates = water.coordinates[[2, 0, 1]]
+
+    assert water2.symbols != water.symbols
+
+    hash1 = Identity.from_geometry(water, algorithm=Algorithm.SMG_HASH).value
+    hash2 = Identity.from_geometry(water2, algorithm=Algorithm.SMG_HASH).value
+
+    assert hash2 == hash1
+
+
+def test__smg_hash_distinguishes_geometries(
+    water: Geometry, peroxide: Geometry
+) -> None:
+    """Test that different geometries produce different SMG_HASH identities."""
+    water_ident = Identity.from_geometry(water, algorithm=Algorithm.SMG_HASH)
+    peroxide_ident = Identity.from_geometry(peroxide, algorithm=Algorithm.SMG_HASH)
+
+    assert water_ident.value != peroxide_ident.value
+
+
+def test__smg_hash_geometry_not_implemented() -> None:
+    """Test that SMG_HASH has no defined inverse back to a Geometry."""
+    ident = Identity.from_value("123", algorithm=Algorithm.SMG_HASH)
+    with pytest.raises(NotImplementedError):
+        ident.geometry()

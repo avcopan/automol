@@ -22,7 +22,7 @@ from .inertia import (
     rotation_to_inertia_axes,
     rotational_analysis,
 )
-from .internal import angles, bonds, dihedrals, set_distance
+from .internal import angles, bonds, dihedrals, set_bond
 from .properties import adjacency_matrix, center_of_mass, distance_keys, distance_matrix
 from .transform import transition
 from .vibration import (
@@ -62,7 +62,7 @@ __all__ = [
     "rotation_to_inertia_axes",
     "rotational_analysis",
     "rotational_normal_modes",
-    "set_distance",
+    "set_bond",
     "stereo_mol_graph",
     "transform",
     "transition",
