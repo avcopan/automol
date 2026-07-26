@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 ### Added
 - `geom.transform.transition()` for determining the transition-state geometry between two geometries via `StereoCondensedReactionGraph`.
+- `Algorithm.SMG_HASH` / `StereoMolGraphHash` for enantiomer-invariant conformer identity via `StereoMolGraph` hashing.
+
+### Changed
+- `geom.internal.set_distance()` -> `set_bond()` for clarity.
+- `geom.comparison.is_duplicate_conformer()` now returns a list the same length as `geos`, appending `False` for symbol-count mismatches instead of skipping them.
+
 
 ## [0.0.19] - 2026-07-17
 ### Added

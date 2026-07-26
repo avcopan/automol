@@ -1,5 +1,6 @@
 """rdkit interface."""
 
 from . import mol
+from .mol import Mol
 
-__all__ = ["mol"]
+__all__ = ["Mol", "mol"]
