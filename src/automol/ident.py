@@ -41,6 +41,7 @@ class Algorithm(StrEnum):
     RDKIT_INCHI = ("rdkit inchi", "stereoisomer")
     RDKIT_SMILES = ("rdkit smiles", "stereoisomer")
     IRMSD = ("irmsd", "conformer")
+    SMG_HASH = ("stereomolgraph hash", "conformer")
 
 
 @dataclass
@@ -221,3 +222,15 @@ class RDKitSMILES(AlgorithmFns):
         mol = Chem.MolFromSmiles(value)
         mol = Chem.AddHs(mol)
         return geom.from_rdkit_mol(mol)
+
+
+@AlgorithmRegistry.register(Algorithm.SMG_HASH)
+class StereoMolGraphHash(AlgorithmFns):
+    """Identify geometry with canonical hahs using stereomolgraph."""
+
+    @staticmethod
+    def identity_fn(geo: Geometry) -> str:
+        """Generate an enantiomer-invariant StereoMolGraph hash from Geometry."""
+        gra = geom.stereo_mol_graph(geo)
+        hashes = [hash(gra.freeze()), hash(gra.enantiomer().freeze())]
+        return "".join(sorted(str(h) for h in hashes))

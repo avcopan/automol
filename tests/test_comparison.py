@@ -29,6 +29,19 @@ def test__is_duplicate_conformer_different_atom_count_no_match(
     assert not any(geom.is_duplicate_conformer(water, [peroxide]))
 
 
+def test__is_duplicate_conformer_mixed_atom_counts_preserves_length(
+    water: Geometry, peroxide: Geometry
+) -> None:
+    """Test that the result stays aligned with `geos` despite mismatches."""
+    rot = Rotation.from_euler("z", 60, degrees=True)
+    duplicate = geom.transform.rotate(water, rot)
+    duplicate = geom.transform.translate(duplicate, [5.0, 5.0, 5.0])
+
+    matches = geom.is_duplicate_conformer(water, [peroxide, duplicate])
+
+    assert matches == [False, True]
+
+
 def test__is_duplicate_conformer_empty_list_no_match(water: Geometry) -> None:
     """Test that an empty candidate list never matches."""
     assert not any(geom.is_duplicate_conformer(water, []))

@@ -36,13 +36,15 @@ def is_duplicate_conformer(
 
     Returns
     -------
-        List where `True` if `geo` matches geometry in `geos`, `False` otherwise.
+        List the same length as `geos`, with `True` at each position where `geo`
+        matches the corresponding candidate, `False` otherwise.
     """
     mol = irmsd.Molecule(symbols=geo.symbols, positions=geo.coordinates)
 
     matches = []
     for candidate in geos:
         if len(candidate.symbols) != len(geo.symbols):
+            matches.append(False)
             continue
         candidate_mol = irmsd.Molecule(
             symbols=candidate.symbols, positions=candidate.coordinates

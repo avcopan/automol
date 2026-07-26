@@ -1,4 +1,4 @@
-"""RDKit interface."""
+"""rdkit interface."""
 
 from . import mol
 from .mol import Mol
