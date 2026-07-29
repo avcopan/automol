@@ -51,7 +51,7 @@ def test__rotational_analysis_right_handed(water: Geometry) -> None:
 def test__rotation_to_inertia_axes(water: Geometry) -> None:
     """Test that the returned rotation diagonalizes the inertia tensor."""
     rot = geom.rotation_to_inertia_axes(water)
-    rotated = geom.transform.rotate(water, rot)
+    rotated = geom.core.rotate(water, rot)
     tensor = geom.inertia_tensor(rotated)
     off_diag = tensor - np.diag(np.diagonal(tensor))
     assert np.allclose(off_diag, 0, atol=1e-10)

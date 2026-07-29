@@ -1,21 +1,81 @@
-"""View functions."""
+"""Coordinate I/O and 3D visualization of a geometry."""
 
 import tempfile
 from collections.abc import Sequence
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 import py3Dmol
+import pyparsing as pp
 import xyzrender
 from numpy.typing import ArrayLike
+from pyparsing import pyparsing_common as ppc
 
-from .core import Geometry, xyz_file
+from ..utils.exc import XYZFormatError
+
+if TYPE_CHECKING:
+    from .core import Geometry
+
+CHAR = pp.Char(pp.alphas)
+SYMBOL = pp.Combine(CHAR + pp.Opt(CHAR))
+XYZ_LINE = SYMBOL + pp.Group(ppc.fnumber * 3) + pp.Suppress(... + pp.LineEnd())
+
+
+def xyz_block(geo: "Geometry", *, comment: str | None = None) -> str:
+    """Return Geometry as a formatted xyz block with optional comment.
+
+    Defaults to a comment reporting the charge and spin, e.g. "Geometry(q=0, s=0)".
+    """
+    if comment is None:
+        comment = f"Geometry(q={geo.charge}, s={geo.spin})"
+    lines = [str(geo.atom_count), comment]
+    for sym, (x, y, z) in zip(geo.symbols, geo.coordinates, strict=True):
+        lines.append(f"{sym:<4} {x:12.8f} {y:12.8f} {z:12.8f}")
+
+    return "\n".join(lines)
+
+
+def from_xyz_block(xyz_block: str, *, charge: int, spin: int) -> "Geometry":
+    """Instantiate Geometry from a formatted xyz block."""
+    from .core import Geometry  # noqa: PLC0415
+
+    lines = xyz_block.strip().splitlines()[2:]
+
+    if not lines:
+        msg = "The provided xyz block is empty."
+        raise XYZFormatError(msg)
+
+    try:
+        symbs, coords = zip(
+            *[XYZ_LINE.parse_string(line).as_list() for line in lines], strict=True
+        )
+    except pp.ParseException as exc:
+        msg = f"Failed to parse xyz line: {exc.line!r}"
+        raise XYZFormatError(msg) from exc
+
+    return Geometry(
+        symbols=list(symbs), coordinates=np.array(coords), charge=charge, spin=spin
+    )
+
+
+def xyz_file(geo: "Geometry", *, path: str | Path, comment: str | None = None) -> None:
+    """Write a Geometry to a formatted xyz file.
+
+    Defaults to a comment reporting the charge and spin, e.g. "Geometry(q=0, s=0)".
+    """
+    Path(path).write_text(xyz_block(geo, comment=comment))
+
+
+def from_xyz_file(path: str | Path, *, charge: int, spin: int) -> "Geometry":
+    """Instantiate Geometry from a formatted xyz file."""
+    return from_xyz_block(Path(path).read_text(), charge=charge, spin=spin)
 
 
 class View(py3Dmol.view):
     """Class for creating and displaying 3D molecular views."""
 
-    def add_geometry(self, geo: Geometry, *, label: bool = False) -> None:
+    def add_geometry(self, geo: "Geometry", *, label: bool = False) -> None:
         """Add geometry to view.
 
         Parameters
@@ -108,7 +168,7 @@ class View(py3Dmol.view):
 
 # Visualization
 def view(
-    geo: Geometry, *, view: py3Dmol.view | None = None, label: bool = False
+    geo: "Geometry", *, view: py3Dmol.view | None = None, label: bool = False
 ) -> py3Dmol.view:
     """View a geometry with py3Dmol.
 
@@ -145,7 +205,7 @@ def view(
 
 
 def render_svg(
-    geo: Geometry,
+    geo: "Geometry",
     *,
     out: str | Path | None = None,
     config: str | xyzrender.RenderConfig = "default",
@@ -180,7 +240,7 @@ def render_svg(
 
 
 def render_gif(
-    geo: Geometry,
+    geo: "Geometry",
     *,
     out: str | Path | None = None,
     config: str | xyzrender.RenderConfig = "default",

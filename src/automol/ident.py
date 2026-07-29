@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections import Counter
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import TYPE_CHECKING, ClassVar, Self
@@ -42,6 +43,7 @@ class Algorithm(StrEnum):
     RDKIT_SMILES = ("rdkit smiles", "stereoisomer")
     IRMSD = ("irmsd", "conformer")
     SMG_HASH = ("stereomolgraph hash", "conformer")
+    HILL_FORMULA = ("hill formula", "formula")
 
 
 @dataclass
@@ -234,3 +236,22 @@ class StereoMolGraphHash(AlgorithmFns):
         gra = geom.stereo_mol_graph(geo)
         hashes = [hash(gra.freeze()), hash(gra.enantiomer().freeze())]
         return "".join(sorted(str(h) for h in hashes))
+
+
+@AlgorithmRegistry.register(Algorithm.HILL_FORMULA)
+class HillFormula(AlgorithmFns):
+    """Identify geometry with its molecular formula in Hill order."""
+
+    @staticmethod
+    def identity_fn(geo: Geometry) -> str:
+        """Render the molecular formula in Hill order."""
+        counts = Counter(s.capitalize() for s in geo.symbols)
+
+        ordered = []
+        if "C" in counts:
+            ordered.append(("C", counts.pop("C")))
+        if "H" in counts:
+            ordered.append(("H", counts.pop("H")))
+        ordered.extend(sorted(counts.items(), key=lambda x: x[0]))
+
+        return "".join(s if n == 1 else f"{s}{n}" for s, n in ordered)

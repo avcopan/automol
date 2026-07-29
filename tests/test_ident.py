@@ -108,3 +108,34 @@ def test__smg_hash_geometry_not_implemented() -> None:
     ident = Identity.from_value("123", algorithm=Algorithm.SMG_HASH)
     with pytest.raises(NotImplementedError):
         ident.geometry()
+
+
+def test__hill_formula(water: Geometry) -> None:
+    """Test Geometry to Hill-ordered formula."""
+    ident = Identity.from_geometry(water, algorithm=Algorithm.HILL_FORMULA)
+    assert ident.kind == "formula"
+    assert ident.value == "H2O"
+
+
+def test__hill_formula_with_carbon() -> None:
+    """Test Hill formula with carbon present."""
+    methane = Geometry(
+        symbols=["C", "H", "H", "H", "H"],
+        coordinates=[[0, 0, 0], [1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0]],
+        charge=0,
+        spin=0,
+    )
+    ident = Identity.from_geometry(methane, algorithm=Algorithm.HILL_FORMULA)
+    assert ident.value == "CH4"
+
+
+def test__hill_formula_no_hydrogen() -> None:
+    """Test Hill formula with no hydrogen present."""
+    dichlorine = Geometry(
+        symbols=["Cl", "Cl"],
+        coordinates=[[0, 0, 0], [2, 0, 0]],
+        charge=0,
+        spin=0,
+    )
+    ident = Identity.from_geometry(dichlorine, algorithm=Algorithm.HILL_FORMULA)
+    assert ident.value == "Cl2"

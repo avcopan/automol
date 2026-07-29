@@ -1,47 +1,55 @@
 """Geometry module."""
 
-from . import transform, view
-from .comparison import is_duplicate_conformer
-from .core import (
-    Geometry,
-    from_rdkit_mol,
-    from_stereo_mol_graph,
-    from_xyz_block,
-    from_xyz_file,
-    hill_formula,
-    rdkit_mol,
-    stereo_mol_graph,
-    xyz_block,
-    xyz_file,
-)
-from .inertia import (
-    eckart_frame,
+from . import analysis, core, io
+from .analysis import (
+    adjacency_matrix,
+    angles,
+    assignment_rmsd,
+    bond_graph,
+    bonds,
+    center_of_mass,
+    dihedrals,
+    distance_keys,
+    distance_matrix,
+    harmonic_zpv,
+    hungarian_correspondence,
     inertia_axes,
     inertia_moments,
     inertia_tensor,
-    rotation_to_inertia_axes,
-    rotational_analysis,
-)
-from .internal import angles, bonds, dihedrals, set_bond
-from .properties import adjacency_matrix, center_of_mass, distance_keys, distance_matrix
-from .transform import transition
-from .vibration import (
-    harmonic_zpv,
+    is_duplicate_conformer,
+    kabsch_align,
     mass_weight_vector,
     normal_mode_projection,
+    orbit_classes,
+    rotation_to_inertia_axes,
+    rotational_analysis,
     rotational_normal_modes,
     translational_normal_modes,
     vibrational_analysis,
 )
-from .view import View
+from .core import (
+    Geometry,
+    eckart_frame,
+    from_rdkit_mol,
+    from_stereo_mol_graph,
+    rdkit_mol,
+    set_bond,
+    stereo_mol_graph,
+    transition,
+)
+from .io import View, from_xyz_block, from_xyz_file, xyz_block, xyz_file
 
 __all__ = [
     "Geometry",
     "View",
     "adjacency_matrix",
+    "analysis",
     "angles",
+    "assignment_rmsd",
+    "bond_graph",
     "bonds",
     "center_of_mass",
+    "core",
     "dihedrals",
     "distance_keys",
     "distance_matrix",
@@ -51,24 +59,25 @@ __all__ = [
     "from_xyz_block",
     "from_xyz_file",
     "harmonic_zpv",
-    "hill_formula",
+    "hungarian_correspondence",
     "inertia_axes",
     "inertia_moments",
     "inertia_tensor",
+    "io",
     "is_duplicate_conformer",
+    "kabsch_align",
     "mass_weight_vector",
     "normal_mode_projection",
+    "orbit_classes",
     "rdkit_mol",
     "rotation_to_inertia_axes",
     "rotational_analysis",
     "rotational_normal_modes",
     "set_bond",
     "stereo_mol_graph",
-    "transform",
     "transition",
     "translational_normal_modes",
     "vibrational_analysis",
-    "view",
     "xyz_block",
     "xyz_file",
 ]

@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+### Added
+- `Geometry.relabel_atoms()` for reordering atoms by index.
+- `geom.analysis.bond_graph()` / `orbit_classes()` for pynauty-based graph construction and automorphism-orbit detection.
+- `geom.analysis.kabsch_align()`, `hungarian_correspondence()`, `assignment_rmsd()` for atom-correspondence-aware structural alignment and RMSD.
+- `Algorithm.HILL_FORMULA` / `HillFormula` for Hill-ordered molecular formula identity via the `ident` registry.
+- `pynauty` dependency.
+
+### Changed
+- `geom.{comparison,inertia,internal,properties,transform}` consolidated into `geom.analysis` (distance/inertia/vibration/comparison/graph analysis); `geom.view` renamed to `geom.io` and merged with xyz block/file I/O.
+- `geom.hill_formula()` -> `Algorithm.HILL_FORMULA` / `HillFormula`, matching the pattern used by InChI/SMILES/SMG_HASH.
+- `geom.transform.{translate,reflect,rotate,transition}` and `geom.internal.set_bond()` moved to `geom.core`.
+- xyz parsing (`from_xyz_block`) reimplemented without `pyparsing`.
+- `.gitignore`: drop `experimental`, add `.scratch`.
+
+### Removed
+- `automol.view` top-level re-export (use `automol.geom.io` / `automol.View`).
 
 ## [0.0.21] - 2026-07-26
 ### Added
