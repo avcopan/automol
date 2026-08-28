@@ -3,7 +3,7 @@
 __version__ = "0.0.21"
 
 from . import geom, rd
-from .geom import Geometry, View, view
+from .geom import Geometry, View
 from .ident import Algorithm, Identity
 
 __all__ = [
@@ -13,5 +13,4 @@ __all__ = [
     "View",
     "geom",
     "rd",
-    "view",
 ]

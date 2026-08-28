@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections import Counter
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import TYPE_CHECKING, ClassVar, Self
@@ -40,8 +41,7 @@ class Algorithm(StrEnum):
 
     RDKIT_INCHI = ("rdkit inchi", "stereoisomer")
     RDKIT_SMILES = ("rdkit smiles", "stereoisomer")
-    IRMSD = ("irmsd", "conformer")
-    SMG_HASH = ("stereomolgraph hash", "conformer")
+    HILL_FORMULA = ("hill formula", "formula")
 
 
 @dataclass
@@ -224,13 +224,20 @@ class RDKitSMILES(AlgorithmFns):
         return geom.from_rdkit_mol(mol)
 
 
-@AlgorithmRegistry.register(Algorithm.SMG_HASH)
-class StereoMolGraphHash(AlgorithmFns):
-    """Identify geometry with canonical hahs using stereomolgraph."""
+@AlgorithmRegistry.register(Algorithm.HILL_FORMULA)
+class HillFormula(AlgorithmFns):
+    """Identify geometry with its molecular formula in Hill order."""
 
     @staticmethod
     def identity_fn(geo: Geometry) -> str:
-        """Generate an enantiomer-invariant StereoMolGraph hash from Geometry."""
-        gra = geom.stereo_mol_graph(geo)
-        hashes = [hash(gra.freeze()), hash(gra.enantiomer().freeze())]
-        return "".join(sorted(str(h) for h in hashes))
+        """Render the molecular formula in Hill order."""
+        counts = Counter(s.capitalize() for s in geo.symbols)
+
+        ordered = []
+        if "C" in counts:
+            ordered.append(("C", counts.pop("C")))
+        if "H" in counts:
+            ordered.append(("H", counts.pop("H")))
+        ordered.extend(sorted(counts.items(), key=lambda x: x[0]))
+
+        return "".join(s if n == 1 else f"{s}{n}" for s, n in ordered)

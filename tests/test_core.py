@@ -31,11 +31,6 @@ def test__xyz_roundtrip(water: Geometry) -> None:
     assert np.allclose(water.coordinates, geo_rt.coordinates)
 
 
-def test__hill_formula(water: Geometry) -> None:
-    """Test Geometry to Hill-ordered formula."""
-    assert geom.hill_formula(water) == "H2O"
-
-
 def test__masses_atomic_numbers_valences(water: Geometry) -> None:
     """Test scalar per-atom properties."""
     expected_masses = [
@@ -97,28 +92,6 @@ def test__from_xyz_block_classmethod(water: Geometry) -> None:
     geo_rt = Geometry.from_xyz_block(water.xyz_block(), charge=0, spin=0)
     assert water.symbols == geo_rt.symbols
     assert np.allclose(water.coordinates, geo_rt.coordinates)
-
-
-def test__hill_formula_with_carbon() -> None:
-    """Test Hill formula with carbon present."""
-    methane = Geometry(
-        symbols=["C", "H", "H", "H", "H"],
-        coordinates=[[0, 0, 0], [1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0]],
-        charge=0,
-        spin=0,
-    )
-    assert geom.hill_formula(methane) == "CH4"
-
-
-def test__hill_formula_no_hydrogen() -> None:
-    """Test Hill formula with no hydrogen present."""
-    dichlorine = Geometry(
-        symbols=["Cl", "Cl"],
-        coordinates=[[0, 0, 0], [2, 0, 0]],
-        charge=0,
-        spin=0,
-    )
-    assert geom.hill_formula(dichlorine) == "Cl2"
 
 
 def test__from_rdkit_mol_without_coordinates() -> None:

@@ -5,8 +5,8 @@ from pathlib import Path
 import pytest
 
 from automol import Geometry, View
-from automol.geom.view import render_gif, render_svg
-from automol.geom.view import view as build_view
+from automol.geom.io import render_gif, render_svg
+from automol.geom.io import view as build_view
 
 
 @pytest.fixture

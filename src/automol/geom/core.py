@@ -1,25 +1,22 @@
 """Molecular geometry functions."""
 
-from collections import Counter
+from collections.abc import Collection, Sequence
 from pathlib import Path
 from typing import Self
 
 import numpy as np
-import pyparsing as pp
+from numpy.typing import ArrayLike
 from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
-from pyparsing import pyparsing_common as ppc
 from rdkit.Chem import Mol
-from stereomolgraph import StereoMolGraph
+from scipy.spatial.transform import Rotation
+from stereomolgraph import StereoCondensedReactionGraph, StereoMolGraph
 from stereomolgraph.coords import Geometry as SMGeometry
 
 from .. import rd
 from ..utils import element
-from ..utils.exc import XYZFormatError
 from ..utils.types import CoordinatesField
-
-CHAR = pp.Char(pp.alphas)
-SYMBOL = pp.Combine(CHAR + pp.Opt(CHAR))
-XYZ_LINE = SYMBOL + pp.Group(ppc.fnumber * 3) + pp.Suppress(... + pp.LineEnd())
+from .analysis import center_of_mass, rotation_to_inertia_axes
+from .io import from_xyz_block, xyz_block, xyz_file
 
 
 class Geometry(BaseModel):
@@ -101,9 +98,9 @@ class Geometry(BaseModel):
 
     def _repr_html_(self) -> str | None:
         """Render geometry inline in Jupyter."""
-        from . import view  # noqa: PLC0415  (avoids circular import)
+        from . import io  # noqa: PLC0415  (avoids circular import)
 
-        return view.view(self, label=True)._repr_html_()
+        return io.view(self, label=True)._repr_html_()
 
     def __repr__(self) -> str:
         """Render Geometry as an xyz block instead of dumping raw fields."""
@@ -142,53 +139,29 @@ class Geometry(BaseModel):
         path = Path(path)
         return cls.from_xyz_block(path.read_text(), charge=charge, spin=spin)
 
+    def relabel_atoms(self, indices: list[int] | tuple[int, ...]) -> Self:
+        """Reorder atoms according to the provided indices.
 
-def xyz_block(geo: Geometry, *, comment: str | None = None) -> str:
-    """Return Geometry as a formatted xyz block with optional comment.
+        Parameters
+        ----------
+        indices
+            Sequence of indices specifying the new atom order.
+            E.g., [2, 0, 1] moves atom 2 to position 0, atom 0 to position 1, etc.
 
-    Defaults to a comment reporting the charge and spin, e.g. "Geometry(q=0, s=0)".
-    """
-    if comment is None:
-        comment = f"Geometry(q={geo.charge}, s={geo.spin})"
-    lines = [str(geo.atom_count), comment]
-    for sym, (x, y, z) in zip(geo.symbols, geo.coordinates, strict=True):
-        lines.append(f"{sym:<4} {x:12.8f} {y:12.8f} {z:12.8f}")
+        Returns
+        -------
+        Reordered Geometry.
+        """
+        indices_array = np.array(indices)
+        new_symbols = [self.symbols[i] for i in indices_array]
+        new_coordinates = self.coordinates[indices_array]
 
-    return "\n".join(lines)
-
-
-def from_xyz_block(xyz_block: str, *, charge: int, spin: int) -> Geometry:
-    """Instantiate Geometry from a formatted xyz block."""
-    lines = xyz_block.strip().splitlines()[2:]
-
-    if not lines:
-        msg = "The provided xyz block is empty."
-        raise XYZFormatError(msg)
-
-    try:
-        symbs, coords = zip(
-            *[XYZ_LINE.parse_string(line).as_list() for line in lines], strict=True
+        return self.__class__(
+            symbols=new_symbols,
+            coordinates=new_coordinates,
+            charge=self.charge,
+            spin=self.spin,
         )
-    except pp.ParseException as exc:
-        msg = f"Failed to parse xyz line: {exc.line!r}"
-        raise XYZFormatError(msg) from exc
-
-    return Geometry(
-        symbols=list(symbs), coordinates=np.array(coords), charge=charge, spin=spin
-    )
-
-
-def xyz_file(geo: Geometry, *, path: str | Path, comment: str | None = None) -> None:
-    """Write a Geometry to a formatted xyz file.
-
-    Defaults to a comment reporting the charge and spin, e.g. "Geometry(q=0, s=0)".
-    """
-    Path(path).write_text(xyz_block(geo, comment=comment))
-
-
-def from_xyz_file(path: str | Path, *, charge: int, spin: int) -> Geometry:
-    """Instantiate Geometry from a formatted xyz file."""
-    return from_xyz_block(Path(path).read_text(), charge=charge, spin=spin)
 
 
 def rdkit_mol(geo: Geometry) -> Mol:
@@ -223,15 +196,211 @@ def from_stereo_mol_graph(smg: StereoMolGraph, *, charge: int = 0) -> Geometry:
     return from_rdkit_mol(mol)
 
 
-def hill_formula(geo: Geometry) -> str:
-    """Render the molecular formula in Hill order."""
-    counts = Counter(s.capitalize() for s in geo.symbols)
+def set_bond(
+    geo: Geometry,
+    *,
+    idxs: Sequence[int],
+    val: float,
+    max_change: float = 0.25,
+    in_place: bool = False,
+) -> Geometry:
+    """
+    Set bond distance between two atoms.
 
-    ordered = []
-    if "C" in counts:
-        ordered.append(("C", counts.pop("C")))
-    if "H" in counts:
-        ordered.append(("H", counts.pop("H")))
-    ordered.extend(sorted(counts.items(), key=lambda x: x[0]))
+    Parameters
+    ----------
+    geo
+        Geometry object.
+    idxs
+        Atom indices.
+    val
+        Value of new distance.
+    max_change
+        Max allowable change in distance.
+    in_place
+        Modify the geometry in place.
 
-    return "".join(s if n == 1 else f"{s}{n}" for s, n in ordered)
+    Returns
+    -------
+    Geometry
+        Updated geometry.
+    """
+    if len(idxs) != 2:  # noqa: PLR2004
+        msg = f"Wrong number of indices provided ({len(idxs)} != 2)."
+        raise ValueError(msg)
+
+    geo = geo if in_place else geo.model_copy(deep=True)
+    i, j = idxs
+
+    # Compute current distance and unit vector
+    vec = geo.coordinates[j] - geo.coordinates[i]
+    r = np.linalg.norm(vec)
+    unit_vec = vec / r
+
+    # Ensure that change does not exceed max allowable
+    # NOTE: Can be replaced by structure smoothing / verification
+    dr = abs(r - val)
+    if dr > max_change:
+        msg = f"{dr = } exceeds {max_change = }."
+        raise ValueError(msg)
+
+    # Atom j coordinates relevant to atom i
+    geo.coordinates[j] = geo.coordinates[i] + (unit_vec * val)
+
+    return geo
+
+
+# Rigid-body transformations
+def translate(
+    geo: Geometry,
+    arr: ArrayLike,
+    *,
+    keys: Collection[int] | None = None,
+    in_place: bool = False,
+) -> Geometry:
+    """Translate geometry.
+
+    Parameters
+    ----------
+    geo
+        Geometry.
+    arr
+        Translation vector or matrix.
+
+    Returns
+    -------
+        Geometry.
+    """
+    geo = geo if in_place else geo.model_copy(deep=True)
+    mask = slice(None) if keys is None else list(keys)
+    geo.coordinates[mask] = np.add(geo.coordinates[mask], arr)
+    return geo
+
+
+def reflect(
+    geo: Geometry,
+    normal: ArrayLike,
+    *,
+    keys: Collection[int] | None = None,
+    in_place: bool = False,
+) -> Geometry:
+    """Reflect geometry across a plane.
+
+    Parameters
+    ----------
+    geo
+        Geometry.
+    normal
+        Normal vector of the reflection plane.
+
+    Returns
+    -------
+        Geometry.
+    """
+    geo = geo if in_place else geo.model_copy(deep=True)
+    normal = np.asarray(normal, dtype=float)
+    proj = np.outer(normal, normal) / np.dot(normal, normal)
+    mask = slice(None) if keys is None else list(keys)
+    geo.coordinates[mask] = geo.coordinates[mask] - 2 * geo.coordinates[mask] @ proj
+    return geo
+
+
+def rotate(
+    geo: Geometry,
+    rot: Rotation,
+    *,
+    keys: Collection[int] | None = None,
+    in_place: bool = False,
+) -> Geometry:
+    """Rotate geometry.
+
+    Parameters
+    ----------
+    geo
+        Geometry.
+    rot
+        Rotation object.
+    keys
+        Atoms to rotate. If None, rotate all atoms.
+    in_place
+        Whether to rotate in place or return a new geometry.
+
+    Returns
+    -------
+        Geometry.
+    """
+    geo = geo if in_place else geo.model_copy(deep=True)
+    mask = slice(None) if keys is None else list(keys)
+    geo.coordinates[mask] = rot.apply(geo.coordinates[mask])
+    return geo
+
+
+def transition(geo1: Geometry, geo2: Geometry) -> Geometry:
+    """Determine the transition geometry between two geometries.
+
+    Parameters
+    ----------
+    geo1
+        Initial geometry.
+    geo2
+        Final geometry.
+
+    Returns
+    -------
+        Geometry.
+    """
+    if geo1.spin != geo2.spin:
+        msg = f"Geometries must have the same spin: {geo1.spin} != {geo2.spin}"
+        raise ValueError(msg)
+
+    smg1 = stereo_mol_graph(geo1)
+    smg2 = stereo_mol_graph(geo2)
+    scrg = StereoCondensedReactionGraph.from_graphs(smg1, smg2)
+
+    active_h = [a for a in scrg.active_atoms() if scrg.get_atom_type(a) == 1]
+    for h in active_h:
+        scrg.set_atom_attribute(h, "atom_type", 8)
+
+    ts_smg = scrg.ts()
+    ts_geo = from_stereo_mol_graph(ts_smg)
+    ts_geo.spin = geo1.spin
+
+    for h in active_h:
+        ts_geo.symbols[h] = "H"
+
+    return ts_geo
+
+
+def eckart_frame(geo: "Geometry", *, in_place: bool = False) -> "Geometry":
+    """Rotate geometry to align with inertia axes.
+
+    Parameters
+    ----------
+    geo
+        Geometry.
+    in_place
+        Whether to rotate in place or return a new geometry.
+
+    Returns
+    -------
+        Geometry in an Eckart frame.
+
+    Example
+    -------
+    >>> from automol import Geometry
+    >>> geo = Geometry(
+    ...     symbols=["O", "H", "H"],
+    ...     coordinates=[[0, 0, 0], [1, 0, 0], [0, 1, 0]],
+    ...     charge=0,
+    ...     spin=0,
+    ... )
+    >>> eck = eckart_frame(geo)
+    >>> bool(np.allclose(center_of_mass(eck), 0, atol=1e-10))
+    True
+    """
+    geo = geo if in_place else geo.model_copy(deep=True)
+    # Move to center of mass
+    geo = translate(geo, -center_of_mass(geo), in_place=True)
+    # Rotate to inertia axes
+    rot = rotation_to_inertia_axes(geo)
+    return rotate(geo, rot, in_place=True)

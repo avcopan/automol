@@ -8,8 +8,8 @@ from automol import Geometry, geom
 def test__is_duplicate_conformer_rotated_translated_match(water: Geometry) -> None:
     """Test that a rotated and translated copy is recognized as a duplicate."""
     rot = Rotation.from_euler("z", 60, degrees=True)
-    duplicate = geom.transform.rotate(water, rot)
-    duplicate = geom.transform.translate(duplicate, [5.0, 5.0, 5.0])
+    duplicate = geom.core.rotate(water, rot)
+    duplicate = geom.core.translate(duplicate, [5.0, 5.0, 5.0])
 
     assert all(geom.is_duplicate_conformer(water, [duplicate]))
 
@@ -34,8 +34,8 @@ def test__is_duplicate_conformer_mixed_atom_counts_preserves_length(
 ) -> None:
     """Test that the result stays aligned with `geos` despite mismatches."""
     rot = Rotation.from_euler("z", 60, degrees=True)
-    duplicate = geom.transform.rotate(water, rot)
-    duplicate = geom.transform.translate(duplicate, [5.0, 5.0, 5.0])
+    duplicate = geom.core.rotate(water, rot)
+    duplicate = geom.core.translate(duplicate, [5.0, 5.0, 5.0])
 
     matches = geom.is_duplicate_conformer(water, [peroxide, duplicate])
 
