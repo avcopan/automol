@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+
+## [0.0.22] - 2026-08-28
 ### Added
 - `Geometry.relabel_atoms()` for reordering atoms by index.
 - `geom.analysis.bond_graph()` / `orbit_classes()` for pynauty-based graph construction and automorphism-orbit detection.

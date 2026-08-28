@@ -1,6 +1,6 @@
 [project]
 name = "automol"
-version = "0.0.21"
+version = "0.0.22"
 authors = [
     {name = "Andreas V. Copan", email = "avcopan@uga.edu"},
     {name = "Troy N. Smith", email = "troy.smith@uga.edu"}
