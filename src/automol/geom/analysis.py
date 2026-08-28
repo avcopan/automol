@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 RMSD_THRESHOLD = 0.125
 
 # Bound on n_perms * k for the brute-force orbit assignment in
-# `_assign_orbit`; past this, a Hungarian solve is cheaper than enumerating k!.
+# `_assign_orbit`; beyond this, a Hungarian solve is cheaper than enumeration.
 _MAX_BRUTE_FORCE_ELEMENTS = 200_000
 
 
@@ -871,13 +871,6 @@ def _assign_orbit(
 ) -> np.ndarray:
     """Solve the optimal within-orbit re-assignment.
 
-    Squared-distance assignment cost decomposes as
-    |a_i|^2 + |r_j|^2 - 2 a_i.r_j, and the assignment problem is invariant to
-    constants added to a full row or column, so the |a_i|^2 (row) and |r_j|^2
-    (column) terms can't affect the optimal assignment. This reduces the
-    problem to maximizing sum_j a_p(j).r_j over permutations p, via one dot
-    product (aligned_cls @ ref_cls.T).
-
     For small orbits (the common case: methyls, geminal pairs, ...) every
     permutation is enumerated and scored in one vectorized pass. Larger
     orbits fall back to a Hungarian solve.
@@ -964,13 +957,11 @@ def hungarian_correspondence(
     """Find the atom-index correspondence between two geometries via Hungarian solve.
 
     Resolves symmetric atom correspondence using only the bond-graph
-    automorphism orbit partition (from `orbit_classes`, itself derived from
-    nauty's `autgrp` at no extra cost) instead of enumerating the full
-    automorphism group, which blows up combinatorially for molecules with
-    many equivalent atoms. Iterates between (1) rigidly aligning tgt_geo onto
-    ref_geo via Kabsch (`kabsch_align`) using the current correspondence and
-    (2) re-solving the optimal correspondence within each orbit via the
-    Hungarian algorithm, scaling polynomially instead of factorially.
+    automorphism orbit partition (from `orbit_classes`, derived from
+    nauty's `autgrp`) instead of enumerating the full automorphism group.
+    Iterates between (1) aligning tgt_geo onto ref_geo via Kabsch (`kabsch_align`)
+    and (2) re-solving the optimal correspondence within each orbit via the
+    Hungarian algorithm.
 
     ref_geo and tgt_geo must have the same connectivity and already be in a
     consistent atom order (e.g. both canonically relabeled, see `bond_graph`
