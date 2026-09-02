@@ -67,7 +67,7 @@ Conversions are standalone module-level functions, not methods on the Pydantic m
 
 ### Current module map
 
-- `automol.geom` — the `Geometry` core model (`core.py`), plus `properties.py` (center of mass, distance matrix/keys, adjacency matrix), `transform.py`, `comparison.py` (e.g. `is_duplicate_conformer`, via `irmsd`), and `view.py` (`View`, 3D visualization, py3Dmol-based).
+- `automol.geom` — the `Geometry` core model (`core.py`), plus `properties.py` (center of mass, distance matrix/keys, adjacency matrix), `transform.py`, `comparison.py`, and `view.py` (`View`, 3D visualization, py3Dmol-based).
 - `automol.rd` — RDKit bridge (`rd/mol.py`) for `Geometry` ↔ RDKit mol conversion.
 - `automol.ident` — `Algorithm`/`Identity` for InChI/SMILES generation from a `Geometry`.
 - `automol.utils` — shared low-level helpers: `constants.py`, `types.py`, `exc.py`, `utils/element/`.

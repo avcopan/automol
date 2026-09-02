@@ -1,11 +1,9 @@
 """Geometric, structural, and vibrational analysis of a geometry."""
 
-from collections.abc import Sequence
 from itertools import permutations
 from math import factorial
 from typing import TYPE_CHECKING, Literal
 
-import irmsd
 import numpy as np
 import numpy.typing as npt
 from pynauty import Graph, autgrp, canon_label
@@ -746,50 +744,6 @@ def harmonic_zpv(
 
 
 # Comparison
-def is_duplicate_conformer(
-    geo: "Geometry",
-    geos: Sequence["Geometry"],
-    *,
-    rthr: float = RMSD_THRESHOLD,
-) -> list[bool]:
-    """Check whether a geometry is an identical conformer to one in a list.
-
-    Two geometries are considered identical conformers if, after optimal
-    alignment (translation, rotation, and atom matching), their interatomic
-    RMSD is below `rthr`. Candidates with a different atom count are never
-    considered a match.
-
-    Parameters
-    ----------
-    geo
-        Geometry to check.
-    geos
-        Candidate geometries to compare against.
-    rthr
-        iRMSD threshold, in Angstroms, below which two geometries are
-        considered identical conformers.
-
-    Returns
-    -------
-        List the same length as `geos`, with `True` at each position where `geo`
-        matches the corresponding candidate, `False` otherwise.
-    """
-    mol = irmsd.Molecule(symbols=geo.symbols, positions=geo.coordinates)
-
-    matches = []
-    for candidate in geos:
-        if len(candidate.symbols) != len(geo.symbols):
-            matches.append(False)
-            continue
-        candidate_mol = irmsd.Molecule(
-            symbols=candidate.symbols, positions=candidate.coordinates
-        )
-        value, _, _ = irmsd.get_irmsd_molecule(mol, candidate_mol)
-        matches.append(value <= rthr)
-
-    return matches
-
-
 def bond_graph(geo: "Geometry") -> Graph:
     """Build a pynauty graph representing geo's bond connectivity.
 

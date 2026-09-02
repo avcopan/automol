@@ -108,30 +108,6 @@ subset of atoms by index, leaving the rest untouched:
 geom.transform.translate(water, [1.0, 0.0, 0.0], keys=[0])  # move only atom 0
 ```
 
-## Duplicate conformer detection
-
-`is_duplicate_conformer` checks whether a `Geometry` is geometrically
-identical to any geometry in a list, using
-[irmsd](https://pypi.org/project/irmsd/)'s interatomic RMSD after optimal
-alignment (translation, rotation, and atom matching) — so a rotated or
-translated copy still counts as a match, while a genuinely different
-conformer doesn't:
-
-```python
-rotated_water = geom.transform.rotate(water, Rotation.from_euler("z", 60, degrees=True))
-geom.is_duplicate_conformer(water, [rotated_water])  # True
-
-geom.is_duplicate_conformer(water, [])  # False — nothing to compare against
-```
-
-Candidates with a different atom count are never considered a match.
-`rthr` (default `0.125`, matching irmsd's own default) sets the iRMSD
-threshold, in Angstroms, below which two geometries count as identical —
-lower it for stricter matching:
-
-```python
-geom.is_duplicate_conformer(water, [rotated_water], rthr=1e-6)  # stricter
-```
 
 ## Next steps
 

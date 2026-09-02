@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+### Removed
+- `geom.is_duplicate_conformer()` and `irmsd` dependency. (Broken `numpy` reference in solved `irmsd` version).
+- `Algorithm.IRMSD` conformer-group identity algorithm.
+
+
+### Fixed
+- Dependencies listed in `pixi.toml` instead of `pyproject.toml`
 
 ## [0.0.22] - 2026-08-28
 ### Added
