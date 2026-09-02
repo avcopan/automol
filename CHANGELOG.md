@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+
+## [0.0.23] - 2026-09-01
 ### Removed
 - `geom.is_duplicate_conformer()` and `irmsd` dependency. (Broken `numpy` reference in solved `irmsd` version).
 - `Algorithm.IRMSD` conformer-group identity algorithm.
