@@ -28,9 +28,18 @@ XYZ_LINE = SYMBOL + pp.Group(FLOAT * 3) + pp.Suppress(... + pp.LineEnd())
 
 
 def xyz_block(geo: "Geometry", *, comment: str | None = None) -> str:
-    """Return Geometry as a formatted xyz block with optional comment.
+    """Return a geometry as a formatted xyz block with an optional comment.
 
-    Defaults to a comment reporting the charge and spin, e.g. "Geometry(q=0, s=0)".
+    Args:
+        geo: Geometry.
+        comment: Optional xyz comment line. Defaults to a line reporting the
+            charge and spin, for example `"Geometry(q=0, s=0)"`.
+
+    Returns:
+        str: Formatted xyz block.
+
+    Raises:
+        ValueError: If `comment` contains a newline.
     """
     if comment is None:
         comment = f"Geometry(q={geo.charge}, s={geo.spin})"
@@ -50,11 +59,18 @@ def from_xyz_block(xyz_block: str, *, charge: int, spin: int) -> "Geometry":
     Atoms may be given by symbol (case-insensitive) or atomic number. Only
     single-frame xyz blocks are supported.
 
-    Raises
-    ------
-    XYZFormatError
-        If the block is empty, the atom count line is missing or does not match the
-        number of atom lines, or an atom line cannot be parsed.
+    Args:
+        xyz_block: Formatted xyz block.
+        charge: Total molecular charge.
+        spin: Number of unpaired electrons.
+
+    Returns:
+        Geometry: Geometry parsed from `xyz_block`.
+
+    Raises:
+        XYZFormatError: If the block is empty, the atom count line is missing or
+            does not match the number of atom lines, or an atom line cannot be
+            parsed.
     """
     from .core import Geometry  # noqa: PLC0415
 
@@ -100,7 +116,17 @@ def from_xyz_block(xyz_block: str, *, charge: int, spin: int) -> "Geometry":
 
 
 def _parse_symbol(token: str) -> str:
-    """Convert an xyz atom token (symbol or atomic number) to a canonical symbol."""
+    """Convert an xyz atom token to a canonical symbol.
+
+    Args:
+        token: Element symbol or atomic number from an xyz line.
+
+    Returns:
+        str: Canonicalized element symbol.
+
+    Raises:
+        XYZFormatError: If `token` does not identify a known element.
+    """
     try:
         return element.symbol(int(token) if token.isdigit() else token)
     except ElementNotFoundError as exc:
@@ -109,15 +135,31 @@ def _parse_symbol(token: str) -> str:
 
 
 def xyz_file(geo: "Geometry", *, path: str | Path, comment: str | None = None) -> None:
-    """Write a Geometry to a formatted xyz file.
+    """Write a geometry to a formatted xyz file.
 
-    Defaults to a comment reporting the charge and spin, e.g. "Geometry(q=0, s=0)".
+    Args:
+        geo: Geometry.
+        path: Output path.
+        comment: Optional xyz comment line. Defaults to a line reporting the
+            charge and spin, for example `"Geometry(q=0, s=0)"`.
+
+    Returns:
+        None: This function writes the file in place.
     """
     Path(path).write_text(xyz_block(geo, comment=comment) + "\n")
 
 
 def from_xyz_file(path: str | Path, *, charge: int, spin: int) -> "Geometry":
-    """Instantiate Geometry from a formatted xyz file."""
+    """Instantiate a geometry from a formatted xyz file.
+
+    Args:
+        path: Path to the xyz file.
+        charge: Total molecular charge.
+        spin: Number of unpaired electrons.
+
+    Returns:
+        Geometry: Geometry parsed from `path`.
+    """
     return from_xyz_block(Path(path).read_text(), charge=charge, spin=spin)
 
 
@@ -127,12 +169,12 @@ class View(py3Dmol.view):
     def add_geometry(self, geo: "Geometry", *, label: bool = False) -> None:
         """Add geometry to view.
 
-        Parameters
-        ----------
-        geo
-            Geometry.
-        label
-            Whether to add atom index labels.
+        Args:
+            geo: Geometry.
+            label: Whether to add atom index labels.
+
+        Returns:
+            None: The geometry is added to the existing view.
         """
         view(geo, view=self, label=label)
 
@@ -144,12 +186,12 @@ class View(py3Dmol.view):
     ) -> None:
         """Add x, y, and z axes as arrows from the origin.
 
-        Parameters
-        ----------
-        scale
-            Length of each axis arrow.
-        colors
-            Colors of the x, y, and z arrows.
+        Args:
+            scale: Length of each axis arrow.
+            colors: Colors of the x, y, and z arrows.
+
+        Returns:
+            None: The axes are added to the existing view.
         """
         axes = np.eye(3)
         self.add_vectors(axes * scale, colors=colors)
@@ -164,17 +206,18 @@ class View(py3Dmol.view):
     ) -> None:
         """Add arrows to view.
 
-        Parameters
-        ----------
-        coords
-            The arrow tip coordinates, one row per arrow.
-        start_coord
-            The start coordinates shared by all arrows.
-        direction
-            If True, each row of coords is treated as a direction vector from
-            start_coord.
-        colors
-            The arrow colors, one per arrow. Defaults to black.
+        Args:
+            coords: Arrow tip coordinates, one row per arrow.
+            start_coord: Start coordinates shared by all arrows.
+            direction: If `True`, each row of `coords` is treated as a direction
+                vector from `start_coord`.
+            colors: Arrow colors, one per arrow. Defaults to black.
+
+        Returns:
+            None: The arrows are added to the existing view.
+
+        Raises:
+            ValueError: If the number of coordinates and colors does not match.
         """
         coords = np.asarray(coords, dtype=np.float64)
         colors = colors or ["black"] * len(coords)
@@ -195,16 +238,15 @@ class View(py3Dmol.view):
     ) -> None:
         """Add arrow to view.
 
-        Parameters
-        ----------
-        coord
-            The arrow tip coordinates.
-        start_coord
-            The arrow start coordinates.
-        direction
-            If True, coord is treated as a direction vector from start_coord.
-        color
-            The arrow color.
+        Args:
+            coord: Arrow tip coordinates.
+            start_coord: Arrow start coordinates.
+            direction: If `True`, `coord` is treated as a direction vector from
+                `start_coord`.
+            color: Arrow color.
+
+        Returns:
+            None: The arrow is added to the existing view.
         """
         if direction:
             coord = np.add(coord, start_coord)
@@ -226,18 +268,13 @@ def view(
 ) -> py3Dmol.view:
     """View a geometry with py3Dmol.
 
-    Parameters
-    ----------
-    geo
-        Geometry.
-    view
-        py3Dmol view.
-    label
-        Whether to add atom labels to the view.
+    Args:
+        geo: Geometry.
+        view: Existing py3Dmol view to add the geometry to.
+        label: Whether to add atom labels to the view.
 
-    Returns
-    -------
-        py3Dmol view.
+    Returns:
+        py3Dmol.view: py3Dmol view containing the geometry.
     """
     view = py3Dmol.view(width=400, height=400) if view is None else view
     xyz_str = geo.xyz_block()
@@ -270,20 +307,14 @@ def render_svg(
 
     Results display inlay automatically.
 
-    Parameters
-    ----------
-    geo
-        Geometry.
-    out
-        Output path for rendered image.
-    config
-        xyzrender RenderConfig settings.
-    include_h
-        If True, include hydrogen atoms in render.
+    Args:
+        geo: Geometry.
+        out: Output path for the rendered image.
+        config: `xyzrender.RenderConfig` settings or preset name.
+        include_h: If `True`, include hydrogen atoms in the render.
 
-    Returns
-    -------
-    SVGResult
+    Returns:
+        xyzrender.SVGResult: SVG render result.
     """
     out = Path(out).with_suffix(".svg") if out else out
 
@@ -306,22 +337,15 @@ def render_gif(
 
     Results display inlay automatically.
 
-    Parameters
-    ----------
-    geo
-        Geometry.
-    out
-        Output path for rendered gif.
-    config
-        xyzrender RenderConfig settings.
-    include_h
-        If True, include hydrogen atoms in render.
-    rotation_axis
-        Axis to rotate about in animation.
+    Args:
+        geo: Geometry.
+        out: Output path for the rendered gif.
+        config: `xyzrender.RenderConfig` settings or preset name.
+        include_h: If `True`, include hydrogen atoms in the render.
+        rotation_axis: Axis to rotate about in the animation.
 
-    Returns
-    -------
-    GIFResult
+    Returns:
+        xyzrender.GIFResult: GIF render result.
     """
     out = Path(out).with_suffix(".gif") if out else out
 

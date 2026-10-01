@@ -41,26 +41,18 @@ EMBED_SEED = 0xF00D
 
 
 def from_smiles(smi: str, *, with_coords: bool = False) -> Mol:
-    """
-    Get RDKit molecule from SMILES string.
+    """Get RDKit molecule from SMILES string.
 
-    Parameters
-    ----------
-    smi
-        SMILES string.
+    Args:
+        smi: SMILES string.
+        with_coords: If `True`, generate 3D coordinates for the molecule. If
+            `False`, return a molecule without coordinates.
 
-    with_coords, optional
-        If `True`, generate 3D coordinates for the molecule.
-        If `False` (default), return a molecule without coordinates.
+    Returns:
+        Mol: RDKit molecule with explicit hydrogens.
 
-    Returns
-    -------
-        RDKit molecule with explicit hydrogens.
-
-    Raises
-    ------
-    ValueError
-        If the SMILES string cannot be parsed.
+    Raises:
+        ValueError: If the SMILES string cannot be parsed.
     """
     mol = Chem.MolFromSmiles(smi)
     if mol is None:
@@ -73,45 +65,33 @@ def from_smiles(smi: str, *, with_coords: bool = False) -> Mol:
 
 
 def smiles(mol: Mol) -> str:
-    """
-    Get canonical, non-isomeric SMILES string from Mol.
+    """Get canonical, non-isomeric SMILES string from Mol.
 
     Hydrogens are written as they appear in the molecule, so a molecule with
     explicit hydrogens (e.g. from `from_smiles`) gives e.g. ``[H]O[H]`` for water.
 
-    Parameters
-    ----------
-    mol
-        RDKit molecule object.
+    Args:
+        mol: RDKit molecule object.
 
-    Returns
-    -------
-        SMILES string.
+    Returns:
+        str: SMILES string.
     """
     return Chem.MolToSmiles(mol, isomericSmiles=False)
 
 
 def from_inchi(inchi: str, *, with_coords: bool = False) -> Mol:
-    """
-    Get RDKit molecule from InChI string.
+    """Get RDKit molecule from InChI string.
 
-    Parameters
-    ----------
-    inchi
-        InChI string.
+    Args:
+        inchi: InChI string.
+        with_coords: If `True`, generate 3D coordinates for the molecule. If
+            `False`, return a molecule without coordinates.
 
-    with_coords, optional
-        If `True`, generate 3D coordinates for the molecule.
-        If `False` (default), return a molecule without coordinates.
+    Returns:
+        Mol: RDKit molecule with explicit hydrogens.
 
-    Returns
-    -------
-        RDKit molecule with explicit hydrogens.
-
-    Raises
-    ------
-    ValueError
-        If the InChI string cannot be parsed.
+    Raises:
+        ValueError: If the InChI string cannot be parsed.
     """
     mol = Chem.MolFromInchi(inchi, sanitize=True, removeHs=False)
     if mol is None:
@@ -124,22 +104,16 @@ def from_inchi(inchi: str, *, with_coords: bool = False) -> Mol:
 
 
 def inchi(mol: Mol) -> str:
-    """
-    Get standard InChI string from Mol.
+    """Get standard InChI string from Mol.
 
-    Parameters
-    ----------
-    mol
-        RDKit molecule object.
+    Args:
+        mol: RDKit molecule object.
 
-    Returns
-    -------
-        InChI identifier.
+    Returns:
+        str: InChI identifier.
 
-    Raises
-    ------
-    ValueError
-        If InChI generation fails.
+    Raises:
+        ValueError: If InChI generation fails.
     """
     ich = Chem.inchi.MolBlockToInchi(Chem.rdmolfiles.MolToMolBlock(mol))
     if not ich:
@@ -149,22 +123,16 @@ def inchi(mol: Mol) -> str:
 
 
 def from_xyz_block(xyz_block: str) -> Mol:
-    """
-    Get RDKit molecule from XYZ.
+    """Get RDKit molecule from XYZ.
 
-    Parameters
-    ----------
-    xyz_block
-        Formatted xyz string.
+    Args:
+        xyz_block: Formatted xyz string.
 
-    Returns
-    -------
-        RDKit molecule.
+    Returns:
+        Mol: RDKit molecule.
 
-    Raises
-    ------
-    ValueError
-        If the xyz block cannot be parsed.
+    Raises:
+        ValueError: If the xyz block cannot be parsed.
     """
     raw_mol = Chem.MolFromXYZBlock(xyz_block)
     if raw_mol is None:
@@ -176,17 +144,13 @@ def from_xyz_block(xyz_block: str) -> Mol:
 
 
 def xyz_block(mol: Mol) -> str:
-    """
-    Get formatted xyz block from rdkit molecule.
+    """Get formatted xyz block from rdkit molecule.
 
-    Parameters
-    ----------
-    mol
-        `rdkit.Chem.Mol` instance.
+    Args:
+        mol: `rdkit.Chem.Mol` instance.
 
-    Returns
-    -------
-    Formatted xyz block.
+    Returns:
+        str: Formatted xyz block.
     """
     return Chem.MolToXYZBlock(mol)
 
@@ -198,17 +162,13 @@ def max_bond_count(symbol: str, *, max_charge: int = 1) -> float:
     the valences of its isoelectronic neutral counterpart (as `from_connectivity`
     does), e.g. 4 for N (as in N+), 3 for O (as in O+), and 6 for S.
 
-    Parameters
-    ----------
-    symbol
-        Atomic symbol.
-    max_charge, optional
-        Maximum magnitude of the formal charge.
+    Args:
+        symbol: Atomic symbol.
+        max_charge: Maximum magnitude of the formal charge.
 
-    Returns
-    -------
-        Maximum bond count, or `math.inf` if RDKit places no limit on the valence
-        (e.g., for metals).
+    Returns:
+        float: Maximum bond count, or `math.inf` if RDKit places no limit on the
+        valence (for example, for metals).
     """
     periodic_table = Chem.GetPeriodicTable()
     z = element.number(symbol)
@@ -226,7 +186,14 @@ def max_bond_count(symbol: str, *, max_charge: int = 1) -> float:
 
 @dataclass(frozen=True, slots=True)
 class _AtomState:
-    """Candidate (charge, valence) state of an atom in bond perception."""
+    """Candidate (charge, valence) state of an atom in bond perception.
+
+    Attributes:
+        atom (int): Atom index.
+        charge (int): Formal charge assigned to the atom.
+        valence (int): Valence assigned to the atom.
+        cost (float): Optimization cost for selecting this state.
+    """
 
     atom: int
     charge: int
@@ -241,6 +208,20 @@ def _atom_states(
 
     A charged atom is assigned the allowed valences of its isoelectronic neutral
     counterpart (e.g. N+ ~ C, O- ~ F, F- ~ Ne), mirroring RDKit's valence model.
+
+    Args:
+        idx: Atom index.
+        symbol: Atomic symbol.
+        degree: Required bonded degree.
+        max_charge: Maximum magnitude of the formal charge to consider.
+
+    Returns:
+        list[_AtomState]: Candidate states compatible with the requested degree.
+
+    Raises:
+        NotImplementedError: If the atom is a metal.
+        GeometryConversionError: If no candidate state can accommodate `degree`
+            bonds.
     """
     if element.is_metal(symbol):
         msg = f"Bond perception is not implemented for metals (atom {idx}: {symbol})."
@@ -286,9 +267,15 @@ def _solve_lewis_structure(
 ) -> tuple[list[int], list[int], list[int]]:
     """Solve the bond perception integer program.
 
-    Returns
-    -------
-        Formal charge and radical electron count per atom, and order per bond.
+    Args:
+        symbols: Atomic symbols.
+        edges: Bonded atom-index pairs.
+        charge: Total molecular charge.
+        spin: Number of unpaired electrons.
+
+    Returns:
+        tuple[list[int], list[int], list[int]]: Formal charge per atom, radical
+        electron count per atom, and bond order per edge.
     """
     natms = len(symbols)
     degrees = np.zeros(natms, dtype=int)
@@ -365,8 +352,7 @@ def from_connectivity(
     spin: int = 0,
     coords: ArrayLike | None = None,
 ) -> Mol:
-    """
-    Get RDKit molecule from atoms and connectivity, perceiving the Lewis structure.
+    """Get RDKit molecule from atoms and connectivity, perceiving the Lewis structure.
 
     Bond orders, formal charges, and radical electrons are determined by solving an
     integer linear program over the bonded atoms:
@@ -383,29 +369,21 @@ def from_connectivity(
     charge on more electronegative atoms, positive charge and radicals on less
     electronegative ones.
 
-    Parameters
-    ----------
-    symbols
-        Atomic symbols.
-    bonds
-        Pairs of bonded atom indices.
-    charge, optional
-        Total molecular charge.
-    spin, optional
-        Number of unpaired electrons.
-    coords, optional
-        Atomic coordinates as an (N, 3) array, added as a conformer if given.
+    Args:
+        symbols: Atomic symbols.
+        bonds: Pairs of bonded atom indices.
+        charge: Total molecular charge.
+        spin: Number of unpaired electrons.
+        coords: Atomic coordinates as an `(N, 3)` array, added as a conformer if
+            given.
 
-    Returns
-    -------
-        Sanitized RDKit molecule with explicit hydrogens.
+    Returns:
+        Mol: Sanitized RDKit molecule with explicit hydrogens.
 
-    Raises
-    ------
-    NotImplementedError
-        If the molecule contains a metal.
-    GeometryConversionError
-        If no Lewis structure is consistent with the connectivity, charge, and spin.
+    Raises:
+        NotImplementedError: If the molecule contains a metal.
+        GeometryConversionError: If no Lewis structure is consistent with the
+            connectivity, charge, and spin.
     """
     natms = len(symbols)
     edges = sorted({(min(i, j), max(i, j)) for i, j in map(tuple, bonds)})
@@ -452,38 +430,28 @@ def from_connectivity(
 
 
 def symbols(mol: Mol) -> list[str]:
-    """
-    Get atomic symbols.
+    """Get atomic symbols.
 
-    Parameters
-    ----------
-    mol
-        RDKit molecule object.
+    Args:
+        mol: RDKit molecule object.
 
-    Returns
-    -------
-        List of atomic symbols.
+    Returns:
+        list[str]: Atomic symbols.
     """
     return [a.GetSymbol() for a in mol.GetAtoms()]
 
 
 def coordinates(mol: Mol) -> FloatArray:
-    """
-    Get atom coordinates.
+    """Get atom coordinates.
 
-    Parameters
-    ----------
-    mol
-        RDKit molecule object.
+    Args:
+        mol: RDKit molecule object.
 
-    Returns
-    -------
-        Atomic coordinates as (N, 3) numpy array.
+    Returns:
+        FloatArray: Atomic coordinates as an `(N, 3)` numpy array.
 
-    Raises
-    ------
-    GeometryConversionError
-        If the molecule has no coordinates.
+    Raises:
+        GeometryConversionError: If the molecule has no coordinates.
     """
     if not has_coordinates(mol):
         msg = "Molecule has no coordinates. Did you forget to add them?"
@@ -493,77 +461,57 @@ def coordinates(mol: Mol) -> FloatArray:
 
 
 def charge(mol: Mol) -> int:
-    """
-    Get molecular charge.
+    """Get molecular charge.
 
-    Parameters
-    ----------
-    mol
-        RDKit molecule object.
+    Args:
+        mol: RDKit molecule object.
 
-    Returns
-    -------
-        Molecular charge as an integer.
+    Returns:
+        int: Molecular charge.
     """
     return Chem.GetFormalCharge(mol)
 
 
 def spin(mol: Mol) -> int:
-    """
-    Get molecular spin (number of unpaired electrons).
+    """Get molecular spin (number of unpaired electrons).
 
-    Parameters
-    ----------
-    mol
-        RDKit molecule object.
+    Args:
+        mol: RDKit molecule object.
 
-    Returns
-    -------
-        Number of unpaired electrons as an integer.
+    Returns:
+        int: Number of unpaired electrons.
     """
     return Descriptors.NumRadicalElectrons(mol)
 
 
 # Boolean properties
 def has_coordinates(mol: Mol) -> bool:
-    """
-    Check if coordinates have been added.
+    """Check if coordinates have been added.
 
-    Parameters
-    ----------
-    mol
-        RDKit molecule object.
+    Args:
+        mol: RDKit molecule object.
 
-    Returns
-    -------
-        `True` if the molecule has coordinates, False otherwise.
+    Returns:
+        bool: `True` if the molecule has coordinates, otherwise `False`.
     """
     return bool(mol.GetNumConformers())
 
 
 # Transformations
 def set_coordinates(mol: Mol, coords: FloatArray, *, in_place: bool = False) -> Mol:
-    """
-    Set atom coordinates, replacing any existing conformer.
+    """Set atom coordinates, replacing any existing conformer.
 
-    Parameters
-    ----------
-    mol
-        RDKit molecule object.
-    coords
-        Atomic coordinates as an (N, 3) array.
-    in_place, optional
-        If `True`, modify the molecule in place.
-        If `False` (default), return a new molecule.
+    Args:
+        mol: RDKit molecule object.
+        coords: Atomic coordinates as an `(N, 3)` array.
+        in_place: If `True`, modify the molecule in place. If `False`, return a
+            new molecule.
 
-    Returns
-    -------
-        RDKit molecule object with the given coordinates.
+    Returns:
+        Mol: RDKit molecule object with the given coordinates.
 
-    Raises
-    ------
-    ValueError
-        If `coords` is not of shape (N, 3) for N atoms.
+    Raises:
+        ValueError: If `coords` is not of shape `(N, 3)` for `N` atoms.
     """
     coords = np.asarray(coords, dtype=np.float64)
     if coords.shape != (mol.GetNumAtoms(), 3):
@@ -585,29 +533,21 @@ def set_coordinates(mol: Mol, coords: FloatArray, *, in_place: bool = False) -> 
 def add_coordinates(
     mol: Mol, *, seed: int | None = EMBED_SEED, in_place: bool = False
 ) -> Mol:
-    """
-    Add coordinates, if missing.
+    """Add coordinates, if missing.
 
-    Parameters
-    ----------
-    mol
-        RDKit molecule object.
-    seed, optional
-        Random seed for embedding, for reproducible coordinates.
-        If `None`, use a random seed.
-    in_place, optional
-        If `True`, modify the molecule in place.
-        If `False` (default), return a new molecule.
+    Args:
+        mol: RDKit molecule object.
+        seed: Random seed for embedding, for reproducible coordinates. If
+            `None`, use a random seed.
+        in_place: If `True`, modify the molecule in place. If `False`, return a
+            new molecule.
 
-    Returns
-    -------
-        RDKit molecule object with coordinates.
-        (Unmodified if it already had coordinates.)
+    Returns:
+        Mol: RDKit molecule object with coordinates. If the molecule already had
+        coordinates, it is returned unmodified.
 
-    Raises
-    ------
-    GeometryConversionError
-        If coordinates cannot be embedded.
+    Raises:
+        GeometryConversionError: If coordinates cannot be embedded.
     """
     if has_coordinates(mol):
         return mol
@@ -627,19 +567,15 @@ def add_atom_numbers(
 ) -> Mol:
     """Add atom numbers.
 
-    Parameters
-    ----------
-    mol
-        RDKit molecule object.
-    to_number
-        Mapping from atom index to atom number.
-    in_place, optional
-        If `True`, modify the molecule in place.
-        If `False` (default), return a new molecule.
+    Args:
+        mol: RDKit molecule object.
+        to_number: Mapping from atom index to atom number.
+        in_place: If `True`, modify the molecule in place. If `False`, return a
+            new molecule.
 
-    Returns
-    -------
-        RDKit molecule object with "atomLabel" property set to f"{symbol}{number}"
+    Returns:
+        Mol: RDKit molecule object with `"atomLabel"` properties set to
+        `f"{symbol}{number}"`.
     """
     mol = mol if in_place else Mol(mol)
     for atom in mol.GetAtoms():
@@ -653,16 +589,12 @@ def add_atom_numbers(
 def canonical_ranks(mol: Mol, *, break_ties: bool = True) -> list[int]:
     """Return the canonical ranking.
 
-    Parameters
-    ----------
-    mol
-        RDKit molecule object.
-    break_ties
-        If `True`, force breaking of ranked ties.
+    Args:
+        mol: RDKit molecule object.
+        break_ties: If `True`, force breaking of ranked ties.
 
-    Returns
-    -------
-        List of canonical ranks.
+    Returns:
+        list[int]: Canonical ranks.
     """
     ranks = Chem.CanonicalRankAtoms(mol=mol, breakTies=break_ties)
     return cast("list[int]", ranks)
@@ -671,17 +603,13 @@ def canonical_ranks(mol: Mol, *, break_ties: bool = True) -> list[int]:
 def assign_stereochemistry(mol: Mol, *, in_place: bool = False) -> Mol:
     """Assign stereochemistry from 3D coordinates.
 
-    Parameters
-    ----------
-    mol
-        RDKit molecule object.
-    in_place
-        If `True`, modify the molecule in place.
-        If `False` (default), return a new molecule.
+    Args:
+        mol: RDKit molecule object.
+        in_place: If `True`, modify the molecule in place. If `False`, return a
+            new molecule.
 
-    Returns
-    -------
-        RDKit molecule object with stereochemistry tags.
+    Returns:
+        Mol: RDKit molecule object with stereochemistry tags.
     """
     mol = mol if in_place else Mol(mol)
     Chem.AssignStereochemistryFrom3D(mol)
@@ -691,14 +619,11 @@ def assign_stereochemistry(mol: Mol, *, in_place: bool = False) -> Mol:
 def chiral_centers(mol: Mol) -> list[tuple[int, str]]:
     """Return chiral center indices with R/S labels.
 
-    Parameters
-    ----------
-    mol
-        RDKit molecule object.
+    Args:
+        mol: RDKit molecule object.
 
-    Returns
-    -------
-        List of (index, label) for all chiral centers.
+    Returns:
+        list[tuple[int, str]]: `(index, label)` pairs for all chiral centers.
     """
     mol = assign_stereochemistry(mol)
     return Chem.FindMolChiralCenters(mol, useLegacyImplementation=False)

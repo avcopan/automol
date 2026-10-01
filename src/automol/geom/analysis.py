@@ -20,15 +20,12 @@ FLOOD_FILL_STEP = 0.05
 def center_of_mass(geo: "Geometry") -> FloatArray:
     """Calculate the geometry center of mass.
 
-    Parameters
-    ----------
-    geo
-        Geometry.
+    Args:
+        geo: Geometry.
 
-    Returns
-    -------
-    FloatArray
-        Center of mass coordinates (the origin for an empty geometry).
+    Returns:
+        FloatArray: Center of mass coordinates (the origin for an empty
+        geometry).
     """
     masses = np.asarray(geo.masses)
     if not masses.size:
@@ -39,15 +36,11 @@ def center_of_mass(geo: "Geometry") -> FloatArray:
 def distance_matrix(geo: "Geometry") -> np.ndarray:
     """Calculate the geometry distance matrix.
 
-    Parameters
-    ----------
-    geo
-        Geometry.
+    Args:
+        geo: Geometry.
 
-    Returns
-    -------
-    np.ndarray
-        Distance matrix of geometry.
+    Returns:
+        np.ndarray: Distance matrix of the geometry.
     """
     return spatial.distance.cdist(geo.coordinates, geo.coordinates)
 
@@ -64,26 +57,20 @@ def adjacency_matrix(
     An edge exists between two atoms if their distance is less than `sigma`
     times the sum of their covalent radii.
 
-    Parameters
-    ----------
-    geo
-        Geometry.
-    sigma
-        Scaling factor applied to the sum of covalent radii.
-    flood_fill
-        If True, increase sigma in steps of `FLOOD_FILL_STEP` until the adjacency
-        matrix is connected (one fragment). Stops early if increasing sigma can no
-        longer add edges, in which case the result may remain disconnected.
-    enforce_valence
-        If True, cap the number of bonds to each atom at its maximum valence (see
-        `automol.rd.mol.max_bond_count`). Candidate bonds are accepted in order of
-        increasing distance relative to the sum of covalent radii, so the result
-        does not depend on atom ordering.
+    Args:
+        geo: Geometry.
+        sigma: Scaling factor applied to the sum of covalent radii.
+        flood_fill: If `True`, increase `sigma` in steps of `FLOOD_FILL_STEP`
+            until the adjacency matrix is connected (one fragment). Stops early if
+            increasing `sigma` can no longer add edges, in which case the result
+            may remain disconnected.
+        enforce_valence: If `True`, cap the number of bonds to each atom at its
+            maximum valence (see `automol.rd.mol.max_bond_count`). Candidate bonds
+            are accepted in order of increasing distance relative to the sum of
+            covalent radii, so the result does not depend on atom ordering.
 
-    Returns
-    -------
-    np.ndarray
-        2D binary adjacency matrix.
+    Returns:
+        np.ndarray: 2D binary adjacency matrix.
     """
     natms = geo.atom_count
     radii = np.asarray(geo.covalent_radii)
@@ -127,15 +114,11 @@ def distance_keys(geo: "Geometry") -> np.ndarray:
     atom pairs, sorted first by atomic numbers (z_low, z_high) then their pairwise
     distances.
 
-    Parameters
-    ----------
-    geo
-        Geometry.
+    Args:
+        geo: Geometry.
 
-    Returns
-    -------
-    np.ndarray
-        Array where each row contains [z1, z2, distance]
+    Returns:
+        np.ndarray: Array where each row contains `[z1, z2, distance]`.
     """
     z = np.asarray(geo.atomic_numbers)
     dmat = distance_matrix(geo)
@@ -151,35 +134,29 @@ def distance_keys(geo: "Geometry") -> np.ndarray:
 def bonds(geo: "Geometry", amat: ArrayLike) -> np.ndarray:
     """Compile distances of bonded pairs.
 
-    Parameters
-    ----------
-    geo
-        Geometry.
-    amat
-        Adjacency matrix.
+    Args:
+        geo: Geometry.
+        amat: Adjacency matrix.
 
-    Returns
-    -------
-    np.ndarray
-        Sorted array of bonded pairs and their distances [[z1, z2, dist], ...],
-        with z1 <= z2. Shape is ``(nbonds, 3)``.
+    Returns:
+        np.ndarray: Sorted array of bonded pairs and their distances
+        `[[z1, z2, dist], ...]`, with `z1 <= z2`. Shape is ``(nbonds, 3)``.
 
-    Example
-    -------
-    >>> from automol import Geometry
-    >>> from automol.geom import adjacency_matrix
-    >>> geo = Geometry(
-    ...     symbols=["O", "H", "H"],
-    ...     coordinates=[[0, 0, 0], [1, 0, 0], [0, 1, 0]],
-    ...     charge=0,
-    ...     spin=0,
-    ... )
-    >>> amat = adjacency_matrix(geo)
-    >>> b = bonds(geo, amat)
-    >>> b.shape
-    (2, 3)
-    >>> [tuple(float(x) for x in row) for row in b]
-    [(1.0, 8.0, 1.0), (1.0, 8.0, 1.0)]
+    Example:
+        >>> from automol import Geometry
+        >>> from automol.geom import adjacency_matrix
+        >>> geo = Geometry(
+        ...     symbols=["O", "H", "H"],
+        ...     coordinates=[[0, 0, 0], [1, 0, 0], [0, 1, 0]],
+        ...     charge=0,
+        ...     spin=0,
+        ... )
+        >>> amat = adjacency_matrix(geo)
+        >>> b = bonds(geo, amat)
+        >>> b.shape
+        (2, 3)
+        >>> [tuple(float(x) for x in row) for row in b]
+        [(1.0, 8.0, 1.0), (1.0, 8.0, 1.0)]
     """
     zs = np.asarray(geo.atomic_numbers)
     xyz = geo.coordinates
@@ -193,36 +170,30 @@ def bonds(geo: "Geometry", amat: ArrayLike) -> np.ndarray:
 def angles(geo: "Geometry", amat: ArrayLike) -> np.ndarray:
     """Compile angles of bonded triples.
 
-    Parameters
-    ----------
-    geo
-        Geometry.
-    amat
-        Adjacency matrix.
+    Args:
+        geo: Geometry.
+        amat: Adjacency matrix.
 
-    Returns
-    -------
-    np.ndarray
-        Sorted array of bonded triples and their angles in radians
-        [[z1, z2, z3, theta], ...], where z2 is the central atom and z1 <= z3.
-        Shape is ``(nangles, 4)``.
+    Returns:
+        np.ndarray: Sorted array of bonded triples and their angles in radians
+        `[[z1, z2, z3, theta], ...]`, where `z2` is the central atom and
+        `z1 <= z3`. Shape is ``(nangles, 4)``.
 
-    Example
-    -------
-    >>> from automol import Geometry
-    >>> from automol.geom import adjacency_matrix
-    >>> geo = Geometry(
-    ...     symbols=["O", "H", "H"],
-    ...     coordinates=[[0, 0, 0], [1, 0, 0], [0, 1, 0]],
-    ...     charge=0,
-    ...     spin=0,
-    ... )
-    >>> amat = adjacency_matrix(geo)
-    >>> a = angles(geo, amat)
-    >>> a.shape
-    (1, 4)
-    >>> round(float(a[0][-1]), 6)
-    1.570796
+    Example:
+        >>> from automol import Geometry
+        >>> from automol.geom import adjacency_matrix
+        >>> geo = Geometry(
+        ...     symbols=["O", "H", "H"],
+        ...     coordinates=[[0, 0, 0], [1, 0, 0], [0, 1, 0]],
+        ...     charge=0,
+        ...     spin=0,
+        ... )
+        >>> amat = adjacency_matrix(geo)
+        >>> a = angles(geo, amat)
+        >>> a.shape
+        (1, 4)
+        >>> round(float(a[0][-1]), 6)
+        1.570796
     """
     zs = np.asarray(geo.atomic_numbers)
     xyz = geo.coordinates
@@ -251,41 +222,35 @@ def angles(geo: "Geometry", amat: ArrayLike) -> np.ndarray:
 def dihedrals(geo: "Geometry", amat: ArrayLike) -> np.ndarray:
     """Compile dihedrals of bonded quadruples.
 
-    Parameters
-    ----------
-    geo
-        Geometry.
-    amat
-        Adjacency matrix.
+    Args:
+        geo: Geometry.
+        amat: Adjacency matrix.
 
-    Returns
-    -------
-    np.ndarray
-        Sorted array of bonded quadruples and their dihedral angles in radians
-        [[z1, z2, z3, z4, phi], ...]. Each quadruple is oriented so that
-        (z1, z2, z3, z4) <= (z4, z3, z2, z1), which leaves phi unchanged.
-        Shape is ``(ndihedrals, 5)``.
+    Returns:
+        np.ndarray: Sorted array of bonded quadruples and their dihedral angles
+        in radians `[[z1, z2, z3, z4, phi], ...]`. Each quadruple is oriented so
+        that `(z1, z2, z3, z4) <= (z4, z3, z2, z1)`, which leaves `phi`
+        unchanged. Shape is ``(ndihedrals, 5)``.
 
-    Example
-    -------
-    >>> import numpy as np
-    >>> from automol import Geometry
-    >>> geo = Geometry(
-    ...     symbols=["H", "O", "O", "H"],
-    ...     coordinates=[[0, 0, 1], [0, 0, 0], [0, 1, 0], [1, 1, 0]],
-    ...     charge=0,
-    ...     spin=0,
-    ... )
-    >>> amat = np.array(
-    ...     [[0, 1, 0, 0], [1, 0, 1, 0], [0, 1, 0, 1], [0, 0, 1, 0]]
-    ... )
-    >>> d = dihedrals(geo, amat)
-    >>> d.shape
-    (1, 5)
-    >>> [float(x) for x in d[0][:4]]
-    [1.0, 8.0, 8.0, 1.0]
-    >>> round(float(d[0][-1]), 6)
-    1.570796
+    Example:
+        >>> import numpy as np
+        >>> from automol import Geometry
+        >>> geo = Geometry(
+        ...     symbols=["H", "O", "O", "H"],
+        ...     coordinates=[[0, 0, 1], [0, 0, 0], [0, 1, 0], [1, 1, 0]],
+        ...     charge=0,
+        ...     spin=0,
+        ... )
+        >>> amat = np.array(
+        ...     [[0, 1, 0, 0], [1, 0, 1, 0], [0, 1, 0, 1], [0, 0, 1, 0]]
+        ... )
+        >>> d = dihedrals(geo, amat)
+        >>> d.shape
+        (1, 5)
+        >>> [float(x) for x in d[0][:4]]
+        [1.0, 8.0, 8.0, 1.0]
+        >>> round(float(d[0][-1]), 6)
+        1.570796
     """
     zs = np.asarray(geo.atomic_numbers)
     xyz = geo.coordinates
@@ -329,29 +294,25 @@ def dihedrals(geo: "Geometry", amat: ArrayLike) -> np.ndarray:
 def inertia_tensor(geo: "Geometry") -> np.ndarray:
     """Calculate the inertia tensor of a geometry.
 
-    Parameters
-    ----------
-    geo
-        Geometry.
+    Args:
+        geo: Geometry.
 
-    Returns
-    -------
-        Inertia tensor (zero for an empty geometry).
+    Returns:
+        np.ndarray: Inertia tensor (zero for an empty geometry).
 
-    Example
-    -------
-    >>> from automol import Geometry
-    >>> geo = Geometry(
-    ...     symbols=["O", "H", "H"],
-    ...     coordinates=[[0, 0, 0], [1, 0, 0], [0, 1, 0]],
-    ...     charge=0,
-    ...     spin=0,
-    ... )
-    >>> tensor = inertia_tensor(geo)
-    >>> tensor.shape
-    (3, 3)
-    >>> bool(np.allclose(tensor, tensor.T))
-    True
+    Example:
+        >>> from automol import Geometry
+        >>> geo = Geometry(
+        ...     symbols=["O", "H", "H"],
+        ...     coordinates=[[0, 0, 0], [1, 0, 0], [0, 1, 0]],
+        ...     charge=0,
+        ...     spin=0,
+        ... )
+        >>> tensor = inertia_tensor(geo)
+        >>> tensor.shape
+        (3, 3)
+        >>> bool(np.allclose(tensor, tensor.T))
+        True
     """
     masses = np.asarray(geo.masses)
     coords = geo.coordinates - center_of_mass(geo)
@@ -361,7 +322,18 @@ def inertia_tensor(geo: "Geometry") -> np.ndarray:
 
 # Helpers
 def _as_adjacency(amat: ArrayLike, natms: int) -> np.ndarray:
-    """Convert an adjacency matrix to a validated boolean array."""
+    """Convert an adjacency matrix to a validated boolean array.
+
+    Args:
+        amat: Adjacency matrix-like object.
+        natms: Expected number of atoms.
+
+    Returns:
+        np.ndarray: Boolean adjacency matrix with shape ``(natms, natms)``.
+
+    Raises:
+        ValueError: If `amat` does not have shape ``(natms, natms)``.
+    """
     amat = np.asarray(amat).astype(bool)
     if amat.shape != (natms, natms):
         msg = f"Expected adjacency matrix of shape {(natms, natms)}, got {amat.shape}."
@@ -370,10 +342,24 @@ def _as_adjacency(amat: ArrayLike, natms: int) -> np.ndarray:
 
 
 def _neighbors(amat: np.ndarray) -> list[list[int]]:
-    """Get sorted neighbor lists from an adjacency matrix."""
+    """Get sorted neighbor lists from an adjacency matrix.
+
+    Args:
+        amat: Boolean adjacency matrix.
+
+    Returns:
+        list[list[int]]: Neighbor indices for each atom.
+    """
     return [np.flatnonzero(row).tolist() for row in amat]
 
 
 def _sort_rows(arr: np.ndarray) -> np.ndarray:
-    """Sort the rows of a 2D array lexicographically."""
+    """Sort the rows of a 2D array lexicographically.
+
+    Args:
+        arr: Two-dimensional array to sort.
+
+    Returns:
+        np.ndarray: Lexicographically sorted array.
+    """
     return arr[np.lexsort(arr.T[::-1])]

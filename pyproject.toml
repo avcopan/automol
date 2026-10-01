@@ -42,7 +42,7 @@ ignore = [
 "tests/**.py" = ["S101"]
 
 [tool.ruff.lint.pydocstyle]
-convention = "numpy"
+convention = "google"
 
 # Ty configurations
 [tool.ty.environment]

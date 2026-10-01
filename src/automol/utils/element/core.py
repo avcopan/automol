@@ -10,31 +10,20 @@ from ..exc import ElementNotFoundError
 
 @dataclass(frozen=True, slots=True)
 class Element:
-    """
-    Chemical element.
+    """Chemical element.
 
-    Attributes
-    ----------
-    Z
-        Atomic number.
-    A
-        Mass number.
-    group
-        Group number, or `None` for lanthanides and actinides.
-    period
-        Period number.
-    symbol
-        Chemical symbol.
-    mass
-        Atomic mass.
-    covalent_radius
-        Pyykko covalent radius, in Angstroms.
-    valence
-        Number of valence electrons.
-    electronegativity
-        Pauling electronegativity, if defined.
-    metal
-        Whether the element is a metal.
+    Attributes:
+        Z (int): Atomic number.
+        A (int): Mass number.
+        group (int | None): Group number, or `None` for lanthanides and
+            actinides.
+        period (int): Period number.
+        symbol (str): Chemical symbol.
+        mass (float): Atomic mass.
+        covalent_radius (float): Pyykko covalent radius, in Angstroms.
+        valence (int): Number of valence electrons.
+        electronegativity (float | None): Pauling electronegativity, if defined.
+        metal (bool): Whether the element is a metal.
     """
 
     Z: int
@@ -70,24 +59,18 @@ _load_elements()
 
 
 def from_key(key: int | str) -> Element:
-    """
-    Retrieve element by atomic number or symbol.
+    """Retrieve element by atomic number or symbol.
 
-    Parameters
-    ----------
-    key
-        Atomic number (int) or symbol (str).
+    Args:
+        key: Atomic number (`int`) or symbol (`str`).
 
-    Returns
-    -------
-        Requested element.
+    Returns:
+        Element: Requested element.
 
-    Raises
-    ------
-    TypeError
-        If key is not int or str.
-    ElementNotFoundError
-        If no element matches the given atomic number or symbol.
+    Raises:
+        TypeError: If `key` is not an `int` or `str`.
+        ElementNotFoundError: If no element matches the given atomic number or
+            symbol.
     """
     if isinstance(key, int):
         if key not in ELEMENT_BY_NUMBER:
@@ -107,146 +90,111 @@ def from_key(key: int | str) -> Element:
 
 
 def number(key: int | str) -> int:
-    """
-    Retrieve atomic number of element by atomic number or symbol.
+    """Retrieve atomic number of element by atomic number or symbol.
 
-    Parameters
-    ----------
-    key
-        Atomic number (int) or symbol (str).
+    Args:
+        key: Atomic number (`int`) or symbol (`str`).
 
-    Returns
-    -------
-        Atomic number.
+    Returns:
+        int: Atomic number.
     """
     return from_key(key).Z
 
 
 def mass_number(key: int | str) -> int:
-    """
-    Retrieve mass number of element by atomic number or symbol.
+    """Retrieve mass number of element by atomic number or symbol.
 
-    Parameters
-    ----------
-    key
-        Atomic number (int) or symbol (str).
+    Args:
+        key: Atomic number (`int`) or symbol (`str`).
 
-    Returns
-    -------
-        Mass number.
+    Returns:
+        int: Mass number.
     """
     return from_key(key).A
 
 
 def symbol(key: int | str) -> str:
-    """
-    Retrieve atomic symbol of element by atomic number or symbol.
+    """Retrieve atomic symbol of element by atomic number or symbol.
 
-    Parameters
-    ----------
-    key
-        Atomic number (int) or symbol (str).
+    Args:
+        key: Atomic number (`int`) or symbol (`str`).
 
-    Returns
-    -------
-        Atomic symbol.
+    Returns:
+        str: Atomic symbol.
     """
     return from_key(key).symbol
 
 
 def mass(key: int | str) -> float:
-    """
-    Retrieve atomic mass of element by atomic number or symbol.
+    """Retrieve atomic mass of element by atomic number or symbol.
 
-    Parameters
-    ----------
-    key
-        Atomic number (int) or symbol (str).
+    Args:
+        key: Atomic number (`int`) or symbol (`str`).
 
-    Returns
-    -------
-        Atomic mass.
+    Returns:
+        float: Atomic mass.
     """
     return from_key(key).mass
 
 
 def covalent_radius(key: int | str) -> float:
-    """
-    Retrieve covalent radius of element by atomic number or symbol.
+    """Retrieve covalent radius of element by atomic number or symbol.
 
-    Parameters
-    ----------
-    key
-        Atomic number (int) or symbol (str).
+    Args:
+        key: Atomic number (`int`) or symbol (`str`).
 
-    Returns
-    -------
-        Covalent radius.
+    Returns:
+        float: Covalent radius.
     """
     return from_key(key).covalent_radius
 
 
 def group(key: int | str) -> int | None:
-    """
-    Retrieve group number by atomic number or symbol.
+    """Retrieve group number by atomic number or symbol.
 
-    Parameters
-    ----------
-    key
-        Atomic number (int) or symbol (str).
+    Args:
+        key: Atomic number (`int`) or symbol (`str`).
 
-    Returns
-    -------
-        Group number, or `None` for lanthanides and actinides.
+    Returns:
+        int | None: Group number, or `None` for lanthanides and actinides.
     """
     return from_key(key).group
 
 
 def period(key: int | str) -> int:
-    """
-    Retrieve period number by atomic number or symbol.
+    """Retrieve period number by atomic number or symbol.
 
-    Parameters
-    ----------
-    key
-        Atomic number (int) or symbol (str).
+    Args:
+        key: Atomic number (`int`) or symbol (`str`).
 
-    Returns
-    -------
-        Period.
+    Returns:
+        int: Period number.
     """
     return from_key(key).period
 
 
 def electronegativity(key: int | str) -> float | None:
-    """
-    Retrieve Pauling electronegativity by atomic number or symbol.
+    """Retrieve Pauling electronegativity by atomic number or symbol.
 
-    Parameters
-    ----------
-    key
-        Atomic number (int) or symbol (str).
+    Args:
+        key: Atomic number (`int`) or symbol (`str`).
 
-    Returns
-    -------
-        Pauling electronegativity, or `None` if undefined (e.g., for He, Ne, Ar).
+    Returns:
+        float | None: Pauling electronegativity, or `None` if undefined (for
+            example, for He, Ne, or Ar).
     """
     return from_key(key).electronegativity
 
 
 def is_metal(key: int | str) -> bool:
-    """
-    Determine whether an element is a metal by atomic number or symbol.
+    """Determine whether an element is a metal by atomic number or symbol.
 
-    Parameters
-    ----------
-    key
-        Atomic number (int) or symbol (str).
+    Args:
+        key: Atomic number (`int`) or symbol (`str`).
 
-    Returns
-    -------
-        `True` for alkali, alkaline earth, poor, and transition metals, lanthanides,
-        and actinides; `False` otherwise.
+    Returns:
+        bool: `True` for alkali, alkaline earth, poor, and transition metals,
+        lanthanides, and actinides; `False` otherwise.
     """
     return from_key(key).metal
 
@@ -263,35 +211,26 @@ PERIOD_SHELL_CAPACITY = {
 
 
 def shell_capacity(key: int | str) -> int:
-    """
-    Determine shell capacity by atomic number or symbol.
+    """Determine shell capacity by atomic number or symbol.
 
-    Parameters
-    ----------
-    key
-        Atomic number (int) or symbol (str).
+    Args:
+        key: Atomic number (`int`) or symbol (`str`).
 
-    Returns
-    -------
-        Shell capacity.
+    Returns:
+        int: Shell capacity.
     """
     return PERIOD_SHELL_CAPACITY[period(key)]
 
 
 def valence(key: int | str, *, override: dict[str, int] | None = None) -> int:
-    """
-    Retrieve number of valence electrons by atomic number or symbol.
+    """Retrieve number of valence electrons by atomic number or symbol.
 
-    Parameters
-    ----------
-    key
-        Atomic number (int) or symbol (str).
-    override
-        Dictionary of valence overrides by atomic symbol.
+    Args:
+        key: Atomic number (`int`) or symbol (`str`).
+        override: Dictionary of valence overrides by atomic symbol.
 
-    Returns
-    -------
-        Number of valence electrons.
+    Returns:
+        int: Number of valence electrons.
     """
     if override is not None:
         symb = from_key(key).symbol
@@ -301,19 +240,14 @@ def valence(key: int | str, *, override: dict[str, int] | None = None) -> int:
 
 
 def bonding_capacity(key: int | str, *, override: dict[str, int] | None = None) -> int:
-    """
-    Determine bonding capacity by atomic number or symbol.
+    """Determine bonding capacity by atomic number or symbol.
 
-    Parameters
-    ----------
-    key
-        Atomic number (int) or symbol (str).
-    override
-        Dictionary of bonding capacity overrides by atomic symbol.
+    Args:
+        key: Atomic number (`int`) or symbol (`str`).
+        override: Dictionary of bonding capacity overrides by atomic symbol.
 
-    Returns
-    -------
-        Bonding capacity.
+    Returns:
+        int: Bonding capacity.
     """
     if override is not None:
         symb = from_key(key).symbol

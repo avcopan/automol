@@ -29,6 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `Element.group` is typed `int | None`. It is `None` for lanthanides and actinides.
 
 ### Changed
+- **Documentation:** All docstrings converted from NumPy style to Google style for improved IDE support and consistency. Updated ruff configuration to validate Google-style docstrings and sphinx configuration with Napoleon preprocessor for documentation generation. All functions now have complete Args and Returns sections with full type information.
 - `geom.rdkit_mol` no longer depends on `stereomolgraph`: connectivity comes from `adjacency_matrix`, the Lewis structure from `rd.mol.from_connectivity`, and stereochemistry from the 3D coordinates. Radicals, charged species, and closed-shell singlet carbenes are now represented faithfully.
 - **Breaking:** `geom.dihedrals` returns rows `[z1, z2, z3, z4, phi]` keyed by atomic numbers, oriented canonically and sorted, consistent with `bonds` and `angles`. Previously, rows held atom indices.
 - `adjacency_matrix(enforce_valence=True)` caps bonds at `rd.mol.max_bond_count` instead of the valence-electron count, and keeps the shortest bonds (relative to covalent radii). The result no longer depends on atom order.
