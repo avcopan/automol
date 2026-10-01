@@ -47,3 +47,4 @@ autodoc2_docstring_parser_regexes = [
 napoleon_use_ivar = True
 napoleon_use_param = True
 napoleon_use_rtype = False
+napoleon_preprocess_types = True

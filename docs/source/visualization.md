@@ -1,6 +1,6 @@
 # Visualization
 
-`automol.geom.view` builds on [py3Dmol](https://3dmol.csb.pitt.edu/) for
+`automol.geom` builds on [py3Dmol](https://3dmol.csb.pitt.edu/) for
 interactive 3D viewing (e.g. in a Jupyter notebook) and on
 [xyzrender](https://pypi.org/project/xyzrender/) for static image and
 animation output.
@@ -31,9 +31,9 @@ In a notebook, the view renders inline; `v.show()` (inherited from
 For a one-off view without constructing a `View` yourself:
 
 ```python
-from automol import view
+from automol import geom
 
-v = view.view(water, label=True)
+v = geom.view(water, label=True)
 ```
 
 ### Annotating with vectors
@@ -61,10 +61,10 @@ needing a browser or notebook — useful for scripts, reports, or CI
 artifacts:
 
 ```python
-from automol import view
+from automol import geom
 
-view.render_svg(water, out="water.svg")
-view.render_gif(water, out="water.gif", rotation_axis="y")
+geom.render_svg(water, out="water.svg")
+geom.render_gif(water, out="water.gif", rotation_axis="y")
 ```
 
 Both accept `config` (an `xyzrender` `RenderConfig`, or `"default"`) and

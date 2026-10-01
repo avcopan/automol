@@ -5,8 +5,8 @@ from pathlib import Path
 import pytest
 
 from automol import Geometry, View
-from automol.geom.io import render_gif, render_svg
-from automol.geom.io import view as build_view
+from automol.geom import render_gif, render_svg
+from automol.geom import view as build_view
 
 
 @pytest.fixture
@@ -15,20 +15,17 @@ def view() -> View:
     return View()
 
 
-@pytest.fixture
-def water() -> Geometry:
-    """Water geometry fixture."""
-    return Geometry(
-        symbols=["O", "H", "H"],
-        coordinates=[[0, 0, 0], [1, 0, 0], [0, 1, 0]],
-        charge=0,
-        spin=0,
-    )
-
-
 def test__add_geometry(view: View, water: Geometry) -> None:
     """Test add geometry."""
     view.add_geometry(water, label=True)
+
+
+def test__add_multiple_geometries(view: View, water: Geometry) -> None:
+    """Test that labels and styles only target the most recently added model."""
+    view.add_geometry(water, label=True)
+    view.add_geometry(water, label=True)
+    js = view.startjs
+    assert js.count('"model": -1') == 2 * (water.atom_count + 1)
 
 
 def test__add_axes(view: View) -> None:
@@ -47,16 +44,10 @@ def test__add_vector_direction(view: View) -> None:
     view.add_vector([1, 0, 0], start_coord=[1, 1, 1], direction=True)
 
 
-def test__view_function(water: Geometry) -> None:
-    """Test py3Dmol view construction."""
-    result = build_view(water, label=True)
-    assert result is not None
-
-
-def test__view_function_without_label(water: Geometry) -> None:
-    """Test py3Dmol view construction without atom labels."""
-    result = build_view(water, label=False)
-    assert result is not None
+@pytest.mark.parametrize("label", [True, False])
+def test__view_function(water: Geometry, *, label: bool) -> None:
+    """Test py3Dmol view construction with and without atom labels."""
+    assert build_view(water, label=label) is not None
 
 
 def test__render_svg(water: Geometry, tmp_path: Path) -> None:

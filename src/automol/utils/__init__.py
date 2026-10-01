@@ -1,5 +1,6 @@
-"""Automol utilities."""
+"""Low-level utilities: element data, exceptions, types, and units."""
 
-from . import constants, element, exc, types
+from . import element, exc, types
+from .units import ureg
 
-__all__ = ["constants", "element", "exc", "types"]
+__all__ = ["element", "exc", "types", "ureg"]
