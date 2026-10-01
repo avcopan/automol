@@ -22,27 +22,6 @@ class GeometryConversionError(Exception):
         super().__init__(message)
 
 
-class HashGenerationError(Exception):
-    """Raise an error when object hashing is not successful."""
-
-    def __init__[T](self, message: str, hashable_instance: T) -> None:
-        super().__init__(message, hashable_instance)
-
-
-class UnknownAlgorithmError(Exception):
-    """Raise an error when an identity algorithm is not registered."""
-
-    def __init__(self, message: str) -> None:
-        super().__init__(message)
-
-
-class XTBError(Exception):
-    """Raise an error when an xtb calculation fails."""
-
-    def __init__(self, message: str) -> None:
-        super().__init__(message)
-
-
 class XYZFormatError(Exception):
     """Raise an error when xyz format fails to parse."""
 

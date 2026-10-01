@@ -20,7 +20,7 @@ class Element:
     A
         Mass number.
     group
-        Group number.
+        Group number, or `None` for lanthanides and actinides.
     period
         Period number.
     symbol
@@ -31,16 +31,22 @@ class Element:
         Pyykko covalent radius, in Angstroms.
     valence
         Number of valence electrons.
+    electronegativity
+        Pauling electronegativity, if defined.
+    metal
+        Whether the element is a metal.
     """
 
     Z: int
     A: int
-    group: int
+    group: int | None
     period: int
     symbol: str
     mass: float
     covalent_radius: float
     valence: int
+    electronegativity: float | None
+    metal: bool
 
 
 ELEMENT_BY_NUMBER: dict[int, Element] = {}
@@ -180,7 +186,7 @@ def covalent_radius(key: int | str) -> float:
     return from_key(key).covalent_radius
 
 
-def group(key: int | str) -> int:
+def group(key: int | str) -> int | None:
     """
     Retrieve group number by atomic number or symbol.
 
@@ -191,7 +197,7 @@ def group(key: int | str) -> int:
 
     Returns
     -------
-        Group number.
+        Group number, or `None` for lanthanides and actinides.
     """
     return from_key(key).group
 
@@ -210,6 +216,39 @@ def period(key: int | str) -> int:
         Period.
     """
     return from_key(key).period
+
+
+def electronegativity(key: int | str) -> float | None:
+    """
+    Retrieve Pauling electronegativity by atomic number or symbol.
+
+    Parameters
+    ----------
+    key
+        Atomic number (int) or symbol (str).
+
+    Returns
+    -------
+        Pauling electronegativity, or `None` if undefined (e.g., for He, Ne, Ar).
+    """
+    return from_key(key).electronegativity
+
+
+def is_metal(key: int | str) -> bool:
+    """
+    Determine whether an element is a metal by atomic number or symbol.
+
+    Parameters
+    ----------
+    key
+        Atomic number (int) or symbol (str).
+
+    Returns
+    -------
+        `True` for alkali, alkaline earth, poor, and transition metals, lanthanides,
+        and actinides; `False` otherwise.
+    """
+    return from_key(key).metal
 
 
 PERIOD_SHELL_CAPACITY = {

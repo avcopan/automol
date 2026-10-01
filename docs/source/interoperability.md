@@ -16,7 +16,8 @@ water_rt = geom.from_rdkit_mol(mol)  # rdkit.Chem.Mol -> Geometry
 ```
 
 `from_rdkit_mol` works whether or not the `Mol` already has 3D coordinates —
-if it doesn't, coordinates are embedded automatically before extraction.
+if it doesn't, coordinates are embedded automatically (with a fixed random
+seed, so results are reproducible) before extraction.
 
 For lower-level RDKit work that doesn't go through `Geometry` at all,
 `automol.rd.mol` operates directly on `rdkit.Chem.Mol` objects:
@@ -25,40 +26,26 @@ For lower-level RDKit work that doesn't go through `Geometry` at all,
 from automol.rd import mol
 
 water_mol = mol.from_smiles("O", with_coords=True)
-mol.smiles(water_mol)         # canonical SMILES
+mol.smiles(water_mol)         # canonical, non-isomeric SMILES ("[H]O[H]")
 mol.inchi(water_mol)          # InChI
 mol.symbols(water_mol)        # ["O", "H", "H"]
+mol.max_bond_count("N")       # 4 (allowing formal charges of +/-1)
 mol.coordinates(water_mol)    # (N, 3) array; raises GeometryConversionError
                                # if the Mol has no coordinates
 ```
+
+The parsers (`from_smiles`, `from_inchi`, `from_xyz_block`) raise a
+`ValueError` for invalid input, and `add_coordinates` accepts a `seed`
+(`None` for a random one).
 
 Other utilities in this module include `add_atom_numbers` (for RDKit atom
 labels), `canonical_ranks` (RDKit's canonical atom ranking), and
 `assign_stereochemistry`/`chiral_centers` (stereochemistry from 3D
 coordinates).
 
-## ASE
-
-```python
-atoms = geom.to_ase(water)  # Geometry -> ase.Atoms
-```
-
-`charge` and `spin` are carried over in `atoms.info`. There is currently no
-`from_ase`; go through xyz or RDKit if you need the reverse direction.
-
-## StereoMolGraph
-
-```python
-smg = geom.stereo_mol_graph(water)  # Geometry -> stereomolgraph.StereoMolGraph
-```
-
-This is what `rdkit_mol` uses internally to infer connectivity and
-stereochemistry from coordinates before building the RDKit `Mol`.
-
 ## Adding a new conversion
 
-`automol` enforces a module layering (`view` > `ident` > `geom` > `rd` >
-`utils`; see the `import-linter` contract in `pyproject.toml`) where each
+`automol` enforces a module layering (`ident` > `geom` > `rd` > `utils`; see the `import-linter` contract in `pyproject.toml`) where each
 module may only depend on modules below it. `geom/core.py` depends on `rd`
 (not the reverse) precisely because `rd` sits below `geom` in that
 layering, which is why the RDKit conversions (`rdkit_mol`/`from_rdkit_mol`)
@@ -68,6 +55,6 @@ utilities they're built from live in `rd/mol.py`.
 If you're adding support for another third-party library, follow that same
 split: put library-specific, `Mol`/`Atoms`/etc.-facing utilities in their
 own module beneath `geom` in the layering, and put the `Geometry`-facing
-conversion functions in `geom` itself (as `rdkit_mol`/`from_rdkit_mol` and
-`to_ase` already do) — rather than adding a new top-level dependency to the
+conversion functions in `geom` itself (as `rdkit_mol`/`from_rdkit_mol`
+already do) — rather than adding a new top-level dependency to the
 `Geometry` model itself.

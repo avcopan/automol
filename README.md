@@ -5,7 +5,7 @@
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Typing: ty](https://img.shields.io/badge/typing-ty-EFC621.svg)](https://github.com/astral-sh/ty)
 
-automol is a Python library for working with molecular geometries. It centers on a single `Geometry` model (atomic symbols, Cartesian coordinates, charge, and spin) and builds identity generation (InChI, SMILES, ...), 3D visualization, and RDKit/ASE interoperability on top of it.
+automol is a Python library for working with molecular geometries. It centers on a single `Geometry` model (atomic symbols, Cartesian coordinates, charge, and spin) and builds identity generation (InChI, SMILES, ...), 3D visualization, and RDKit interoperability on top of it.
 
 See the [documentation](https://avcopan.github.io/automol/) for API reference.
 
@@ -41,13 +41,13 @@ com = geom.center_of_mass(water)
 ### Identity generation (InChI, SMILES)
 
 ```python
-from automol import RDKIT_INCHI, RDKIT_SMILES, Identity
+from automol import hill_formula, rdkit_inchi, rdkit_smiles
 
-inchi = Identity.from_geometry(water, algorithm=RDKIT_INCHI)
-print(inchi.value)  # "InChI=1S/H2O/h1H2"
+rdkit_inchi.identity_fn(water)   # "InChI=1S/H2O/h1H2"
+rdkit_smiles.identity_fn(water)  # "O"
+hill_formula.identity_fn(water)  # "H2O"
 
-smiles = Identity.from_geometry(water, algorithm=RDKIT_SMILES)
-print(smiles.value)  # "O"
+water_rt = rdkit_inchi.geometry_fn("InChI=1S/H2O/h1H2")  # back to a Geometry
 ```
 
 ### RDKit interoperability
@@ -61,7 +61,7 @@ mol = rd.mol.from_smiles("O")
 geo = geom.from_rdkit_mol(mol)
 ```
 
-Conversions between `Geometry` and other cheminformatic packages (e.g., `RDKit`, `ASE`, ...) are maintained  by `automol.geom` and modules wrapping the external packages are agnostic to `automol`.
+Conversions between `Geometry` and other cheminformatic packages (e.g., `RDKit`) are maintained by `automol.geom` and modules wrapping the external packages are agnostic to `automol`.
 
 ### Visualization
 
@@ -81,7 +81,7 @@ water
 # Shows a 3D rendering + xyz-formatted block.
 ```
 
-See the [documentation](https://avcopan.github.io/automol/) for more on geometries, identity generation, visualization, and interoperability with RDKit/ASE.
+See the [documentation](https://avcopan.github.io/automol/) for more on geometries, identity generation, visualization, and interoperability with RDKit.
 
 ## Architecture
 

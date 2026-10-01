@@ -21,9 +21,17 @@ water = Geometry(
 )
 ```
 
-`coordinates` must have shape `(len(symbols), 3)` — a mismatch raises a
-`ValueError` at construction time, since this is standard pydantic field
-validation.
+`Geometry` is validated on construction and on assignment (a pydantic
+`ValidationError`, which is a `ValueError`, is raised otherwise):
+
+- `symbols` must be known elements; they are canonicalized, so `"cl"` becomes
+  `"Cl"`.
+- `coordinates` must have shape `(len(symbols), 3)`.
+- `spin` must be non-negative, no larger than the electron count, and of the
+  same parity.
+
+Geometries compare equal (`==`) when all fields match, with coordinates
+compared exactly.
 
 ### Per-atom properties
 
@@ -58,18 +66,22 @@ water_rt = geom.from_xyz_block(xyz, charge=0, spin=0)
 ```
 
 `charge` and `spin` aren't part of the xyz format, so they must be supplied
-explicitly when reading. A malformed or empty xyz block raises
-`automol.utils.exc.XYZFormatError`.
+explicitly when reading. Atoms may be given by symbol (case-insensitive) or
+atomic number. Only single-frame xyz blocks are supported. A malformed or
+empty xyz block, or one whose atom count line doesn't match the number of
+atom lines, raises `automol.utils.exc.XYZFormatError`.
 
 ## Molecular formula
 
 ```python
-geom.hill_formula(water)  # "H2O"
+from automol import hill_formula
+
+hill_formula.identity_fn(water)  # "H2O"
 ```
 
-Elements are ordered with carbon first, then hydrogen, then the rest
-alphabetically (Hill order) — the standard convention regardless of whether
-carbon is present.
+Elements are in Hill order: with carbon present, C comes first, then H, then
+the rest alphabetically; without carbon, all elements (including H) are
+alphabetical. See [Molecular identity](identity.md).
 
 ## Geometric properties
 
@@ -85,27 +97,42 @@ geom.distance_keys(water)      # sorted (z1, z2, distance) descriptor
 
 `adjacency_matrix` draws an edge between two atoms when their distance is
 less than `sigma` times the sum of their covalent radii (`sigma=1.3` by
-default). `distance_keys` produces an order-independent geometric fingerprint
-useful for comparing or hashing geometries.
+default). With `flood_fill=True`, `sigma` is increased until the molecule is
+connected (or no more edges can be added). With `enforce_valence=True`, the
+number of bonds to each atom is capped at its maximum valence, keeping the
+shortest bonds relative to their covalent radii. `distance_keys` produces an
+order-independent geometric fingerprint useful for comparing or hashing
+geometries.
+
+`bonds`, `angles`, and `dihedrals` take a geometry and an adjacency matrix
+and return sorted arrays of bonded pairs, triples, and quadruples, given by
+atomic numbers, with their distances or angles (in radians):
+
+```python
+amat = geom.adjacency_matrix(water)
+geom.bonds(water, amat)      # [[z1, z2, distance], ...]
+geom.angles(water, amat)     # [[z1, z2, z3, theta], ...]
+geom.dihedrals(water, amat)  # [[z1, z2, z3, z4, phi], ...]
+```
 
 ## Transformations
 
-`geom.transform` provides rigid transformations that return a new `Geometry`
+`automol.geom` provides rigid transformations that return a new `Geometry`
 by default, or mutate in place with `in_place=True`:
 
 ```python
 from scipy.spatial.transform import Rotation
 
-shifted = geom.transform.translate(water, [1.0, 0.0, 0.0])
-rotated = geom.transform.rotate(water, Rotation.from_euler("z", 90, degrees=True))
-mirrored = geom.transform.reflect(water, normal=[0, 0, 1])
+shifted = geom.translate(water, [1.0, 0.0, 0.0])
+rotated = geom.rotate(water, Rotation.from_euler("z", 90, degrees=True))
+mirrored = geom.reflect(water, normal=[0, 0, 1])
 ```
 
 All three accept a `keys` argument to restrict the transformation to a
 subset of atoms by index, leaving the rest untouched:
 
 ```python
-geom.transform.translate(water, [1.0, 0.0, 0.0], keys=[0])  # move only atom 0
+geom.translate(water, [1.0, 0.0, 0.0], keys=[0])  # move only atom 0
 ```
 
 
@@ -114,5 +141,4 @@ geom.transform.translate(water, [1.0, 0.0, 0.0], keys=[0])  # move only atom 0
 - [Molecular identity](identity.md) — generate InChI/SMILES from a
   `Geometry`, or a `Geometry` from one.
 - [Visualization](visualization.md) — view or render a `Geometry`.
-- [Interoperability](interoperability.md) — convert to/from RDKit, ASE, and
-  StereoMolGraph.
+- [Interoperability](interoperability.md) — convert to/from RDKit.

@@ -2,21 +2,20 @@
 
 from collections.abc import Collection, Sequence
 from pathlib import Path
-from typing import Self
+from typing import Any, Self
 
 import numpy as np
 from numpy.typing import ArrayLike
 from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
 from rdkit.Chem import Mol
 from scipy.spatial.transform import Rotation
-from stereomolgraph import StereoCondensedReactionGraph, StereoMolGraph
-from stereomolgraph.coords import Geometry as SMGeometry
 
 from .. import rd
 from ..utils import element
+from ..utils.exc import ElementNotFoundError
 from ..utils.types import CoordinatesField
-from .analysis import center_of_mass, rotation_to_inertia_axes
-from .io import from_xyz_block, xyz_block, xyz_file
+from .analysis import adjacency_matrix
+from .io import from_xyz_block, view, xyz_block, xyz_file
 
 
 class Geometry(BaseModel):
@@ -27,7 +26,8 @@ class Geometry(BaseModel):
     ----------
     symbols
         Atomic symbols in order (e.g., ``["H", "O", "H"]``).
-        The length of ``symbols`` must match the number of atoms.
+        The length of ``symbols`` must match the number of atoms. Symbols are
+        validated against the periodic table and canonicalized (``"cl"`` -> ``"Cl"``).
     coordinates
         Cartesian coordinates of the atoms in Angstroms.
         Shape is ``(len(symbols), 3)`` and the ordering corresponds to ``symbols``.
@@ -35,6 +35,7 @@ class Geometry(BaseModel):
         Total molecular charge.
     spin
         Number of unpaired electrons, i.e. two times the spin quantum number (``2S``).
+        Must be non-negative and have the same parity as the electron count.
 
     Example
     -------
@@ -55,21 +56,41 @@ class Geometry(BaseModel):
     charge: int
     spin: int
 
-    @field_validator("coordinates")
+    @field_validator("symbols")
     @classmethod
-    def validate_coordinates_shape(
-        cls: Self, v: CoordinatesField, info: ValidationInfo
-    ) -> CoordinatesField:
-        """Validate shape of geometry coordinates."""
-        symbols = info.data.get("symbols")
-        if symbols is not None and v is not None and len(symbols) != v.shape[0]:
-            msg = (
-                f"Number of symbols ({len(symbols)}) does not match coordinates"
-                f"{v.shape[0]}."
-            )
-            raise ValueError(msg)
+    def validate_symbols(cls, v: list[str]) -> list[str]:
+        """Validate and canonicalize atomic symbols."""
+        try:
+            return [element.symbol(s) for s in v]
+        except ElementNotFoundError as err:
+            raise ValueError(str(err)) from err
 
+    # Cross-field checks are field validators (not a model validator) so that a
+    # failed assignment under `validate_assignment` leaves the model unchanged.
+    @field_validator("symbols", "coordinates", "charge", "spin")
+    @classmethod
+    def validate_consistency(cls, v: Any, info: ValidationInfo) -> Any:  # noqa: ANN401
+        """Validate consistency of symbols, coordinates, charge, and spin."""
+        data = {**info.data, str(info.field_name): v}
+        symbols = data.get("symbols")
+        coordinates = data.get("coordinates")
+        if symbols is not None and coordinates is not None:
+            _check_atom_count(symbols, coordinates)
+        if symbols is not None and "charge" in data and "spin" in data:
+            _check_spin(symbols, charge=data["charge"], spin=data["spin"])
         return v
+
+    def __eq__(self, other: object) -> bool:
+        """Compare geometries field by field (coordinates compared exactly)."""
+        if type(other) is not type(self):
+            return NotImplemented
+        return all(
+            _values_equal(getattr(self, name), getattr(other, name))
+            for name in type(self).model_fields
+        )
+
+    # Mutable (validate_assignment) model with array data, so not hashable
+    __hash__ = None
 
     @property
     def atom_count(self) -> int:
@@ -98,9 +119,7 @@ class Geometry(BaseModel):
 
     def _repr_html_(self) -> str | None:
         """Render geometry inline in Jupyter."""
-        from . import io  # noqa: PLC0415  (avoids circular import)
-
-        return io.view(self, label=True)._repr_html_()
+        return view(self, label=True)._repr_html_()
 
     def __repr__(self) -> str:
         """Render Geometry as an xyz block instead of dumping raw fields."""
@@ -139,36 +158,88 @@ class Geometry(BaseModel):
         path = Path(path)
         return cls.from_xyz_block(path.read_text(), charge=charge, spin=spin)
 
-    def relabel_atoms(self, indices: list[int] | tuple[int, ...]) -> Self:
+    def relabel_atoms(self, indices: Sequence[int]) -> Self:
         """Reorder atoms according to the provided indices.
 
         Parameters
         ----------
         indices
-            Sequence of indices specifying the new atom order.
+            Permutation of ``range(atom_count)`` specifying the new atom order.
             E.g., [2, 0, 1] moves atom 2 to position 0, atom 0 to position 1, etc.
 
         Returns
         -------
-        Reordered Geometry.
-        """
-        indices_array = np.array(indices)
-        new_symbols = [self.symbols[i] for i in indices_array]
-        new_coordinates = self.coordinates[indices_array]
+        Reordered Geometry (other fields, including those of subclasses, are kept).
 
-        return self.__class__(
-            symbols=new_symbols,
-            coordinates=new_coordinates,
-            charge=self.charge,
-            spin=self.spin,
+        Raises
+        ------
+        ValueError
+            If ``indices`` is not a permutation of ``range(atom_count)``.
+        """
+        indices = [int(i) for i in indices]
+        if sorted(indices) != list(range(self.atom_count)):
+            msg = f"{indices} is not a permutation of range({self.atom_count})."
+            raise ValueError(msg)
+
+        return self.model_copy(
+            deep=True,
+            update={
+                "symbols": [self.symbols[i] for i in indices],
+                "coordinates": self.coordinates[indices],
+            },
         )
 
 
+def _check_atom_count(symbols: Sequence[str], coordinates: np.ndarray) -> None:
+    """Check that there is one row of coordinates per symbol."""
+    if len(symbols) != coordinates.shape[0]:
+        msg = (
+            f"Number of symbols ({len(symbols)}) does not match number of "
+            f"coordinates ({coordinates.shape[0]})."
+        )
+        raise ValueError(msg)
+
+
+def _check_spin(symbols: Sequence[str], *, charge: int, spin: int) -> None:
+    """Check that spin is consistent with the electron count."""
+    nelec = sum(map(element.number, symbols)) - charge
+    if spin < 0 or nelec < 0 or spin > nelec or (nelec - spin) % 2:
+        msg = f"Spin {spin} is inconsistent with {nelec} electrons (charge {charge})."
+        raise ValueError(msg)
+
+
+def _values_equal(val1: Any, val2: Any) -> bool:  # noqa: ANN401
+    """Compare two field values, handling numpy arrays."""
+    if isinstance(val1, np.ndarray) or isinstance(val2, np.ndarray):
+        return bool(np.array_equal(val1, val2))
+    return bool(val1 == val2)
+
+
 def rdkit_mol(geo: Geometry) -> Mol:
-    """Instantiate an rdkit Mol from a Geometry."""
-    smg = stereo_mol_graph(geo)
-    mol = smg.to_rdmol(charge=geo.charge)
-    return rd.mol.set_coordinates(mol, geo.coordinates, in_place=True)
+    """Instantiate an rdkit Mol from a Geometry.
+
+    Connectivity is determined from covalent radii. Bond orders, formal charges, and
+    radicals are then perceived to match the geometry's charge and spin (see
+    `automol.rd.mol.from_connectivity`), and stereochemistry is assigned from the 3D
+    coordinates.
+
+    Raises
+    ------
+    NotImplementedError
+        If the geometry contains a metal.
+    GeometryConversionError
+        If no Lewis structure is consistent with the connectivity, charge, and spin.
+    """
+    amat = adjacency_matrix(geo, enforce_valence=True)
+    bonds = [(int(i), int(j)) for i, j in zip(*np.nonzero(np.triu(amat)), strict=True)]
+    mol = rd.mol.from_connectivity(
+        geo.symbols,
+        bonds,
+        charge=geo.charge,
+        spin=geo.spin,
+        coords=geo.coordinates,
+    )
+    return rd.mol.assign_stereochemistry(mol, in_place=True)
 
 
 def from_rdkit_mol(mol: Mol) -> Geometry:
@@ -182,72 +253,6 @@ def from_rdkit_mol(mol: Mol) -> Geometry:
         charge=rd.mol.charge(mol),
         spin=rd.mol.spin(mol),
     )
-
-
-def stereo_mol_graph(geo: Geometry) -> StereoMolGraph:
-    """Instantiate a StereoMolGraph from a Geometry."""
-    sm_geo = SMGeometry(atom_types=tuple(geo.symbols), coords=geo.coordinates)
-    return StereoMolGraph.from_geometry(sm_geo)  # ty:ignore[invalid-argument-type]
-
-
-def from_stereo_mol_graph(smg: StereoMolGraph, *, charge: int = 0) -> Geometry:
-    """Instantiate a Geometry from a StereoMolGraph."""
-    mol = smg.to_rdmol(charge=charge)
-    return from_rdkit_mol(mol)
-
-
-def set_bond(
-    geo: Geometry,
-    *,
-    idxs: Sequence[int],
-    val: float,
-    max_change: float = 0.25,
-    in_place: bool = False,
-) -> Geometry:
-    """
-    Set bond distance between two atoms.
-
-    Parameters
-    ----------
-    geo
-        Geometry object.
-    idxs
-        Atom indices.
-    val
-        Value of new distance.
-    max_change
-        Max allowable change in distance.
-    in_place
-        Modify the geometry in place.
-
-    Returns
-    -------
-    Geometry
-        Updated geometry.
-    """
-    if len(idxs) != 2:  # noqa: PLR2004
-        msg = f"Wrong number of indices provided ({len(idxs)} != 2)."
-        raise ValueError(msg)
-
-    geo = geo if in_place else geo.model_copy(deep=True)
-    i, j = idxs
-
-    # Compute current distance and unit vector
-    vec = geo.coordinates[j] - geo.coordinates[i]
-    r = np.linalg.norm(vec)
-    unit_vec = vec / r
-
-    # Ensure that change does not exceed max allowable
-    # NOTE: Can be replaced by structure smoothing / verification
-    dr = abs(r - val)
-    if dr > max_change:
-        msg = f"{dr = } exceeds {max_change = }."
-        raise ValueError(msg)
-
-    # Atom j coordinates relevant to atom i
-    geo.coordinates[j] = geo.coordinates[i] + (unit_vec * val)
-
-    return geo
 
 
 # Rigid-body transformations
@@ -266,6 +271,10 @@ def translate(
         Geometry.
     arr
         Translation vector or matrix.
+    keys
+        Atoms to translate. If None, translate all atoms.
+    in_place
+        Whether to translate in place or return a new geometry.
 
     Returns
     -------
@@ -291,15 +300,29 @@ def reflect(
     geo
         Geometry.
     normal
-        Normal vector of the reflection plane.
+        Normal vector of the reflection plane (which passes through the origin).
+    keys
+        Atoms to reflect. If None, reflect all atoms.
+    in_place
+        Whether to reflect in place or return a new geometry.
 
     Returns
     -------
         Geometry.
+
+    Raises
+    ------
+    ValueError
+        If ``normal`` is a zero vector.
     """
-    geo = geo if in_place else geo.model_copy(deep=True)
     normal = np.asarray(normal, dtype=float)
-    proj = np.outer(normal, normal) / np.dot(normal, normal)
+    norm2 = np.dot(normal, normal)
+    if not norm2 > 0:
+        msg = f"Reflection plane normal must be a non-zero vector, got {normal}."
+        raise ValueError(msg)
+
+    geo = geo if in_place else geo.model_copy(deep=True)
+    proj = np.outer(normal, normal) / norm2
     mask = slice(None) if keys is None else list(keys)
     geo.coordinates[mask] = geo.coordinates[mask] - 2 * geo.coordinates[mask] @ proj
     return geo
@@ -333,74 +356,3 @@ def rotate(
     mask = slice(None) if keys is None else list(keys)
     geo.coordinates[mask] = rot.apply(geo.coordinates[mask])
     return geo
-
-
-def transition(geo1: Geometry, geo2: Geometry) -> Geometry:
-    """Determine the transition geometry between two geometries.
-
-    Parameters
-    ----------
-    geo1
-        Initial geometry.
-    geo2
-        Final geometry.
-
-    Returns
-    -------
-        Geometry.
-    """
-    if geo1.spin != geo2.spin:
-        msg = f"Geometries must have the same spin: {geo1.spin} != {geo2.spin}"
-        raise ValueError(msg)
-
-    smg1 = stereo_mol_graph(geo1)
-    smg2 = stereo_mol_graph(geo2)
-    scrg = StereoCondensedReactionGraph.from_graphs(smg1, smg2)
-
-    active_h = [a for a in scrg.active_atoms() if scrg.get_atom_type(a) == 1]
-    for h in active_h:
-        scrg.set_atom_attribute(h, "atom_type", 8)
-
-    ts_smg = scrg.ts()
-    ts_geo = from_stereo_mol_graph(ts_smg)
-    ts_geo.spin = geo1.spin
-
-    for h in active_h:
-        ts_geo.symbols[h] = "H"
-
-    return ts_geo
-
-
-def eckart_frame(geo: "Geometry", *, in_place: bool = False) -> "Geometry":
-    """Rotate geometry to align with inertia axes.
-
-    Parameters
-    ----------
-    geo
-        Geometry.
-    in_place
-        Whether to rotate in place or return a new geometry.
-
-    Returns
-    -------
-        Geometry in an Eckart frame.
-
-    Example
-    -------
-    >>> from automol import Geometry
-    >>> geo = Geometry(
-    ...     symbols=["O", "H", "H"],
-    ...     coordinates=[[0, 0, 0], [1, 0, 0], [0, 1, 0]],
-    ...     charge=0,
-    ...     spin=0,
-    ... )
-    >>> eck = eckart_frame(geo)
-    >>> bool(np.allclose(center_of_mass(eck), 0, atol=1e-10))
-    True
-    """
-    geo = geo if in_place else geo.model_copy(deep=True)
-    # Move to center of mass
-    geo = translate(geo, -center_of_mass(geo), in_place=True)
-    # Rotate to inertia axes
-    rot = rotation_to_inertia_axes(geo)
-    return rotate(geo, rot, in_place=True)

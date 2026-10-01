@@ -7,7 +7,9 @@
     "symbol": "H",
     "mass": 1.007825031898,
     "covalent_radius": 0.32,
-    "valence": 1
+    "valence": 1,
+    "electronegativity": 2.2,
+    "metal": false
   },
   {
     "Z": 2,
@@ -17,7 +19,9 @@
     "symbol": "He",
     "mass": 4.00260325413,
     "covalent_radius": 0.46,
-    "valence": 2
+    "valence": 2,
+    "electronegativity": null,
+    "metal": false
   },
   {
     "Z": 3,
@@ -27,7 +31,9 @@
     "symbol": "Li",
     "mass": 7.01600343426,
     "covalent_radius": 1.33,
-    "valence": 1
+    "valence": 1,
+    "electronegativity": 0.98,
+    "metal": true
   },
   {
     "Z": 4,
@@ -37,7 +43,9 @@
     "symbol": "Be",
     "mass": 9.012183062,
     "covalent_radius": 1.02,
-    "valence": 2
+    "valence": 2,
+    "electronegativity": 1.57,
+    "metal": true
   },
   {
     "Z": 5,
@@ -47,7 +55,9 @@
     "symbol": "B",
     "mass": 11.009305166,
     "covalent_radius": 0.85,
-    "valence": 3
+    "valence": 3,
+    "electronegativity": 2.04,
+    "metal": false
   },
   {
     "Z": 6,
@@ -57,7 +67,9 @@
     "symbol": "C",
     "mass": 12.0,
     "covalent_radius": 0.75,
-    "valence": 4
+    "valence": 4,
+    "electronegativity": 2.55,
+    "metal": false
   },
   {
     "Z": 7,
@@ -67,7 +79,9 @@
     "symbol": "N",
     "mass": 14.00307400425,
     "covalent_radius": 0.71,
-    "valence": 5
+    "valence": 5,
+    "electronegativity": 3.04,
+    "metal": false
   },
   {
     "Z": 8,
@@ -77,7 +91,9 @@
     "symbol": "O",
     "mass": 15.99491461926,
     "covalent_radius": 0.63,
-    "valence": 6
+    "valence": 6,
+    "electronegativity": 3.44,
+    "metal": false
   },
   {
     "Z": 9,
@@ -87,7 +103,9 @@
     "symbol": "F",
     "mass": 18.99840316207,
     "covalent_radius": 0.64,
-    "valence": 7
+    "valence": 7,
+    "electronegativity": 3.98,
+    "metal": false
   },
   {
     "Z": 10,
@@ -97,7 +115,9 @@
     "symbol": "Ne",
     "mass": 19.99244017525,
     "covalent_radius": 0.67,
-    "valence": 8
+    "valence": 8,
+    "electronegativity": null,
+    "metal": false
   },
   {
     "Z": 11,
@@ -107,7 +127,9 @@
     "symbol": "Na",
     "mass": 22.98976928195,
     "covalent_radius": 1.55,
-    "valence": 1
+    "valence": 1,
+    "electronegativity": 0.93,
+    "metal": true
   },
   {
     "Z": 12,
@@ -117,7 +139,9 @@
     "symbol": "Mg",
     "mass": 23.985041689,
     "covalent_radius": 1.39,
-    "valence": 2
+    "valence": 2,
+    "electronegativity": 1.31,
+    "metal": true
   },
   {
     "Z": 13,
@@ -127,7 +151,9 @@
     "symbol": "Al",
     "mass": 26.981538408,
     "covalent_radius": 1.26,
-    "valence": 3
+    "valence": 3,
+    "electronegativity": 1.61,
+    "metal": true
   },
   {
     "Z": 14,
@@ -137,7 +163,9 @@
     "symbol": "Si",
     "mass": 27.97692653442,
     "covalent_radius": 1.16,
-    "valence": 4
+    "valence": 4,
+    "electronegativity": 1.9,
+    "metal": false
   },
   {
     "Z": 15,
@@ -147,7 +175,9 @@
     "symbol": "P",
     "mass": 30.97376199768,
     "covalent_radius": 1.11,
-    "valence": 5
+    "valence": 5,
+    "electronegativity": 2.19,
+    "metal": false
   },
   {
     "Z": 16,
@@ -157,7 +187,9 @@
     "symbol": "S",
     "mass": 31.97207117354,
     "covalent_radius": 1.03,
-    "valence": 6
+    "valence": 6,
+    "electronegativity": 2.58,
+    "metal": false
   },
   {
     "Z": 17,
@@ -167,7 +199,9 @@
     "symbol": "Cl",
     "mass": 34.968852694,
     "covalent_radius": 0.99,
-    "valence": 7
+    "valence": 7,
+    "electronegativity": 3.16,
+    "metal": false
   },
   {
     "Z": 18,
@@ -177,7 +211,9 @@
     "symbol": "Ar",
     "mass": 39.96238312204,
     "covalent_radius": 0.96,
-    "valence": 8
+    "valence": 8,
+    "electronegativity": null,
+    "metal": false
   },
   {
     "Z": 19,
@@ -187,7 +223,9 @@
     "symbol": "K",
     "mass": 38.96370648482,
     "covalent_radius": 1.96,
-    "valence": 1
+    "valence": 1,
+    "electronegativity": 0.82,
+    "metal": true
   },
   {
     "Z": 20,
@@ -197,7 +235,9 @@
     "symbol": "Ca",
     "mass": 39.96259085,
     "covalent_radius": 1.71,
-    "valence": 2
+    "valence": 2,
+    "electronegativity": 1.0,
+    "metal": true
   },
   {
     "Z": 21,
@@ -207,7 +247,9 @@
     "symbol": "Sc",
     "mass": 44.955907051,
     "covalent_radius": 1.48,
-    "valence": 3
+    "valence": 3,
+    "electronegativity": 1.36,
+    "metal": true
   },
   {
     "Z": 22,
@@ -217,7 +259,9 @@
     "symbol": "Ti",
     "mass": 47.947940677,
     "covalent_radius": 1.36,
-    "valence": 4
+    "valence": 4,
+    "electronegativity": 1.54,
+    "metal": true
   },
   {
     "Z": 23,
@@ -227,7 +271,9 @@
     "symbol": "V",
     "mass": 50.943957664,
     "covalent_radius": 1.34,
-    "valence": 5
+    "valence": 5,
+    "electronegativity": 1.63,
+    "metal": true
   },
   {
     "Z": 24,
@@ -237,7 +283,9 @@
     "symbol": "Cr",
     "mass": 51.940504714,
     "covalent_radius": 1.22,
-    "valence": 6
+    "valence": 6,
+    "electronegativity": 1.66,
+    "metal": true
   },
   {
     "Z": 25,
@@ -247,7 +295,9 @@
     "symbol": "Mn",
     "mass": 54.93804304,
     "covalent_radius": 1.19,
-    "valence": 7
+    "valence": 7,
+    "electronegativity": 1.55,
+    "metal": true
   },
   {
     "Z": 26,
@@ -257,7 +307,9 @@
     "symbol": "Fe",
     "mass": 55.934935537,
     "covalent_radius": 1.16,
-    "valence": 8
+    "valence": 8,
+    "electronegativity": 1.83,
+    "metal": true
   },
   {
     "Z": 27,
@@ -267,7 +319,9 @@
     "symbol": "Co",
     "mass": 58.933193524,
     "covalent_radius": 1.11,
-    "valence": 9
+    "valence": 9,
+    "electronegativity": 1.88,
+    "metal": true
   },
   {
     "Z": 28,
@@ -277,7 +331,9 @@
     "symbol": "Ni",
     "mass": 57.93534165,
     "covalent_radius": 1.1,
-    "valence": 10
+    "valence": 10,
+    "electronegativity": 1.91,
+    "metal": true
   },
   {
     "Z": 29,
@@ -287,7 +343,9 @@
     "symbol": "Cu",
     "mass": 62.929597119,
     "covalent_radius": 1.12,
-    "valence": 11
+    "valence": 11,
+    "electronegativity": 1.9,
+    "metal": true
   },
   {
     "Z": 30,
@@ -297,7 +355,9 @@
     "symbol": "Zn",
     "mass": 63.929141776,
     "covalent_radius": 1.18,
-    "valence": 12
+    "valence": 12,
+    "electronegativity": 1.65,
+    "metal": true
   },
   {
     "Z": 31,
@@ -307,7 +367,9 @@
     "symbol": "Ga",
     "mass": 68.925573528,
     "covalent_radius": 1.24,
-    "valence": 3
+    "valence": 3,
+    "electronegativity": 1.81,
+    "metal": true
   },
   {
     "Z": 32,
@@ -317,7 +379,9 @@
     "symbol": "Ge",
     "mass": 73.92117776,
     "covalent_radius": 1.21,
-    "valence": 4
+    "valence": 4,
+    "electronegativity": 2.01,
+    "metal": false
   },
   {
     "Z": 33,
@@ -327,7 +391,9 @@
     "symbol": "As",
     "mass": 74.921594562,
     "covalent_radius": 1.21,
-    "valence": 5
+    "valence": 5,
+    "electronegativity": 2.18,
+    "metal": false
   },
   {
     "Z": 34,
@@ -337,7 +403,9 @@
     "symbol": "Se",
     "mass": 79.916521761,
     "covalent_radius": 1.16,
-    "valence": 6
+    "valence": 6,
+    "electronegativity": 2.55,
+    "metal": false
   },
   {
     "Z": 35,
@@ -347,7 +415,9 @@
     "symbol": "Br",
     "mass": 78.918337574,
     "covalent_radius": 1.14,
-    "valence": 7
+    "valence": 7,
+    "electronegativity": 2.96,
+    "metal": false
   },
   {
     "Z": 36,
@@ -357,7 +427,9 @@
     "symbol": "Kr",
     "mass": 83.91149772708,
     "covalent_radius": 1.17,
-    "valence": 8
+    "valence": 8,
+    "electronegativity": null,
+    "metal": false
   },
   {
     "Z": 37,
@@ -367,7 +439,9 @@
     "symbol": "Rb",
     "mass": 84.91178973604,
     "covalent_radius": 2.1,
-    "valence": 1
+    "valence": 1,
+    "electronegativity": 0.82,
+    "metal": true
   },
   {
     "Z": 38,
@@ -377,7 +451,9 @@
     "symbol": "Sr",
     "mass": 87.905612253,
     "covalent_radius": 1.85,
-    "valence": 2
+    "valence": 2,
+    "electronegativity": 0.95,
+    "metal": true
   },
   {
     "Z": 39,
@@ -387,7 +463,9 @@
     "symbol": "Y",
     "mass": 88.905838156,
     "covalent_radius": 1.63,
-    "valence": 3
+    "valence": 3,
+    "electronegativity": 1.22,
+    "metal": true
   },
   {
     "Z": 40,
@@ -397,7 +475,9 @@
     "symbol": "Zr",
     "mass": 89.904698755,
     "covalent_radius": 1.54,
-    "valence": 4
+    "valence": 4,
+    "electronegativity": 1.33,
+    "metal": true
   },
   {
     "Z": 41,
@@ -407,7 +487,9 @@
     "symbol": "Nb",
     "mass": 92.90637317,
     "covalent_radius": 1.47,
-    "valence": 5
+    "valence": 5,
+    "electronegativity": 1.6,
+    "metal": true
   },
   {
     "Z": 42,
@@ -417,7 +499,9 @@
     "symbol": "Mo",
     "mass": 97.905403609,
     "covalent_radius": 1.38,
-    "valence": 6
+    "valence": 6,
+    "electronegativity": 2.16,
+    "metal": true
   },
   {
     "Z": 43,
@@ -427,7 +511,9 @@
     "symbol": "Tc",
     "mass": 82.966377,
     "covalent_radius": 1.28,
-    "valence": 7
+    "valence": 7,
+    "electronegativity": 2.1,
+    "metal": true
   },
   {
     "Z": 44,
@@ -437,7 +523,9 @@
     "symbol": "Ru",
     "mass": 101.904340312,
     "covalent_radius": 1.25,
-    "valence": 8
+    "valence": 8,
+    "electronegativity": 2.2,
+    "metal": true
   },
   {
     "Z": 45,
@@ -447,7 +535,9 @@
     "symbol": "Rh",
     "mass": 102.905494081,
     "covalent_radius": 1.25,
-    "valence": 9
+    "valence": 9,
+    "electronegativity": 2.28,
+    "metal": true
   },
   {
     "Z": 46,
@@ -457,7 +547,9 @@
     "symbol": "Pd",
     "mass": 105.903480287,
     "covalent_radius": 1.2,
-    "valence": 10
+    "valence": 10,
+    "electronegativity": 2.2,
+    "metal": true
   },
   {
     "Z": 47,
@@ -467,7 +559,9 @@
     "symbol": "Ag",
     "mass": 106.905091509,
     "covalent_radius": 1.28,
-    "valence": 11
+    "valence": 11,
+    "electronegativity": 1.93,
+    "metal": true
   },
   {
     "Z": 48,
@@ -477,7 +571,9 @@
     "symbol": "Cd",
     "mass": 113.903364998,
     "covalent_radius": 1.36,
-    "valence": 12
+    "valence": 12,
+    "electronegativity": 1.69,
+    "metal": true
   },
   {
     "Z": 49,
@@ -487,7 +583,9 @@
     "symbol": "In",
     "mass": 114.903878772,
     "covalent_radius": 1.42,
-    "valence": 3
+    "valence": 3,
+    "electronegativity": 1.78,
+    "metal": true
   },
   {
     "Z": 50,
@@ -497,7 +595,9 @@
     "symbol": "Sn",
     "mass": 119.902202557,
     "covalent_radius": 1.4,
-    "valence": 4
+    "valence": 4,
+    "electronegativity": 1.96,
+    "metal": true
   },
   {
     "Z": 51,
@@ -507,7 +607,9 @@
     "symbol": "Sb",
     "mass": 120.903811353,
     "covalent_radius": 1.4,
-    "valence": 5
+    "valence": 5,
+    "electronegativity": 2.05,
+    "metal": false
   },
   {
     "Z": 52,
@@ -517,7 +619,9 @@
     "symbol": "Te",
     "mass": 129.906222745,
     "covalent_radius": 1.36,
-    "valence": 6
+    "valence": 6,
+    "electronegativity": 2.1,
+    "metal": false
   },
   {
     "Z": 53,
@@ -527,7 +631,9 @@
     "symbol": "I",
     "mass": 126.904472592,
     "covalent_radius": 1.33,
-    "valence": 7
+    "valence": 7,
+    "electronegativity": 2.66,
+    "metal": false
   },
   {
     "Z": 54,
@@ -537,7 +643,9 @@
     "symbol": "Xe",
     "mass": 131.90415508346,
     "covalent_radius": 1.31,
-    "valence": 8
+    "valence": 8,
+    "electronegativity": 2.6,
+    "metal": false
   },
   {
     "Z": 55,
@@ -547,7 +655,9 @@
     "symbol": "Cs",
     "mass": 132.905451958,
     "covalent_radius": 2.32,
-    "valence": 1
+    "valence": 1,
+    "electronegativity": 0.79,
+    "metal": true
   },
   {
     "Z": 56,
@@ -557,7 +667,9 @@
     "symbol": "Ba",
     "mass": 137.905247059,
     "covalent_radius": 1.96,
-    "valence": 2
+    "valence": 2,
+    "electronegativity": 0.89,
+    "metal": true
   },
   {
     "Z": 57,
@@ -567,7 +679,9 @@
     "symbol": "La",
     "mass": 138.906362927,
     "covalent_radius": 1.8,
-    "valence": 3
+    "valence": 3,
+    "electronegativity": 1.1,
+    "metal": true
   },
   {
     "Z": 58,
@@ -577,7 +691,9 @@
     "symbol": "Ce",
     "mass": 139.905448433,
     "covalent_radius": 1.63,
-    "valence": 4
+    "valence": 4,
+    "electronegativity": 1.12,
+    "metal": true
   },
   {
     "Z": 59,
@@ -587,7 +703,9 @@
     "symbol": "Pr",
     "mass": 140.907659604,
     "covalent_radius": 1.76,
-    "valence": 5
+    "valence": 5,
+    "electronegativity": 1.13,
+    "metal": true
   },
   {
     "Z": 60,
@@ -597,7 +715,9 @@
     "symbol": "Nd",
     "mass": 141.907728824,
     "covalent_radius": 1.74,
-    "valence": 6
+    "valence": 6,
+    "electronegativity": 1.14,
+    "metal": true
   },
   {
     "Z": 61,
@@ -607,7 +727,9 @@
     "symbol": "Pm",
     "mass": 125.957327,
     "covalent_radius": 1.73,
-    "valence": 7
+    "valence": 7,
+    "electronegativity": null,
+    "metal": true
   },
   {
     "Z": 62,
@@ -617,7 +739,9 @@
     "symbol": "Sm",
     "mass": 151.919738646,
     "covalent_radius": 1.72,
-    "valence": 8
+    "valence": 8,
+    "electronegativity": 1.17,
+    "metal": true
   },
   {
     "Z": 63,
@@ -627,7 +751,9 @@
     "symbol": "Eu",
     "mass": 152.921236789,
     "covalent_radius": 1.68,
-    "valence": 9
+    "valence": 9,
+    "electronegativity": null,
+    "metal": true
   },
   {
     "Z": 64,
@@ -637,7 +763,9 @@
     "symbol": "Gd",
     "mass": 157.9241112,
     "covalent_radius": 1.69,
-    "valence": 10
+    "valence": 10,
+    "electronegativity": 1.2,
+    "metal": true
   },
   {
     "Z": 65,
@@ -647,7 +775,9 @@
     "symbol": "Tb",
     "mass": 158.925353707,
     "covalent_radius": 1.68,
-    "valence": 11
+    "valence": 11,
+    "electronegativity": null,
+    "metal": true
   },
   {
     "Z": 66,
@@ -657,7 +787,9 @@
     "symbol": "Dy",
     "mass": 163.929180819,
     "covalent_radius": 1.67,
-    "valence": 12
+    "valence": 12,
+    "electronegativity": 1.22,
+    "metal": true
   },
   {
     "Z": 67,
@@ -667,7 +799,9 @@
     "symbol": "Ho",
     "mass": 164.930329116,
     "covalent_radius": 1.66,
-    "valence": 13
+    "valence": 13,
+    "electronegativity": 1.23,
+    "metal": true
   },
   {
     "Z": 68,
@@ -677,7 +811,9 @@
     "symbol": "Er",
     "mass": 165.930301067,
     "covalent_radius": 1.65,
-    "valence": 14
+    "valence": 14,
+    "electronegativity": 1.24,
+    "metal": true
   },
   {
     "Z": 69,
@@ -687,7 +823,9 @@
     "symbol": "Tm",
     "mass": 168.934218956,
     "covalent_radius": 1.64,
-    "valence": 15
+    "valence": 15,
+    "electronegativity": 1.25,
+    "metal": true
   },
   {
     "Z": 70,
@@ -697,7 +835,9 @@
     "symbol": "Yb",
     "mass": 173.938867545,
     "covalent_radius": 1.7,
-    "valence": 16
+    "valence": 16,
+    "electronegativity": null,
+    "metal": true
   },
   {
     "Z": 71,
@@ -707,7 +847,9 @@
     "symbol": "Lu",
     "mass": 174.940777211,
     "covalent_radius": 1.62,
-    "valence": 17
+    "valence": 17,
+    "electronegativity": 1.0,
+    "metal": true
   },
   {
     "Z": 72,
@@ -717,7 +859,9 @@
     "symbol": "Hf",
     "mass": 179.946559537,
     "covalent_radius": 1.52,
-    "valence": 4
+    "valence": 4,
+    "electronegativity": 1.3,
+    "metal": true
   },
   {
     "Z": 73,
@@ -727,7 +871,9 @@
     "symbol": "Ta",
     "mass": 180.947998528,
     "covalent_radius": 1.46,
-    "valence": 5
+    "valence": 5,
+    "electronegativity": 1.5,
+    "metal": true
   },
   {
     "Z": 74,
@@ -737,7 +883,9 @@
     "symbol": "W",
     "mass": 183.95093318,
     "covalent_radius": 1.37,
-    "valence": 6
+    "valence": 6,
+    "electronegativity": 1.7,
+    "metal": true
   },
   {
     "Z": 75,
@@ -747,7 +895,9 @@
     "symbol": "Re",
     "mass": 186.955752217,
     "covalent_radius": 1.31,
-    "valence": 7
+    "valence": 7,
+    "electronegativity": 1.9,
+    "metal": true
   },
   {
     "Z": 76,
@@ -757,7 +907,9 @@
     "symbol": "Os",
     "mass": 191.961478765,
     "covalent_radius": 1.29,
-    "valence": 8
+    "valence": 8,
+    "electronegativity": 2.2,
+    "metal": true
   },
   {
     "Z": 77,
@@ -767,7 +919,9 @@
     "symbol": "Ir",
     "mass": 192.962923753,
     "covalent_radius": 1.22,
-    "valence": 9
+    "valence": 9,
+    "electronegativity": 2.2,
+    "metal": true
   },
   {
     "Z": 78,
@@ -777,7 +931,9 @@
     "symbol": "Pt",
     "mass": 194.964794325,
     "covalent_radius": 1.23,
-    "valence": 10
+    "valence": 10,
+    "electronegativity": 2.2,
+    "metal": true
   },
   {
     "Z": 79,
@@ -787,7 +943,9 @@
     "symbol": "Au",
     "mass": 196.966570103,
     "covalent_radius": 1.24,
-    "valence": 11
+    "valence": 11,
+    "electronegativity": 2.4,
+    "metal": true
   },
   {
     "Z": 80,
@@ -797,7 +955,9 @@
     "symbol": "Hg",
     "mass": 201.970643604,
     "covalent_radius": 1.33,
-    "valence": 12
+    "valence": 12,
+    "electronegativity": 1.9,
+    "metal": true
   },
   {
     "Z": 81,
@@ -807,7 +967,9 @@
     "symbol": "Tl",
     "mass": 204.974427318,
     "covalent_radius": 1.44,
-    "valence": 3
+    "valence": 3,
+    "electronegativity": 1.8,
+    "metal": true
   },
   {
     "Z": 82,
@@ -817,7 +979,9 @@
     "symbol": "Pb",
     "mass": 207.976652005,
     "covalent_radius": 1.44,
-    "valence": 4
+    "valence": 4,
+    "electronegativity": 1.8,
+    "metal": true
   },
   {
     "Z": 83,
@@ -827,7 +991,9 @@
     "symbol": "Bi",
     "mass": 208.980398599,
     "covalent_radius": 1.51,
-    "valence": 5
+    "valence": 5,
+    "electronegativity": 1.9,
+    "metal": true
   },
   {
     "Z": 84,
@@ -837,7 +1003,9 @@
     "symbol": "Po",
     "mass": 186.004403174,
     "covalent_radius": 1.45,
-    "valence": 6
+    "valence": 6,
+    "electronegativity": 2.0,
+    "metal": false
   },
   {
     "Z": 85,
@@ -847,7 +1015,9 @@
     "symbol": "At",
     "mass": 191.004148081,
     "covalent_radius": 1.47,
-    "valence": 7
+    "valence": 7,
+    "electronegativity": 2.2,
+    "metal": false
   },
   {
     "Z": 86,
@@ -857,7 +1027,9 @@
     "symbol": "Rn",
     "mass": 193.009707973,
     "covalent_radius": 1.42,
-    "valence": 8
+    "valence": 8,
+    "electronegativity": null,
+    "metal": false
   },
   {
     "Z": 87,
@@ -867,7 +1039,9 @@
     "symbol": "Fr",
     "mass": 197.011008086,
     "covalent_radius": 2.23,
-    "valence": 1
+    "valence": 1,
+    "electronegativity": 0.7,
+    "metal": true
   },
   {
     "Z": 88,
@@ -877,7 +1051,9 @@
     "symbol": "Ra",
     "mass": 201.012814699,
     "covalent_radius": 2.01,
-    "valence": 2
+    "valence": 2,
+    "electronegativity": 0.9,
+    "metal": true
   },
   {
     "Z": 89,
@@ -887,7 +1063,9 @@
     "symbol": "Ac",
     "mass": 205.015144152,
     "covalent_radius": 1.86,
-    "valence": 3
+    "valence": 3,
+    "electronegativity": 1.1,
+    "metal": true
   },
   {
     "Z": 90,
@@ -897,7 +1075,9 @@
     "symbol": "Th",
     "mass": 232.038053606,
     "covalent_radius": 1.75,
-    "valence": 4
+    "valence": 4,
+    "electronegativity": 1.3,
+    "metal": true
   },
   {
     "Z": 91,
@@ -907,7 +1087,9 @@
     "symbol": "Pa",
     "mass": 231.0358825,
     "covalent_radius": 1.69,
-    "valence": 5
+    "valence": 5,
+    "electronegativity": 1.5,
+    "metal": true
   },
   {
     "Z": 92,
@@ -917,7 +1099,9 @@
     "symbol": "U",
     "mass": 238.050786936,
     "covalent_radius": 1.7,
-    "valence": 6
+    "valence": 6,
+    "electronegativity": 1.7,
+    "metal": true
   },
   {
     "Z": 93,
@@ -927,7 +1111,9 @@
     "symbol": "Np",
     "mass": 219.031601865,
     "covalent_radius": 1.71,
-    "valence": 7
+    "valence": 7,
+    "electronegativity": 1.3,
+    "metal": true
   },
   {
     "Z": 94,
@@ -937,7 +1123,9 @@
     "symbol": "Pu",
     "mass": 221.038572,
     "covalent_radius": 1.72,
-    "valence": 8
+    "valence": 8,
+    "electronegativity": 1.3,
+    "metal": true
   },
   {
     "Z": 95,
@@ -947,7 +1135,9 @@
     "symbol": "Am",
     "mass": 223.04584,
     "covalent_radius": 1.66,
-    "valence": 9
+    "valence": 9,
+    "electronegativity": null,
+    "metal": true
   },
   {
     "Z": 96,
@@ -957,7 +1147,9 @@
     "symbol": "Cm",
     "mass": 231.050746,
     "covalent_radius": 1.66,
-    "valence": 10
+    "valence": 10,
+    "electronegativity": null,
+    "metal": true
   },
   {
     "Z": 97,
@@ -967,7 +1159,9 @@
     "symbol": "Bk",
     "mass": 233.056652,
     "covalent_radius": 1.68,
-    "valence": 11
+    "valence": 11,
+    "electronegativity": null,
+    "metal": true
   },
   {
     "Z": 98,
@@ -977,7 +1171,9 @@
     "symbol": "Cf",
     "mass": 237.062199272,
     "covalent_radius": 1.68,
-    "valence": 12
+    "valence": 12,
+    "electronegativity": null,
+    "metal": true
   },
   {
     "Z": 99,
@@ -987,7 +1183,9 @@
     "symbol": "Es",
     "mass": 239.06831,
     "covalent_radius": 1.65,
-    "valence": 13
+    "valence": 13,
+    "electronegativity": null,
+    "metal": true
   },
   {
     "Z": 100,
@@ -997,7 +1195,9 @@
     "symbol": "Fm",
     "mass": 241.074311,
     "covalent_radius": 1.67,
-    "valence": 14
+    "valence": 14,
+    "electronegativity": null,
+    "metal": true
   },
   {
     "Z": 101,
@@ -1007,7 +1207,9 @@
     "symbol": "Md",
     "mass": 244.081157,
     "covalent_radius": 1.73,
-    "valence": 15
+    "valence": 15,
+    "electronegativity": null,
+    "metal": true
   },
   {
     "Z": 102,
@@ -1017,7 +1219,9 @@
     "symbol": "No",
     "mass": 248.086623,
     "covalent_radius": 1.76,
-    "valence": 16
+    "valence": 16,
+    "electronegativity": null,
+    "metal": true
   },
   {
     "Z": 103,
@@ -1027,7 +1231,9 @@
     "symbol": "Lr",
     "mass": 251.094289,
     "covalent_radius": 1.61,
-    "valence": 17
+    "valence": 17,
+    "electronegativity": null,
+    "metal": true
   },
   {
     "Z": 104,
@@ -1037,7 +1243,9 @@
     "symbol": "Rf",
     "mass": 253.100528,
     "covalent_radius": 1.57,
-    "valence": 4
+    "valence": 4,
+    "electronegativity": null,
+    "metal": true
   },
   {
     "Z": 105,
@@ -1047,7 +1255,9 @@
     "symbol": "Db",
     "mass": 255.106919,
     "covalent_radius": 1.49,
-    "valence": 5
+    "valence": 5,
+    "electronegativity": null,
+    "metal": true
   },
   {
     "Z": 106,
@@ -1057,7 +1267,9 @@
     "symbol": "Sg",
     "mass": 258.11304,
     "covalent_radius": 1.43,
-    "valence": 6
+    "valence": 6,
+    "electronegativity": null,
+    "metal": true
   },
   {
     "Z": 107,
@@ -1067,7 +1279,9 @@
     "symbol": "Bh",
     "mass": 260.121443,
     "covalent_radius": 1.41,
-    "valence": 7
+    "valence": 7,
+    "electronegativity": null,
+    "metal": true
   },
   {
     "Z": 108,
@@ -1077,7 +1291,9 @@
     "symbol": "Hs",
     "mass": 263.128479,
     "covalent_radius": 1.34,
-    "valence": 8
+    "valence": 8,
+    "electronegativity": null,
+    "metal": true
   },
   {
     "Z": 109,
@@ -1087,7 +1303,9 @@
     "symbol": "Mt",
     "mass": 265.135937,
     "covalent_radius": 1.29,
-    "valence": 9
+    "valence": 9,
+    "electronegativity": null,
+    "metal": true
   },
   {
     "Z": 110,
@@ -1097,7 +1315,9 @@
     "symbol": "Ds",
     "mass": 267.143726,
     "covalent_radius": 1.28,
-    "valence": 10
+    "valence": 10,
+    "electronegativity": null,
+    "metal": true
   },
   {
     "Z": 111,
@@ -1107,7 +1327,9 @@
     "symbol": "Rg",
     "mass": 272.153273,
     "covalent_radius": 1.21,
-    "valence": 11
+    "valence": 11,
+    "electronegativity": null,
+    "metal": true
   },
   {
     "Z": 112,
@@ -1117,7 +1339,9 @@
     "symbol": "Cn",
     "mass": 276.161418,
     "covalent_radius": 1.22,
-    "valence": 12
+    "valence": 12,
+    "electronegativity": null,
+    "metal": true
   },
   {
     "Z": 113,
@@ -1127,7 +1351,9 @@
     "symbol": "Nh",
     "mass": 278.170725,
     "covalent_radius": 1.36,
-    "valence": 3
+    "valence": 3,
+    "electronegativity": null,
+    "metal": true
   },
   {
     "Z": 114,
@@ -1137,7 +1363,9 @@
     "symbol": "Fl",
     "mass": 284.181192,
     "covalent_radius": 1.43,
-    "valence": 4
+    "valence": 4,
+    "electronegativity": null,
+    "metal": true
   },
   {
     "Z": 115,
@@ -1147,7 +1375,9 @@
     "symbol": "Mc",
     "mass": 287.19082,
     "covalent_radius": 1.62,
-    "valence": 5
+    "valence": 5,
+    "electronegativity": null,
+    "metal": true
   },
   {
     "Z": 116,
@@ -1157,7 +1387,9 @@
     "symbol": "Lv",
     "mass": 289.198023,
     "covalent_radius": 1.75,
-    "valence": 6
+    "valence": 6,
+    "electronegativity": null,
+    "metal": true
   },
   {
     "Z": 117,
@@ -1167,7 +1399,9 @@
     "symbol": "Ts",
     "mass": 291.205748,
     "covalent_radius": 1.65,
-    "valence": 7
+    "valence": 7,
+    "electronegativity": null,
+    "metal": false
   },
   {
     "Z": 118,
@@ -1177,6 +1411,8 @@
     "symbol": "Og",
     "mass": 293.213423,
     "covalent_radius": 1.57,
-    "valence": 8
+    "valence": 8,
+    "electronegativity": null,
+    "metal": false
   }
 ]

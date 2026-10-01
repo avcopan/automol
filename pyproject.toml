@@ -12,11 +12,9 @@ dependencies = [
     "pint>=0.24",
     "py3dmol>=2.5",
     "pydantic>=2.5",
-    "pynauty>=2.8.8.1",
     "pyparsing>=3.3.2",
     "rdkit>=2025",
     "scipy>=1.13",
-    "stereomolgraph>=0.0.22b0",
     "xyzrender>=0.3.8",
 ]
 

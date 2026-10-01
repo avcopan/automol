@@ -11,8 +11,7 @@ coordinates, charge, and spin) and provides:
   SMILES) from a `Geometry`, and back.
 - {doc}`visualization` — interactive 3D viewing and static/animated
   rendering.
-- {doc}`interoperability` — converting to and from RDKit, ASE, and
-  StereoMolGraph representations.
+- {doc}`interoperability` — converting to and from RDKit representations.
 
 New here? Start with {doc}`installation`, then {doc}`geometry`.
 

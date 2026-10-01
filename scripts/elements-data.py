@@ -13,6 +13,16 @@ metadata = MetaData()
 
 elements = Table("elements", metadata, autoload_with=engine)
 isotopes = Table("isotopes", metadata, autoload_with=engine)
+series = Table("series", metadata, autoload_with=engine)
+
+METAL_SERIES = {
+    "Alkali metals",
+    "Alkaline earth metals",
+    "Poor metals",
+    "Transition metals",
+    "Lanthanides",
+    "Actinides",
+}
 
 abundance_ranked_isotopes = select(
     isotopes.c.atomic_number,
@@ -37,15 +47,23 @@ primary_isotopes = (
     .subquery()
 )
 
-stmt = select(
-    elements.c.symbol,
-    elements.c.covalent_radius_pyykko,
-    elements.c.group_id,
-    elements.c.period,
-    primary_isotopes.c.atomic_number,
-    primary_isotopes.c.mass_number,
-    primary_isotopes.c.mass,
-).join(primary_isotopes, elements.c.atomic_number == primary_isotopes.c.atomic_number)
+stmt = (
+    select(
+        elements.c.symbol,
+        elements.c.covalent_radius_pyykko,
+        elements.c.group_id,
+        elements.c.period,
+        elements.c.en_pauling,
+        series.c.name.label("series"),
+        primary_isotopes.c.atomic_number,
+        primary_isotopes.c.mass_number,
+        primary_isotopes.c.mass,
+    )
+    .join(
+        primary_isotopes, elements.c.atomic_number == primary_isotopes.c.atomic_number
+    )
+    .outerjoin(series, elements.c.series_id == series.c.id)
+)
 
 with engine.connect() as conn:
     result = conn.execute(stmt)
@@ -59,6 +77,8 @@ with engine.connect() as conn:
             "mass": row.mass,
             "covalent_radius": row.covalent_radius_pyykko / 100,
             "valence": mendeleev_element(row.atomic_number).nvalence(),
+            "electronegativity": row.en_pauling,
+            "metal": row.series in METAL_SERIES,
         }
         for row in result
     ]

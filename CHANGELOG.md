@@ -4,6 +4,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+### Added
+- `rd.mol.from_connectivity(symbols, bonds, *, charge, spin, coords)` — builds a sanitized RDKit `Mol` from connectivity alone, perceiving bond orders, formal charges, and radical electrons that exactly match the requested charge and spin via an integer linear program (`scipy.optimize.milp`). Raises `NotImplementedError` for metals.
+- `utils.element.electronegativity()` (Pauling) and `utils.element.is_metal()`, backed by new `electronegativity` / `metal` fields in the generated element data.
+- `Geometry` validation: symbols are checked against the periodic table and canonicalized (`"cl"` → `"Cl"`), and `spin` must be non-negative and consistent with the electron count. Cross-field checks now also run on assignment, and a failed assignment leaves the geometry unchanged.
+- Value-based `Geometry.__eq__`. Previously, `==` raised `ValueError` on the coordinate arrays.
+- `rd.mol.max_bond_count()`, the maximum number of bonds to an atom allowing formal charges of ±1.
+- `seed` parameter on `rd.mol.add_coordinates()` (default `rd.mol.EMBED_SEED`; `None` for random).
+- `geom.translate`, `geom.rotate`, `geom.reflect`, `geom.view`, `geom.render_svg`, and `geom.render_gif` exported from `automol.geom`.
+- `from_xyz_block` accepts atomic numbers and lowercase symbols as atom labels, and floats with a leading dot (`.74`).
+- A `data` pixi environment with `mendeleev` and `sqlalchemy` for the `elements-data` task.
+
+### Fixed
+- `adjacency_matrix(..., flood_fill=True, enforce_valence=True)` no longer loops forever when valence caps prevent fragments from connecting.
+- `rdkit_smiles.identity_fn` no longer raises `StopIteration` when no `other_geos` entry matches.
+- `hill_formula` follows strict Hill order: without carbon, all elements (including H) are alphabetical (e.g. `ClH`).
+- `Geometry.relabel_atoms` rejects indices that aren't a permutation and keeps subclass fields.
+- `from_xyz_block` checks the atom count line, and rejects multi-frame blocks and fused tokens such as `H1 0 0 0` with a clear `XYZFormatError`.
+- Invalid SMILES/InChI/xyz input to `rd.mol.from_smiles` / `from_inchi` / `from_xyz_block` and the `geometry_fn`s raises `ValueError` instead of an RDKit `ArgumentError`. Failed InChI generation raises instead of returning `""`.
+- `rd.mol.add_coordinates` raises `GeometryConversionError` when embedding fails, after retrying with random initial coordinates.
+- `geom.reflect` rejects a zero normal vector instead of returning NaN coordinates.
+- `View` labels and styles apply only to the most recently added geometry.
+- `center_of_mass` / `inertia_tensor` handle empty geometries, and `bonds` / `angles` / `dihedrals` return correctly shaped empty arrays.
+- `Element.group` is typed `int | None`. It is `None` for lanthanides and actinides.
+
+### Changed
+- `geom.rdkit_mol` no longer depends on `stereomolgraph`: connectivity comes from `adjacency_matrix`, the Lewis structure from `rd.mol.from_connectivity`, and stereochemistry from the 3D coordinates. Radicals, charged species, and closed-shell singlet carbenes are now represented faithfully.
+- **Breaking:** `geom.dihedrals` returns rows `[z1, z2, z3, z4, phi]` keyed by atomic numbers, oriented canonically and sorted, consistent with `bonds` and `angles`. Previously, rows held atom indices.
+- `adjacency_matrix(enforce_valence=True)` caps bonds at `rd.mol.max_bond_count` instead of the valence-electron count, and keeps the shortest bonds (relative to covalent radii). The result no longer depends on atom order.
+- `angles` and `dihedrals` are built from neighbor lists instead of dense O(N³)/O(N⁴) tensors, and `inertia_tensor` is vectorized.
+- `rd.mol.from_smiles` / `from_inchi` (and so `geometry_fn`) embed coordinates with a fixed seed, so the results are reproducible.
+- `Algorithm` validates that `identity_fn` accepts `(geo, other_geos)` and `geometry_fn` accepts `(value)`.
+- `xyz_file` writes a trailing newline. `xyz_block` rejects multi-line comments.
+- `rd.mol.from_inchi` sanitizes the parsed molecule.
+- The `elements-data` task moved to the new `data` environment.
+
+### Removed
+- `AlgorithmRegistry.get()`, `.all_algorithms()`, `.algorithms_for_kind()` — unused lookup helpers; algorithms are now accessed via their module-level `Algorithm` instances (e.g. `rdkit_inchi`, `rdkit_smiles`, `hill_formula`) instead of by name.
+- `geom.inertia_moments()`, `inertia_axes()`, `rotational_analysis()`, `rotation_to_inertia_axes()`, and `eckart_frame()`.
+- `geom.mass_weight_vector()`, `translational_normal_modes()`, `rotational_normal_modes()`, `normal_mode_projection()`, `vibrational_analysis()`, and `harmonic_zpv()`.
+- `geom.bond_graph()`, `orbit_classes()`, `kabsch_align()`, `hungarian_correspondence()`, and `assignment_rmsd()`.
+- `geom.stereo_mol_graph()`, `from_stereo_mol_graph()`, `set_bond()`, and `transition()`.
+- `pynauty` and `stereomolgraph` dependencies.
+- `Algorithm.deterministic` and the `deterministic` parameter of `AlgorithmRegistry.register(...)`.
+- Unused `HashGenerationError`, `UnknownAlgorithmError`, and `XTBError` exceptions, and the unused `geom.analysis.RMSD_THRESHOLD` constant.
 
 ## [0.0.25] - 2026-09-19
 ### Added

@@ -1,12 +1,8 @@
 """Shared fixtures for geometry tests."""
 
-from pathlib import Path
-
 import pytest
 
 from automol import Geometry
-
-DATA_DIR = Path(__file__).parent.parent / "data"
 
 
 @pytest.fixture
