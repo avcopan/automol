@@ -28,7 +28,9 @@ class Geometry(BaseModel):
             canonicalized (``"cl"`` -> ``"Cl"``).
         coordinates (CoordinatesField): Cartesian coordinates of the atoms in
             Angstroms. Shape is ``(len(symbols), 3)`` and the ordering
-            corresponds to `symbols`.
+            corresponds to `symbols`. May be given as a `pint.Quantity` with
+            length units, which is converted to Angstroms; plain values are
+            assumed to be in Angstroms.
         charge (int): Total molecular charge.
         spin (int): Number of unpaired electrons, i.e. two times the spin
             quantum number (``2S``). Must be non-negative and have the same

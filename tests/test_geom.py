@@ -9,6 +9,7 @@ from rdkit import Chem
 from scipy.spatial.transform import Rotation
 
 from automol import Geometry, geom, rd
+from automol.utils import ureg
 from automol.utils.exc import XYZFormatError
 
 # Model
@@ -32,6 +33,30 @@ def test__coordinates_symbols_mismatch_raises() -> None:
         Geometry(
             symbols=["O", "H", "H"],
             coordinates=[[0, 0, 0], [1, 0, 0]],
+            charge=0,
+            spin=0,
+        )
+
+
+@pytest.mark.parametrize(
+    ("unit", "factor"), [("angstrom", 1.0), ("bohr", 0.529177), ("nm", 10.0)]
+)
+def test__coordinates_quantity_converted_to_angstrom(unit: str, factor: float) -> None:
+    """Test that pint quantity coordinates are converted to Angstrom."""
+    coords = np.eye(3)
+    geo = Geometry(
+        symbols=["O", "H", "H"], coordinates=coords * ureg(unit), charge=0, spin=0
+    )
+    assert isinstance(geo.coordinates, np.ndarray)
+    np.testing.assert_allclose(geo.coordinates, coords * factor, rtol=1e-6)
+
+
+def test__coordinates_quantity_bad_units_raises() -> None:
+    """Test that quantity coordinates without length units are rejected."""
+    with pytest.raises(ValidationError, match="length units"):
+        Geometry(
+            symbols=["O", "H", "H"],
+            coordinates=np.eye(3) * ureg.second,
             charge=0,
             spin=0,
         )

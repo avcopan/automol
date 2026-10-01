@@ -3,6 +3,7 @@
 from typing import Annotated
 
 import numpy as np
+import pint
 from numpy import typing as npt
 from pydantic import BeforeValidator, PlainSerializer
 from pydantic.functional_validators import SkipValidation
@@ -28,6 +29,14 @@ FloatArrayField = Annotated[
 
 # Coordinates field
 def _coordinates_validator(obj: object) -> FloatArray:
+    # Pint quantities are converted to Angstrom; bare values are assumed Angstrom
+    if isinstance(obj, pint.Quantity):
+        try:
+            obj = obj.m_as("angstrom")
+        except pint.DimensionalityError as err:
+            msg = f"Expected coordinates with length units but got {obj.units:~}."
+            raise ValueError(msg) from err
+
     arr = _float_array_validator(obj)
 
     if arr.ndim != 2 or arr.shape[-1] != 3:  # noqa: PLR2004
