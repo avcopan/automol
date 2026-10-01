@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+
+## [0.0.26] - 2026-09-30
 ### Added
 - `rd.mol.from_connectivity(symbols, bonds, *, charge, spin, coords)` — builds a sanitized RDKit `Mol` from connectivity alone, perceiving bond orders, formal charges, and radical electrons that exactly match the requested charge and spin via an integer linear program (`scipy.optimize.milp`). Raises `NotImplementedError` for metals.
 - `utils.element.electronegativity()` (Pauling) and `utils.element.is_metal()`, backed by new `electronegativity` / `metal` fields in the generated element data.
