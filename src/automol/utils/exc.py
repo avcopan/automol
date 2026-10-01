@@ -1,49 +1,17 @@
-"""Automol exceptions."""
+"""Package exceptions."""
 
 
 class AlgorithmAlreadyRegisteredError(Exception):
-    """Raise an error when an identity algorithm is already registered."""
-
-    def __init__(self, message: str) -> None:
-        """Initialize the exception.
-
-        Args:
-            message: Error message.
-        """
-        super().__init__(message)
+    """An identity algorithm with the same name is already registered."""
 
 
 class ElementNotFoundError(Exception):
-    """Raise an error when an element cannot be found by atomic number or symbol."""
-
-    def __init__(self, message: str) -> None:
-        """Initialize the exception.
-
-        Args:
-            message: Error message.
-        """
-        super().__init__(message)
+    """No element matches the given atomic number or symbol."""
 
 
 class GeometryConversionError(Exception):
-    """Raise an error when Geometry conversion is not successful."""
-
-    def __init__(self, message: str) -> None:
-        """Initialize the exception.
-
-        Args:
-            message: Error message.
-        """
-        super().__init__(message)
+    """A geometry could not be converted to or from another representation."""
 
 
 class XYZFormatError(Exception):
-    """Raise an error when xyz format fails to parse."""
-
-    def __init__(self, message: str) -> None:
-        """Initialize the exception.
-
-        Args:
-            message: Error message.
-        """
-        super().__init__(message)
+    """An xyz block could not be parsed."""

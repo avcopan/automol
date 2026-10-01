@@ -1,4 +1,4 @@
-"""Constant values."""
+"""Shared `pint` unit registry."""
 
 import pint
 

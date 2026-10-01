@@ -1,4 +1,4 @@
-"""automol."""
+"""Molecular geometries, identities, and RDKit interoperability."""
 
 __version__ = "0.0.25"
 

@@ -29,7 +29,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `Element.group` is typed `int | None`. It is `None` for lanthanides and actinides.
 
 ### Changed
-- **Documentation:** All docstrings converted from NumPy style to Google style for improved IDE support and consistency. Updated ruff configuration to validate Google-style docstrings and sphinx configuration with Napoleon preprocessor for documentation generation. All functions now have complete Args and Returns sections with full type information.
+- **Breaking:** The `automol.geom.core`, `automol.geom.analysis`, and `automol.geom.io` submodules are merged into a single `automol.geom` module. Import from `automol.geom` instead (e.g. `geom.reflect`, not `geom.core.reflect`). The public names are unchanged.
+- `automol.utils.element` is now a single module (`utils/element.py`), so `automol.utils.element.core` no longer exists. The public `utils.element.*` functions are unchanged.
+- `rd/mol.py` is reorganized into sections (conversion, accessors, coordinates, stereochemistry, Lewis structure perception). There are no API changes.
+- **Documentation:** Docstrings use Google style, validated by Ruff and rendered by Sphinx through Napoleon. Types come from annotations and are no longer repeated in `Returns:` or `Attributes:`, and empty `Returns: None` sections are omitted. Module docstrings and comments are clearer and shorter.
 - `geom.rdkit_mol` no longer depends on `stereomolgraph`: connectivity comes from `adjacency_matrix`, the Lewis structure from `rd.mol.from_connectivity`, and stereochemistry from the 3D coordinates. Radicals, charged species, and closed-shell singlet carbenes are now represented faithfully.
 - **Breaking:** `geom.dihedrals` returns rows `[z1, z2, z3, z4, phi]` keyed by atomic numbers, oriented canonically and sorted, consistent with `bonds` and `angles`. Previously, rows held atom indices.
 - `adjacency_matrix(enforce_valence=True)` caps bonds at `rd.mol.max_bond_count` instead of the valence-electron count, and keeps the shortest bonds (relative to covalent radii). The result no longer depends on atom order.
@@ -49,6 +52,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `pynauty` and `stereomolgraph` dependencies.
 - `Algorithm.deterministic` and the `deterministic` parameter of `AlgorithmRegistry.register(...)`.
 - Unused `HashGenerationError`, `UnknownAlgorithmError`, and `XTBError` exceptions, and the unused `geom.analysis.RMSD_THRESHOLD` constant.
+- Public internals `geom.FLOOD_FILL_STEP`, the xyz grammar constants (`SYMBOL`, `FLOAT`, `XYZ_LINE`), and `utils.element.ELEMENT_BY_NUMBER` / `ELEMENT_BY_SYMBOL` / `PERIOD_SHELL_CAPACITY` are now private.
 
 ## [0.0.25] - 2026-09-19
 ### Added
