@@ -48,7 +48,7 @@ def test__duplicate_registration_raises() -> None:
     """Test that re-registering an algorithm is rejected."""
     with pytest.raises(AlgorithmAlreadyRegisteredError):
         AlgorithmRegistry.register(
-            name="rdkit inchi",
+            name="rdkit_inchi",
             kind=IdentityKind.STEREOISOMER,
             identity_fn=rdkit_inchi.identity_fn,
         )
