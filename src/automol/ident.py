@@ -185,7 +185,7 @@ def rdkit_inchi_identity_fn(
 
 
 rdkit_inchi = AlgorithmRegistry.register(
-    name="rdkit inchi",
+    name="rdkit_inchi",
     kind=IdentityKind.STEREOISOMER,
     identity_fn=rdkit_inchi_identity_fn,
     geometry_fn=rdkit_inchi_geometry_fn,
@@ -228,7 +228,7 @@ def rdkit_smiles_identity_fn(geo: Geometry, other_geos: OTHER_GEOS = None) -> st
 
 
 rdkit_smiles = AlgorithmRegistry.register(
-    name="rdkit smiles",
+    name="rdkit_smiles",
     kind=IdentityKind.STEREOISOMER,
     parent_algorithm=rdkit_inchi,
     identity_fn=rdkit_smiles_identity_fn,
@@ -265,7 +265,7 @@ def hill_formula_identity_fn(
 
 
 hill_formula = AlgorithmRegistry.register(
-    name="hill formula",
+    name="hill_formula",
     kind=IdentityKind.FORMULA,
     parent_algorithm=rdkit_inchi,
     identity_fn=hill_formula_identity_fn,
