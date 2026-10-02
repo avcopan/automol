@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.0.27] - 2026-10-02
+
 ## [0.0.26] - 2026-09-30
 ### Added
 - `rd.mol.from_connectivity(symbols, bonds, *, charge, spin, coords)` — builds a sanitized RDKit `Mol` from connectivity alone, perceiving bond orders, formal charges, and radical electrons that exactly match the requested charge and spin via an integer linear program (`scipy.optimize.milp`). Raises `NotImplementedError` for metals.
