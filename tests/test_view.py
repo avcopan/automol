@@ -1,5 +1,7 @@
 """View tests."""
 
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -63,3 +65,18 @@ def test__render_gif(water: Geometry, tmp_path: Path) -> None:
     out = tmp_path / "water"
     render_gif(water, out=out)
     assert (tmp_path / "water.gif").exists()
+
+
+def test__import_does_not_require_xyzrender() -> None:
+    """Test that importing automol doesn't import xyzrender (PyPI-only)."""
+    code = "import sys, automol; assert 'xyzrender' not in sys.modules"
+    subprocess.run([sys.executable, "-c", code], check=True)  # noqa: S603
+
+
+def test__render_without_xyzrender_raises(
+    water: Geometry, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test that rendering without xyzrender explains how to install it."""
+    monkeypatch.setitem(sys.modules, "xyzrender", None)
+    with pytest.raises(ImportError, match="PyPI"):
+        render_svg(water)

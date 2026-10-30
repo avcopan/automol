@@ -1,5 +1,6 @@
 """Geometry tests: model, I/O, rdkit conversion, analysis, and transforms."""
 
+from collections.abc import Callable
 from pathlib import Path
 
 import numpy as np
@@ -439,3 +440,161 @@ def test__rotate_in_place(water: Geometry) -> None:
     result = geom.rotate(water, rot, in_place=True)
     assert result is water
     assert np.allclose(water.coordinates, expected)
+
+
+# A random rotation, origin, and translation, for roundtrip and invariance tests
+ROT = Rotation.random(random_state=0)
+ORIGIN = np.array([0.3, -1.2, 0.7])
+SHIFT = np.array([1.0, 2.0, 3.0])
+
+
+def _rigid_motion(geo: Geometry) -> Geometry:
+    """Apply a rotation about a point and a translation."""
+    return geom.translate(geom.rotate(geo, ROT, origin=ORIGIN), SHIFT)
+
+
+def test__rotate_about_origin_roundtrip(propyl_oxirane: Geometry) -> None:
+    """Test rotation about a point: it stays fixed, and the inverse undoes it."""
+    geo = geom.translate(propyl_oxirane, ORIGIN - propyl_oxirane.coordinates[3])
+    rotated = geom.rotate(geo, ROT, origin=ORIGIN)
+    assert np.allclose(rotated.coordinates[3], ORIGIN)
+    assert not np.allclose(rotated.coordinates, geo.coordinates)
+    restored = geom.rotate(rotated, ROT.inv(), origin=ORIGIN)
+    assert np.allclose(restored.coordinates, geo.coordinates)
+
+
+def test__reflect_about_origin_roundtrip() -> None:
+    """Test reflection across a plane through a point, and its inverse."""
+    normal = [1.0, -2.0, 0.5]
+    geo = Geometry(
+        symbols=["He", "He"], coordinates=[ORIGIN, ORIGIN + 1.0], charge=0, spin=0
+    )
+    reflected = geom.reflect(geo, normal, origin=ORIGIN)
+    assert np.allclose(reflected.coordinates[0], ORIGIN)
+    assert not np.allclose(reflected.coordinates[1], geo.coordinates[1])
+    restored = geom.reflect(reflected, normal, origin=ORIGIN)
+    assert np.allclose(restored.coordinates, geo.coordinates)
+
+
+def test__center(propyl_oxirane: Geometry) -> None:
+    """Test that centering moves the center of mass to the origin."""
+    centered = geom.center(geom.translate(propyl_oxirane, [5.0, -3.0, 1.0]))
+    assert np.allclose(geom.center_of_mass(centered), 0.0)
+    assert np.allclose(
+        geom.distance_matrix(centered), geom.distance_matrix(propyl_oxirane)
+    )
+
+
+# Selecting and joining atoms
+
+
+def test__select_and_join_roundtrip(propyl_oxirane: Geometry) -> None:
+    """Test that splitting a geometry and joining the parts restores it."""
+    keys1, keys2 = [3, 0, 7, 12], [k for k in range(15) if k not in (3, 0, 7, 12)]
+    parts = [geom.select_atoms(propyl_oxirane, ks) for ks in (keys1, keys2)]
+    joined = geom.join(parts).relabel_atoms(np.argsort(keys1 + keys2).tolist())
+    assert joined.symbols == propyl_oxirane.symbols
+    assert np.array_equal(joined.coordinates, propyl_oxirane.coordinates)
+
+
+def test__remove_atoms_complements_select(propyl_oxirane: Geometry) -> None:
+    """Test that removing atoms selects the rest, in order."""
+    removed = geom.remove_atoms(propyl_oxirane, {2, 5})
+    kept = geom.select_atoms(propyl_oxirane, [k for k in range(15) if k not in (2, 5)])
+    assert removed == kept
+    assert removed.atom_count == propyl_oxirane.atom_count - 2
+
+
+def test__select_atoms_charge_and_spin() -> None:
+    """Test default and explicit charge and spin of a selection."""
+    methane = Geometry(
+        symbols=["C", "H", "H", "H", "H"],
+        coordinates=np.zeros((5, 3)),
+        charge=0,
+        spin=0,
+    )
+    methyl = geom.remove_atoms(methane, [4])
+    assert (methyl.charge, methyl.spin) == (0, 1)
+    cation = geom.remove_atoms(methane, [4], charge=1, spin=0)
+    assert (cation.charge, cation.spin) == (1, 0)
+    ch2 = geom.remove_atoms(methane, [3, 4])
+    assert (ch2.charge, ch2.spin) == (0, 0)
+    # Joining two methyl radicals sums the spins (a triplet)
+    assert geom.join([methyl, methyl]).spin == 2  # noqa: PLR2004
+
+
+# Rotational analysis and alignment
+
+
+def test__alignment_rotation_recovers_rotation(propyl_oxirane: Geometry) -> None:
+    """Test that the alignment rotation of a moved geometry is the rotation."""
+    found = geom.alignment_rotation(_rigid_motion(propyl_oxirane), propyl_oxirane)
+    assert found.approx_equal(ROT, atol=1e-8)
+
+
+def test__alignment_rotation_mismatch_raises(
+    water: Geometry, peroxide: Geometry
+) -> None:
+    """Test that geometries with different atoms are rejected."""
+    with pytest.raises(ValueError, match="do not match"):
+        geom.alignment_rotation(water, peroxide)
+
+
+def test__inertial_frame_rotation(propyl_oxirane: Geometry) -> None:
+    """Test that the inertial frame diagonalizes the inertia tensor."""
+    geo = _rigid_motion(propyl_oxirane)
+    moments, axes = geom.principal_axes(geo)
+    assert np.isclose(np.linalg.det(axes), 1.0)
+    assert np.all(np.diff(moments) >= 0)
+
+    rot = geom.inertial_frame_rotation(geo)
+    framed = geom.rotate(geom.center(geo), rot)
+    assert np.allclose(geom.inertia_tensor(framed), np.diag(moments))
+    # The moments don't depend on the starting orientation
+    assert np.allclose(moments, geom.principal_axes(propyl_oxirane)[0])
+
+
+# Measurements
+
+
+def test__measurements_invariant_under_rigid_motion(propyl_oxirane: Geometry) -> None:
+    """Test that distances and angles don't change under rigid motions."""
+    moved = _rigid_motion(propyl_oxirane)
+    for fn, keys in [
+        (geom.distance, [0, 5]),
+        (geom.angle, [0, 1, 2]),
+        (geom.dihedral, [0, 1, 2, 3]),
+    ]:
+        assert np.isclose(fn(moved, keys), fn(propyl_oxirane, keys))
+    assert np.allclose(
+        geom.distance_matrix(moved), geom.distance_matrix(propyl_oxirane)
+    )
+
+
+def test__dihedral_reflection_flips_sign(propyl_oxirane: Geometry) -> None:
+    """Test that a reflection flips the sign of a dihedral angle."""
+    mirrored = geom.reflect(propyl_oxirane, [1.0, -2.0, 0.5])
+    keys = [0, 1, 2, 3]
+    assert np.isclose(
+        geom.dihedral(mirrored, keys), -geom.dihedral(propyl_oxirane, keys)
+    )
+
+
+def test__dihedral_matches_dihedrals_table(peroxide: Geometry) -> None:
+    """Test that the dihedral of specific atoms agrees with the table."""
+    amat = geom.adjacency_matrix(peroxide)
+    table = geom.dihedrals(peroxide, amat)
+    assert np.isclose(geom.dihedral(peroxide, [0, 1, 2, 3]), table[0, -1])
+    assert np.isclose(geom.dihedral(peroxide, [3, 2, 1, 0]), table[0, -1])
+
+
+@pytest.mark.parametrize(
+    ("fn", "keys"),
+    [(geom.distance, [0]), (geom.angle, [0, 1]), (geom.dihedral, [0, 1, 2])],
+)
+def test__measurement_wrong_key_count_raises(
+    peroxide: Geometry, fn: Callable[..., float], keys: list[int]
+) -> None:
+    """Test that the wrong number of atom indices is rejected."""
+    with pytest.raises(ValueError, match="atom indices"):
+        fn(peroxide, keys)

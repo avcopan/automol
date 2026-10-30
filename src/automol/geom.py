@@ -3,12 +3,12 @@
 import tempfile
 from collections.abc import Collection, Sequence
 from pathlib import Path
-from typing import Any, Self
+from types import ModuleType
+from typing import TYPE_CHECKING, Any, Self
 
 import numpy as np
 import py3Dmol
 import pyparsing as pp
-import xyzrender
 from numpy.typing import ArrayLike
 from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
 from pyparsing import pyparsing_common as ppc
@@ -22,25 +22,38 @@ from .utils import element
 from .utils.exc import ElementNotFoundError, XYZFormatError
 from .utils.types import CoordinatesField, FloatArray
 
+if TYPE_CHECKING:
+    import xyzrender
+
 __all__ = [
     "Geometry",
     "View",
     "adjacency_matrix",
+    "alignment_rotation",
+    "angle",
     "angles",
     "bonds",
+    "center",
     "center_of_mass",
+    "dihedral",
     "dihedrals",
+    "distance",
     "distance_keys",
     "distance_matrix",
     "from_rdkit_mol",
     "from_xyz_block",
     "from_xyz_file",
     "inertia_tensor",
+    "inertial_frame_rotation",
+    "join",
+    "principal_axes",
     "rdkit_mol",
     "reflect",
+    "remove_atoms",
     "render_gif",
     "render_svg",
     "rotate",
+    "select_atoms",
     "translate",
     "view",
     "xyz_block",
@@ -422,6 +435,93 @@ def from_rdkit_mol(mol: Mol) -> Geometry:
     )
 
 
+# Selecting and joining atoms
+def select_atoms(
+    geo: Geometry,
+    keys: Sequence[int],
+    *,
+    charge: int | None = None,
+    spin: int | None = None,
+) -> Geometry:
+    """Select a subset of atoms.
+
+    Args:
+        geo: Geometry.
+        keys: Indices of the atoms to keep, in the order to keep them.
+        charge: Charge of the selection. Defaults to the charge of `geo`.
+        spin: Spin of the selection. Defaults to the spin of `geo` if that is
+            consistent with the electron count, and otherwise to the lowest
+            consistent spin (e.g. 1 for a methyl radical selected from methane).
+
+    Returns:
+        The selected atoms.
+
+    Example:
+        >>> geo = Geometry(
+        ...     symbols=["C", "H", "H", "H", "H"],
+        ...     coordinates=np.zeros((5, 3)),
+        ...     charge=0,
+        ...     spin=0,
+        ... )
+        >>> methyl = select_atoms(geo, [0, 1, 2, 3])
+        >>> methyl.symbols, methyl.spin
+        (['C', 'H', 'H', 'H'], 1)
+    """
+    keys = [int(k) for k in keys]
+    symbols = [geo.symbols[k] for k in keys]
+    charge = geo.charge if charge is None else charge
+    if spin is None:
+        nelec = sum(map(element.number, symbols)) - charge
+        spin = geo.spin if (nelec - geo.spin) % 2 == 0 else nelec % 2
+    return Geometry(
+        symbols=symbols,
+        coordinates=geo.coordinates[keys],
+        charge=charge,
+        spin=spin,
+    )
+
+
+def remove_atoms(
+    geo: Geometry,
+    keys: Collection[int],
+    *,
+    charge: int | None = None,
+    spin: int | None = None,
+) -> Geometry:
+    """Remove a subset of atoms.
+
+    Args:
+        geo: Geometry.
+        keys: Indices of the atoms to remove.
+        charge: Charge of the remaining atoms (see `select_atoms`).
+        spin: Spin of the remaining atoms (see `select_atoms`).
+
+    Returns:
+        The remaining atoms, in their original order.
+    """
+    remove = set(map(int, keys))
+    keep = [k for k in range(geo.atom_count) if k not in remove]
+    return select_atoms(geo, keep, charge=charge, spin=spin)
+
+
+def join(geos: Sequence[Geometry]) -> Geometry:
+    """Join geometries into one.
+
+    Args:
+        geos: Geometries, in order.
+
+    Returns:
+        A geometry with the atoms of each geometry in turn, and the summed
+        charges and spins.
+    """
+    return Geometry(
+        symbols=[s for geo in geos for s in geo.symbols],
+        coordinates=np.vstack([geo.coordinates for geo in geos]).reshape(-1, 3),
+        charge=sum(geo.charge for geo in geos),
+        spin=sum(geo.spin for geo in geos),
+    )
+
+
 # Properties
 _FLOOD_FILL_STEP = 0.05
 
@@ -560,6 +660,114 @@ def inertia_tensor(geo: Geometry) -> np.ndarray:
     coords = geo.coordinates - center_of_mass(geo)
     mr2 = np.einsum("i,ij,ij->", masses, coords, coords)
     return mr2 * np.eye(3) - np.einsum("i,ij,ik->jk", masses, coords, coords)
+
+
+def principal_axes(geo: Geometry) -> tuple[FloatArray, FloatArray]:
+    """Calculate the principal moments and axes of inertia.
+
+    Args:
+        geo: Geometry.
+
+    Returns:
+        The principal moments, in ascending order, and the principal axes, as
+        the columns of a ``(3, 3)`` rotation matrix (a right-handed frame).
+    """
+    moments, axes = np.linalg.eigh(inertia_tensor(geo))
+    if np.linalg.det(axes) < 0:
+        axes[:, -1] *= -1
+    return moments, axes
+
+
+def inertial_frame_rotation(geo: Geometry) -> Rotation:
+    """Find the rotation into the principal axis frame.
+
+    After ``rotate(center(geo), rot)``, the principal axes with the smallest to
+    largest moments lie along x, y, and z, so the inertia tensor is diagonal.
+
+    Args:
+        geo: Geometry.
+
+    Returns:
+        The rotation.
+    """
+    _, axes = principal_axes(geo)
+    return Rotation.from_matrix(axes.T)
+
+
+# Measurements
+def distance(geo: Geometry, keys: Sequence[int]) -> float:
+    """Measure the distance between two atoms.
+
+    Args:
+        geo: Geometry.
+        keys: Indices of the two atoms.
+
+    Returns:
+        The distance, in Angstroms.
+    """
+    r1, r2 = _key_coordinates(geo, keys, 2)
+    return float(np.linalg.norm(r2 - r1))
+
+
+def angle(geo: Geometry, keys: Sequence[int], *, degrees: bool = False) -> float:
+    """Measure the angle between three atoms.
+
+    Args:
+        geo: Geometry.
+        keys: Indices of the three atoms, with the vertex in the middle.
+        degrees: If `True`, return degrees instead of radians.
+
+    Returns:
+        The angle, between 0 and pi.
+
+    Example:
+        >>> geo = Geometry(
+        ...     symbols=["O", "H", "H"],
+        ...     coordinates=[[0, 0, 0], [1, 0, 0], [0, 1, 0]],
+        ...     charge=0,
+        ...     spin=0,
+        ... )
+        >>> angle(geo, [1, 0, 2], degrees=True)
+        90.0
+    """
+    r1, r2, r3 = _key_coordinates(geo, keys, 3)
+    v1, v2 = r1 - r2, r3 - r2
+    cos = np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
+    ang = float(np.arccos(np.clip(cos, -1.0, 1.0)))
+    return float(np.degrees(ang)) if degrees else ang
+
+
+def dihedral(geo: Geometry, keys: Sequence[int], *, degrees: bool = False) -> float:
+    """Measure the dihedral angle between four atoms.
+
+    Looking down the 2-3 bond, the angle is positive when atom 4 is rotated
+    clockwise from atom 1.
+
+    Args:
+        geo: Geometry.
+        keys: Indices of the four atoms.
+        degrees: If `True`, return degrees instead of radians.
+
+    Returns:
+        The dihedral angle, between -pi and pi.
+
+    Example:
+        >>> geo = Geometry(
+        ...     symbols=["H", "O", "O", "H"],
+        ...     coordinates=[[0, 0, 1], [0, 0, 0], [0, 1, 0], [1, 1, 0]],
+        ...     charge=0,
+        ...     spin=0,
+        ... )
+        >>> dihedral(geo, [0, 1, 2, 3], degrees=True)
+        90.0
+    """
+    r1, r2, r3, r4 = _key_coordinates(geo, keys, 4)
+    b1, b2, b3 = r2 - r1, r3 - r2, r4 - r3
+    n1, n2 = np.cross(b1, b2), np.cross(b2, b3)
+    x = np.dot(n1, n2)
+    y = np.dot(np.cross(n1, n2), b2 / np.linalg.norm(b2))
+    ang = float(np.arctan2(y, x))
+    return float(np.degrees(ang)) if degrees else ang
 
 
 # Internal coordinates
@@ -741,14 +949,16 @@ def reflect(
     geo: Geometry,
     normal: ArrayLike,
     *,
+    origin: ArrayLike = (0.0, 0.0, 0.0),
     keys: Collection[int] | None = None,
     in_place: bool = False,
 ) -> Geometry:
-    """Reflect a geometry across a plane through the origin.
+    """Reflect a geometry across a plane.
 
     Args:
         geo: Geometry.
         normal: Normal vector of the reflection plane.
+        origin: A point on the reflection plane.
         keys: Atoms to reflect. If `None`, reflect all atoms.
         in_place: If `True`, modify `geo` instead of returning a copy.
 
@@ -767,7 +977,9 @@ def reflect(
     geo = geo if in_place else geo.model_copy(deep=True)
     proj = np.outer(normal, normal) / norm2
     mask = slice(None) if keys is None else list(keys)
-    geo.coordinates[mask] = geo.coordinates[mask] - 2 * geo.coordinates[mask] @ proj
+    origin = np.asarray(origin, dtype=float)
+    coords = geo.coordinates[mask] - origin
+    geo.coordinates[mask] = coords - 2 * coords @ proj + origin
     return geo
 
 
@@ -775,14 +987,16 @@ def rotate(
     geo: Geometry,
     rot: Rotation,
     *,
+    origin: ArrayLike = (0.0, 0.0, 0.0),
     keys: Collection[int] | None = None,
     in_place: bool = False,
 ) -> Geometry:
-    """Rotate a geometry about the origin.
+    """Rotate a geometry about a point.
 
     Args:
         geo: Geometry.
         rot: Rotation to apply.
+        origin: Point to rotate about.
         keys: Atoms to rotate. If `None`, rotate all atoms.
         in_place: If `True`, modify `geo` instead of returning a copy.
 
@@ -791,8 +1005,61 @@ def rotate(
     """
     geo = geo if in_place else geo.model_copy(deep=True)
     mask = slice(None) if keys is None else list(keys)
-    geo.coordinates[mask] = rot.apply(geo.coordinates[mask])
+    origin = np.asarray(origin, dtype=float)
+    geo.coordinates[mask] = rot.apply(geo.coordinates[mask] - origin) + origin
     return geo
+
+
+def center(geo: Geometry, *, in_place: bool = False) -> Geometry:
+    """Translate a geometry so that its center of mass is at the origin.
+
+    Args:
+        geo: Geometry.
+        in_place: If `True`, modify `geo` instead of returning a copy.
+
+    Returns:
+        The centered geometry.
+    """
+    return translate(geo, -center_of_mass(geo), in_place=in_place)
+
+
+def alignment_rotation(geo: Geometry, ref: Geometry) -> Rotation:
+    """Find the rotation that best aligns a reference geometry onto a geometry.
+
+    The rotation is found by the Kabsch algorithm, after moving both centers of
+    mass to the origin. Atoms are matched by index.
+
+    Args:
+        geo: Target geometry.
+        ref: Reference geometry, with the same atoms as `geo`.
+
+    Returns:
+        The rotation `rot` minimizing the RMSD between ``rotate(center(ref), rot)``
+        and ``center(geo)``.
+
+    Raises:
+        ValueError: If the geometries have different symbols.
+
+    Example:
+        >>> ref = Geometry(
+        ...     symbols=["O", "H", "H"],
+        ...     coordinates=[[0, 0, 0], [1, 0, 0], [0, 1, 0]],
+        ...     charge=0,
+        ...     spin=0,
+        ... )
+        >>> rot = Rotation.from_euler("z", 30, degrees=True)
+        >>> geo = rotate(ref, rot)
+        >>> round(float(alignment_rotation(geo, ref).magnitude()), 6)
+        0.523599
+    """
+    if geo.symbols != ref.symbols:
+        msg = f"Symbols do not match: {geo.symbols} != {ref.symbols}"
+        raise ValueError(msg)
+
+    # The second return value is the root-sum-square distance
+    return Rotation.align_vectors(
+        center(geo).coordinates, center(ref).coordinates, weights=geo.masses
+    )[0]
 
 
 # Visualization
@@ -918,9 +1185,9 @@ def render_svg(
     geo: Geometry,
     *,
     out: str | Path | None = None,
-    config: str | xyzrender.RenderConfig = "default",
+    config: "str | xyzrender.RenderConfig" = "default",
     include_h: bool = True,
-) -> xyzrender.SVGResult:
+) -> "xyzrender.SVGResult":
     """Render a geometry as an SVG image with xyzrender.
 
     The result displays inline in Jupyter.
@@ -934,6 +1201,7 @@ def render_svg(
     Returns:
         The SVG render result.
     """
+    xyzrender = _import_xyzrender()
     out = Path(out).with_suffix(".svg") if out else out
     mol = _xyzrender_molecule(geo)
     return xyzrender.render(mol, config=config, hy=include_h, output=out)
@@ -943,10 +1211,10 @@ def render_gif(
     geo: Geometry,
     *,
     out: str | Path | None = None,
-    config: str | xyzrender.RenderConfig = "default",
+    config: "str | xyzrender.RenderConfig" = "default",
     include_h: bool = True,
     rotation_axis: str = "x",
-) -> xyzrender.GIFResult:
+) -> "xyzrender.GIFResult":
     """Render a geometry rotating about an axis as a GIF with xyzrender.
 
     The result displays inline in Jupyter.
@@ -961,6 +1229,7 @@ def render_gif(
     Returns:
         The GIF render result.
     """
+    xyzrender = _import_xyzrender()
     out = Path(out).with_suffix(".gif") if out else out
     mol = _xyzrender_molecule(geo)
     return xyzrender.render_gif(
@@ -968,8 +1237,23 @@ def render_gif(
     )
 
 
-def _xyzrender_molecule(geo: Geometry) -> xyzrender.Molecule:
+def _import_xyzrender() -> ModuleType:
+    """Import xyzrender, which is optional for conda installs (PyPI-only)."""
+    try:
+        import xyzrender  # noqa: PLC0415
+    except ImportError as err:
+        msg = (
+            "Rendering requires xyzrender, which is only on PyPI. "
+            "Install it with `pip install xyzrender` or, in a pixi workspace, "
+            "add it under [pypi-dependencies]."
+        )
+        raise ImportError(msg) from err
+    return xyzrender
+
+
+def _xyzrender_molecule(geo: Geometry) -> "xyzrender.Molecule":
     """Load a geometry into xyzrender via a temporary xyz file."""
+    xyzrender = _import_xyzrender()
     with tempfile.TemporaryDirectory() as tmp_dir:
         path = Path(tmp_dir) / "geometry.xyz"
         xyz_file(geo, path=path)
@@ -977,6 +1261,15 @@ def _xyzrender_molecule(geo: Geometry) -> xyzrender.Molecule:
 
 
 # Helpers
+def _key_coordinates(geo: Geometry, keys: Sequence[int], count: int) -> np.ndarray:
+    """Get the coordinates of `count` atoms, checking the number of keys."""
+    keys = list(keys)
+    if len(keys) != count:
+        msg = f"Expected {count} atom indices, got {keys}."
+        raise ValueError(msg)
+    return geo.coordinates[keys]
+
+
 def _as_adjacency(amat: ArrayLike, natms: int) -> np.ndarray:
     """Convert to a boolean adjacency matrix, checking its shape."""
     amat = np.asarray(amat).astype(bool)

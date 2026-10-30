@@ -12,10 +12,20 @@ channel:
 pixi add --channel avcopan automol
 ```
 
-Some functionality is optional and pulled in through the dependencies it
-already declares (RDKit for identity/InChI/SMILES conversions, py3Dmol and
-xyzrender for visualization) — these install automatically with the package,
-so no extra flags are needed.
+RDKit (identity/InChI/SMILES conversions) and py3Dmol (interactive
+viewing) install automatically with the package.
+
+xyzrender, which `geom.render_svg` and `geom.render_gif` use, is only on PyPI,
+so the conda package leaves it out. To render images, add it as a PyPI
+dependency:
+
+```bash
+pixi add --pypi xyzrender
+```
+
+Everything else works without it; the render functions raise an `ImportError`
+explaining this if it's missing. Installing automol from PyPI
+(`pip install automol`) includes xyzrender.
 
 ## For development
 

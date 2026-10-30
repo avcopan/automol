@@ -17,6 +17,9 @@ backend = { name = "pixi-build-python", version = "*" }
 [package.build.config]
 ignore-pyproject-manifest = false
 ignore-pypi-mapping = false
+# xyzrender is only on PyPI, so leave it out of the conda package (geom imports it
+# lazily; see [pypi-dependencies] for the development environments)
+pypi-conda-map = { xyzrender = false }
 
 [package.host-dependencies]
 uv = "*"

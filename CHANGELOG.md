@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+### Added
+- `geom.select_atoms`, `geom.remove_atoms`, and `geom.join` for selecting and combining atoms. Selections keep the charge, and keep the spin when it is still consistent with the electron count (otherwise the lowest consistent spin).
+- `geom.distance`, `geom.angle`, and `geom.dihedral` to measure specific atoms by index.
+- `geom.center`, `geom.principal_axes`, `geom.inertial_frame_rotation`, and `geom.alignment_rotation` (Kabsch).
+- `origin` parameter on `geom.rotate` and `geom.reflect`, to rotate about a point or reflect across a plane that doesn't contain the origin.
+
+### Fixed
+- `import automol` no longer fails in conda environments, which don't have xyzrender (it is only on PyPI). xyzrender is now imported only by `geom.render_svg` and `geom.render_gif`, which explain how to install it if it's missing, and the conda package leaves it out explicitly (`pypi-conda-map`).
 
 ## [0.0.27] - 2026-10-02
 

@@ -115,6 +115,15 @@ geom.angles(water, amat)     # [[z1, z2, z3, theta], ...]
 geom.dihedrals(water, amat)  # [[z1, z2, z3, z4, phi], ...]
 ```
 
+To measure specific atoms by index, use `distance`, `angle`, and `dihedral`
+(in radians, or degrees with `degrees=True`):
+
+```python
+geom.distance(water, [0, 1])
+geom.angle(water, [1, 0, 2], degrees=True)       # vertex in the middle
+geom.dihedral(peroxide, [0, 1, 2, 3], degrees=True)
+```
+
 ## Transformations
 
 `automol.geom` provides rigid transformations that return a new `Geometry`
@@ -134,6 +143,39 @@ subset of atoms by index, leaving the rest untouched:
 ```python
 geom.translate(water, [1.0, 0.0, 0.0], keys=[0])  # move only atom 0
 ```
+
+`rotate` and `reflect` also accept an `origin`: the point to rotate about, or a
+point on the reflection plane. For example, to rotate atoms 3 and 4 about atom
+1, or to move the center of mass to the origin:
+
+```python
+geom.rotate(geo, rot, origin=geo.coordinates[1], keys=[3, 4])
+geom.center(geo)
+```
+
+`alignment_rotation` finds the rotation that best maps one geometry onto
+another with the same atoms (by the Kabsch algorithm, about their centers of
+mass), and `inertial_frame_rotation` finds the rotation into the principal
+axis frame, with the principal axes from `principal_axes`:
+
+```python
+rot = geom.alignment_rotation(geo, ref)           # rotate(center(ref), rot) ~ center(geo)
+framed = geom.rotate(geom.center(geo), geom.inertial_frame_rotation(geo))
+moments, axes = geom.principal_axes(geo)          # ascending; right-handed axes
+```
+
+## Selecting and joining atoms
+
+```python
+methyl = geom.select_atoms(methane, [0, 1, 2, 3])  # keep these atoms, in this order
+methyl = geom.remove_atoms(methane, [4])           # same, by removing atom 4
+dimer = geom.join([methyl, methyl])                # concatenate atoms
+```
+
+Selections keep the charge, and keep the spin when it is still consistent with
+the electron count (otherwise they use the lowest consistent spin, so the
+methyl radical above has `spin=1`). Pass `charge` and `spin` to override.
+`join` sums the charges and spins.
 
 
 ## Next steps
