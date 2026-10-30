@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+
+## [0.0.28] - 2026-10-30
 ### Added
 - `geom.select_atoms`, `geom.remove_atoms`, and `geom.join` for selecting and combining atoms. Selections keep the charge, and keep the spin when it is still consistent with the electron count (otherwise the lowest consistent spin).
 - `geom.distance`, `geom.angle`, and `geom.dihedral` to measure specific atoms by index.
