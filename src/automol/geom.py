@@ -32,6 +32,7 @@ __all__ = [
     "alignment_rotation",
     "angle",
     "angles",
+    "axis_alignment_rotation",
     "bonds",
     "center",
     "center_of_mass",
@@ -1194,6 +1195,46 @@ def alignment_rotation(geo: Geometry, ref: Geometry) -> Rotation:
     return Rotation.align_vectors(
         center(geo).coordinates, center(ref).coordinates, weights=geo.masses
     )[0]
+
+
+def axis_alignment_rotation(
+    geo: Geometry, keys: Sequence[int], axis: ArrayLike = (0.0, 0.0, 1.0)
+) -> Rotation:
+    """Find the smallest rotation pointing the vector between two atoms along an axis.
+
+    Use it to put a bond or other molecular axis along a coordinate axis, e.g.
+    before spinning the geometry about that axis.
+
+    Args:
+        geo: Geometry.
+        keys: Two atoms, ``(i, j)``. The vector from `i` to `j` is aligned.
+        axis: Direction to point it in.
+
+    Returns:
+        The rotation, to apply with `rotate` (about atom `i` to keep it in
+        place, e.g. ``rotate(geo, rot, origin=geo.coordinates[i])``).
+
+    Raises:
+        ValueError: If `keys` isn't two distinct atoms at different positions.
+
+    Example:
+        >>> geo = Geometry(
+        ...     symbols=["H", "H"], coordinates=[[0, 0, 0], [1, 0, 0]], charge=0, spin=0
+        ... )
+        >>> rot = axis_alignment_rotation(geo, [0, 1], axis=[0, 1, 0])
+        >>> rotate(geo, rot).coordinates.round(6).tolist()
+        [[0.0, 0.0, 0.0], [0.0, 1.0, 0.0]]
+    """
+    if len(keys) != 2 or keys[0] == keys[1]:  # noqa: PLR2004
+        msg = f"Expected two distinct atoms, got {keys}."
+        raise ValueError(msg)
+    i, j = keys
+    vec = geo.coordinates[j] - geo.coordinates[i]
+    if np.isclose(np.linalg.norm(vec), 0.0):
+        msg = f"Atoms {i} and {j} are at the same position."
+        raise ValueError(msg)
+    # For a single pair of vectors, scipy returns the smallest rotation
+    return Rotation.align_vectors([axis], [vec])[0]
 
 
 # Visualization

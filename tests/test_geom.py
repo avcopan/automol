@@ -577,6 +577,36 @@ def test__alignment_rotation_recovers_rotation(propyl_oxirane: Geometry) -> None
     assert found.approx_equal(ROT, atol=1e-8)
 
 
+@pytest.mark.parametrize("axis", [(0, 1, 0), (1, -2, 3), (0, 0, -1)])
+def test__axis_alignment_rotation(
+    propyl_oxirane: Geometry, axis: tuple[float, float, float]
+) -> None:
+    """Test that the atom vector ends up along the axis, from any orientation."""
+    unit = np.array(axis) / np.linalg.norm(axis)
+    for seed in range(3):
+        geo = geom.rotate(propyl_oxirane, Rotation.random(random_state=seed))
+        rot = geom.axis_alignment_rotation(geo, (0, 4), axis=axis)
+        aligned = geom.rotate(geo, rot, origin=geo.coordinates[0])
+        vec = aligned.coordinates[4] - aligned.coordinates[0]
+        assert np.allclose(vec / np.linalg.norm(vec), unit)
+        assert np.allclose(aligned.coordinates[0], geo.coordinates[0])
+        assert np.allclose(geom.distance_matrix(aligned), geom.distance_matrix(geo))
+        # Already aligned: nothing to do
+        again = geom.axis_alignment_rotation(aligned, (0, 4), axis=axis)
+        assert again.magnitude() < 1e-6  # noqa: PLR2004
+
+
+@pytest.mark.parametrize(
+    ("keys", "match"), [((0,), "two distinct"), ((1, 1), "two distinct")]
+)
+def test__axis_alignment_rotation_raises(
+    water: Geometry, keys: tuple[int, ...], match: str
+) -> None:
+    """Test that the atoms must be two distinct atoms."""
+    with pytest.raises(ValueError, match=match):
+        geom.axis_alignment_rotation(water, keys)
+
+
 def test__alignment_rotation_mismatch_raises(
     water: Geometry, peroxide: Geometry
 ) -> None:
