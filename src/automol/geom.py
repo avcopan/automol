@@ -58,6 +58,8 @@ __all__ = [
     "rotate",
     "select_atoms",
     "translate",
+    "twist",
+    "twist_angle",
     "view",
     "xyz_block",
     "xyz_file",
@@ -1143,6 +1145,111 @@ def rotate(
     origin = np.asarray(origin, dtype=float)
     geo.coordinates[mask] = rot.apply(geo.coordinates[mask] - origin) + origin
     return geo
+
+
+def twist(
+    geo: Geometry, keys: Sequence[int], angle: float, *, degrees: bool = False
+) -> Geometry:
+    """Rotate a group about a bond, e.g. a methyl or amine group.
+
+    Everything on the side of atom `j` of the bond ``(i, j)`` rotates about the
+    axis from `i` to `j`, by the right-hand rule (thumb from `i` to `j`). Bond
+    lengths and angles are kept; only the dihedral angles about the bond change.
+
+    Args:
+        geo: Geometry.
+        keys: The bond, ``(i, j)``. The side of `j` moves.
+        angle: Angle to rotate by.
+        degrees: If `True`, `angle` is in degrees instead of radians.
+
+    Returns:
+        The twisted geometry.
+
+    Raises:
+        ValueError: If `i` and `j` aren't bonded, or the bond is in a ring.
+
+    Example:
+        >>> geo = Geometry(
+        ...     symbols=["H", "O", "O", "H"],
+        ...     coordinates=[[1, 0, 0], [0, 0, 0], [0, 0, 1.4], [1, 0, 1.4]],
+        ...     charge=0,
+        ...     spin=0,
+        ... )
+        >>> geo = twist(geo, (1, 2), 90, degrees=True)
+        >>> round(dihedral(geo, [0, 1, 2, 3], degrees=True), 6)
+        90.0
+    """
+    i, j = _bond_keys(keys)
+    moving = _bond_side(geo, i, j)
+    axis = geo.coordinates[j] - geo.coordinates[i]
+    angle = float(np.radians(angle)) if degrees else angle
+    rot = Rotation.from_rotvec(angle * axis / np.linalg.norm(axis))
+    return rotate(geo, rot, origin=geo.coordinates[j], keys=moving)
+
+
+def twist_angle(
+    geo: Geometry,
+    keys: Sequence[int],
+    vec: ArrayLike,
+    target: ArrayLike,
+    *,
+    degrees: bool = False,
+) -> float:
+    """Find the twist about a bond that turns one direction onto another.
+
+    Both directions are projected onto the plane perpendicular to the bond, and
+    the result is the signed angle between the projections, so that
+    ``twist(geo, keys, twist_angle(geo, keys, vec, target))`` turns `vec` (as
+    part of the moving group) to point as close as possible to `target`.
+
+    Args:
+        geo: Geometry.
+        keys: The bond, ``(i, j)``, as for `twist`.
+        vec: Direction attached to the moving group, e.g. a bond direction.
+        target: Direction to turn it toward.
+        degrees: If `True`, return the angle in degrees instead of radians.
+
+    Returns:
+        The angle, between -pi and pi (or -180 and 180 degrees).
+
+    Raises:
+        ValueError: If `vec` or `target` is parallel to the bond.
+    """
+    i, j = _bond_keys(keys)
+    axis = geo.coordinates[j] - geo.coordinates[i]
+    axis = axis / np.linalg.norm(axis)
+    vec_perp, target_perp = (
+        np.asarray(v, dtype=float) - np.dot(v, axis) * axis for v in (vec, target)
+    )
+    for name, v in (("vec", vec_perp), ("target", target_perp)):
+        if np.isclose(np.linalg.norm(v), 0.0):
+            msg = f"`{name}` is parallel to the bond {keys}."
+            raise ValueError(msg)
+    y = np.dot(np.cross(vec_perp, target_perp), axis)
+    ang = float(np.arctan2(y, np.dot(vec_perp, target_perp)))
+    return float(np.degrees(ang)) if degrees else ang
+
+
+def _bond_keys(keys: Sequence[int]) -> tuple[int, int]:
+    """Check that `keys` is a pair of distinct atoms."""
+    if len(keys) != 2 or keys[0] == keys[1]:  # noqa: PLR2004
+        msg = f"Expected a bond of two distinct atoms, got {keys}."
+        raise ValueError(msg)
+    return int(keys[0]), int(keys[1])
+
+
+def _bond_side(geo: Geometry, i: int, j: int) -> list[int]:
+    """List the atoms on the side of `j` of the bond ``(i, j)``, without `j`."""
+    amat = adjacency_matrix(geo)
+    if not amat[i, j]:
+        msg = f"Atoms {i} and {j} are not bonded."
+        raise ValueError(msg)
+    amat[i, j] = amat[j, i] = 0
+    _, labels = connected_components(amat, directed=False)
+    if labels[i] == labels[j]:
+        msg = f"The bond ({i}, {j}) is in a ring, so its sides can't twist."
+        raise ValueError(msg)
+    return [k for k in np.flatnonzero(labels == labels[j]).tolist() if k != j]
 
 
 def center(geo: Geometry, *, in_place: bool = False) -> Geometry:

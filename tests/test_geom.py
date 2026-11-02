@@ -673,3 +673,64 @@ def test__measurement_wrong_key_count_raises(
     """Test that the wrong number of atom indices is rejected."""
     with pytest.raises(ValueError, match="atom indices"):
         fn(peroxide, keys)
+
+
+# Twisting groups about bonds (propyl_oxirane: chain C0-C1-C2-C3, ring C3-O4-C5)
+
+
+@pytest.mark.parametrize("angle", [-120.0, 37.0, 180.0])
+def test__twist(propyl_oxirane: Geometry, angle: float) -> None:
+    """Test that a twist changes only the dihedral about the bond, by the angle."""
+    geo = propyl_oxirane
+    twisted = geom.twist(geo, (1, 2), angle, degrees=True)
+    before = geom.dihedral(geo, [0, 1, 2, 3], degrees=True)
+    after = geom.dihedral(twisted, [0, 1, 2, 3], degrees=True)
+    assert np.isclose((after - before - angle + 180) % 360, 180)
+    # The side of atom 1 doesn't move; the side of atom 2 moves rigidly
+    fixed = [0, 1, *np.flatnonzero(geom.adjacency_matrix(geo)[0]).tolist()]
+    assert np.allclose(twisted.coordinates[fixed], geo.coordinates[fixed])
+    moving = [2, 3, 4, 5]
+    assert np.allclose(
+        geom.distance_matrix(geom.select_atoms(twisted, moving)),
+        geom.distance_matrix(geom.select_atoms(geo, moving)),
+    )
+    # Twisting back is a roundtrip
+    back = geom.twist(twisted, (1, 2), -angle, degrees=True)
+    assert np.allclose(back.coordinates, geo.coordinates)
+
+
+def test__twist_angle_roundtrip(propyl_oxirane: Geometry) -> None:
+    """Test that twisting by `twist_angle` turns a direction onto the target."""
+    geo = propyl_oxirane
+    axis = geo.coordinates[2] - geo.coordinates[1]
+    axis /= np.linalg.norm(axis)
+    vec = geo.coordinates[3] - geo.coordinates[2]
+    for seed in range(5):
+        target = np.random.default_rng(seed).normal(size=3)
+        angle = geom.twist_angle(geo, (1, 2), vec, target)
+        twisted = geom.twist(geo, (1, 2), angle)
+        new = twisted.coordinates[3] - twisted.coordinates[2]
+        new_perp = new - np.dot(new, axis) * axis
+        target_perp = target - np.dot(target, axis) * axis
+        assert np.allclose(
+            new_perp / np.linalg.norm(new_perp),
+            target_perp / np.linalg.norm(target_perp),
+        )
+    assert np.isclose(geom.twist_angle(geo, (1, 2), vec, vec), 0)
+
+
+@pytest.mark.parametrize(
+    ("keys", "match"),
+    [((3, 4), "in a ring"), ((0, 3), "not bonded"), ((1, 1), "two distinct")],
+)
+def test__twist_raises(propyl_oxirane: Geometry, keys: tuple, match: str) -> None:
+    """Test that ring bonds, non-bonds, and non-pairs can't be twisted."""
+    with pytest.raises(ValueError, match=match):
+        geom.twist(propyl_oxirane, keys, 1.0)
+
+
+def test__twist_angle_parallel_raises(propyl_oxirane: Geometry) -> None:
+    """Test that a direction along the bond has no twist angle."""
+    axis = propyl_oxirane.coordinates[2] - propyl_oxirane.coordinates[1]
+    with pytest.raises(ValueError, match="parallel"):
+        geom.twist_angle(propyl_oxirane, (1, 2), axis, [1, 0, 0])
