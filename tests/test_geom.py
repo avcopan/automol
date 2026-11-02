@@ -178,6 +178,51 @@ def test__from_xyz_block_raises(xyz_block: str, match: str) -> None:
         geom.from_xyz_block(xyz_block, charge=0, spin=0)
 
 
+def test__xyz_trajectory_file_roundtrip(
+    water: Geometry, peroxide: Geometry, tmp_path: Path
+) -> None:
+    """Test multi-frame xyz file roundtrip, with frames of different sizes."""
+    geos = [water, peroxide, geom.translate(water, [1.0, 2.0, 3.0])]
+    comments = ["-15.2", "second", ""]
+    path = tmp_path / "frames.xyz"
+    geom.xyz_trajectory_file(geos, path=path, comments=comments)
+
+    geos_rt = geom.from_xyz_trajectory_file(path, charge=0, spin=0)
+    assert len(geos_rt) == len(geos)
+    for geo, geo_rt in zip(geos, geos_rt, strict=True):
+        assert geo.symbols == geo_rt.symbols
+        assert np.allclose(geo.coordinates, geo_rt.coordinates)
+    assert geom.xyz_trajectory_comments(path.read_text()) == comments
+
+
+def test__xyz_trajectory_single_frame(water: Geometry) -> None:
+    """Test that single-frame and multi-frame I/O agree on a single frame."""
+    block = geom.xyz_trajectory_block([water])
+    assert block == geom.xyz_block(water)
+    (geo_rt,) = geom.from_xyz_trajectory_block(block, charge=0, spin=0)
+    assert geo_rt == geom.from_xyz_block(block, charge=0, spin=0)
+
+
+@pytest.mark.parametrize(
+    ("xyz_block", "match"),
+    [
+        ("", "empty"),
+        ("1\na\nH 0 0 0\nH 0 0 1\n", "atom count on line 4"),
+        ("1\na\nH 0 0 0\n2\nb\nH 0 0 1\n", "only 1 atom lines"),
+    ],
+)
+def test__from_xyz_trajectory_block_raises(xyz_block: str, match: str) -> None:
+    """Test that empty and malformed multi-frame xyz blocks are rejected."""
+    with pytest.raises(XYZFormatError, match=match):
+        geom.from_xyz_trajectory_block(xyz_block, charge=0, spin=0)
+
+
+def test__xyz_trajectory_block_comment_count_raises(water: Geometry) -> None:
+    """Test that the number of comments must match the number of geometries."""
+    with pytest.raises(ValueError, match="2 comments for 1 geometries"):
+        geom.xyz_trajectory_block([water], comments=["a", "b"])
+
+
 # RDKit conversion (C/H/O perception is covered in test_geom_to_mol.py)
 
 

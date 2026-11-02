@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+### Added
+- Multi-frame xyz I/O, e.g. for conformer lists: `geom.from_xyz_trajectory_block`, `geom.from_xyz_trajectory_file`, `geom.xyz_trajectory_block`, `geom.xyz_trajectory_file`, and `geom.xyz_trajectory_comments` (for per-frame values on the comment line, such as CREST's energies).
 
 ## [0.0.28] - 2026-10-30
 ### Added
