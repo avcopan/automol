@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+
+## [0.0.30] - 2026-11-03
 ### Added
 - `geom.twist`, which rotates the group on one side of a bond about it (e.g. a methyl or amine group), and `geom.twist_angle`, the twist that turns one direction onto another, as the signed angle between their projections perpendicular to the bond.
 
