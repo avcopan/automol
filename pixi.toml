@@ -50,10 +50,24 @@ test = { cmd = "pytest", default-environment = "test" }
 [feature.lowest]
 solve-strategy = "lowest"
 
-# Data packages that should always be recent, even when testing lowest versions
-# (other packages depend on them without lower bounds)
-# Only use PyPI wheels: unbounded transitive PyPI dependencies would otherwise
-# resolve to ancient source-only releases that fail to build (e.g. cairosvg 0.1)
+# Floors for packages that other packages depend on without (adequate) lower bounds
+[feature.lowest.constraints]
+# Data packages that should always be recent
+ca-certificates = ">=2026.10.18"
+tzdata = ">=2026c"
+# Older typing-extensions releases break on Python 3.13 (e.g. pydantic fails to import)
+typing-extensions = ">=4.12"
+# The oldest libstdcxx-ng packages ship a libstdc++.so.6 that shadows the newer one from
+# libstdcxx, so C++ packages fail with "GLIBCXX_3.4.31 not found"
+libstdcxx-ng = ">=13"
+# conda's py3dmol depends on an unbounded ipython, whose oldest versions pull in a
+# Jupyter stack too old for the ipykernel>=7.2 that xyzrender (PyPI) needs
+ipython = ">=9"
+# jupyter-core (via xyzrender's ipykernel) needs platformdirs>=2.5
+platformdirs = ">=2.5"
+
+# Only use PyPI wheels: unbounded transitive PyPI dependencies would otherwise resolve
+# to ancient source-only releases that fail to build
 [feature.lowest.pypi-options]
 no-build = true
 
@@ -61,20 +75,6 @@ no-build = true
 # don't work on Python 3.13; networkx follows SPEC 0
 [feature.lowest.pypi-options.dependency-overrides]
 networkx = ">=3.5"
-
-[feature.lowest.constraints]
-ca-certificates = ">=2026.10.18"
-tzdata = ">=2026c"
-# Older typing-extensions releases break on Python 3.13 (pydantic fails to import)
-typing-extensions = ">=4.12"
-# rdkit's boost needs GLIBCXX_3.4.31 (GCC 13); the oldest libstdcxx-ng packages ship
-# an older libstdc++.so.6 that shadows the one from libstdcxx
-libstdcxx-ng = ">=13"
-# conda's py3dmol depends on an unbounded ipython, whose oldest versions pull in a
-# Jupyter stack too old for the ipykernel>=7.2 that xyzrender (PyPI) needs
-ipython = ">=9"
-# jupyter-core (via xyzrender's ipykernel) needs platformdirs>=2.5
-platformdirs = ">=2.5"
 
 [feature.data.dependencies]
 python = "*"
