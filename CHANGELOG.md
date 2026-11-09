@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+
+## [0.0.31] - 2026-11-09
 ### Changed
 - **Breaking:** automol requires Python 3.13 or later, following [SPEC 0](https://scientific-python.org/specs/spec-0000/).
 - Minimum dependency versions follow SPEC 0 and are tested against the lowest allowed versions: numpy 2.2 (was 2.0), scipy 1.15 (was 1.13), and pydantic 2.9 (was 2.5, the oldest with Python 3.13 support).

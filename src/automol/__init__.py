@@ -1,6 +1,6 @@
 """Molecular geometries, identities, and RDKit interoperability."""
 
-__version__ = "0.0.30"
+__version__ = "0.0.31"
 
 from . import geom, rd
 from .geom import Geometry, View
