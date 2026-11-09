@@ -5,9 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 ### Changed
-- The conda package is now published to the [`avcopan/automech`](https://prefix.dev/channels/avcopan/automech) channel on prefix.dev, instead of the `avcopan` channel on anaconda.org.
-- **Breaking:** automol requires Python 3.13 or later, following [SPEC 0](https://scientific-python.org/specs/spec-0000/). The minimum versions of numpy (2.2), scipy (1.15), pydantic (2.9), and rdkit (2025.3.3) are raised to match, and are tested.
-- The project now follows the [copier-pixi-python](https://github.com/avcopan/copier-pixi-python) template, and the documentation site is built with Great Docs.
+- **Breaking:** automol requires Python 3.13 or later, following [SPEC 0](https://scientific-python.org/specs/spec-0000/).
+- Minimum dependency versions follow SPEC 0 and are tested against the lowest allowed versions: numpy 2.2 (was 2.0), scipy 1.15 (was 1.13), and pydantic 2.9 (was 2.5, the oldest with Python 3.13 support).
+- rdkit requires 2025.3.3 or later, since earlier releases fail to embed allenes (e.g. `C=C=C`).
+- The conda package is published to the [`avcopan/automech`](https://prefix.dev/channels/avcopan/automech) channel on prefix.dev instead of the `avcopan` channel on anaconda.org. Install it with `pixi workspace channel add https://repo.prefix.dev/avcopan/automech` and `pixi add automol`. As before, xyzrender (for `geom.render_svg` and `geom.render_gif`) comes from PyPI.
+- The documentation site is built with Great Docs, with a rewritten installation page and self-contained, tested examples in the user guide.
+- The project follows the [copier-pixi-python](https://github.com/avcopan/copier-pixi-python) template, which also adds the README, license, and repository and documentation links to the PyPI page.
 
 ### Removed
 - The unused `ipython` dependency.
