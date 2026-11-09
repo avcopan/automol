@@ -1,3 +1,8 @@
+---
+title: "Geometries"
+guide-section: "User Guide"
+---
+
 # Geometries
 
 The `Geometry` model and the `automol.geom` module are the core of automol:
@@ -81,7 +86,7 @@ hill_formula.identity_fn(water)  # "H2O"
 
 Elements are in Hill order: with carbon present, C comes first, then H, then
 the rest alphabetically; without carbon, all elements (including H) are
-alphabetical. See [Molecular identity](identity.md).
+alphabetical. See [Molecular identity](../user-guide/identity.qmd).
 
 ## Geometric properties
 
@@ -121,7 +126,11 @@ To measure specific atoms by index, use `distance`, `angle`, and `dihedral`
 ```python
 geom.distance(water, [0, 1])
 geom.angle(water, [1, 0, 2], degrees=True)       # vertex in the middle
-geom.dihedral(peroxide, [0, 1, 2, 3], degrees=True)
+
+from automol import rd
+
+peroxide = geom.from_rdkit_mol(rd.mol.from_smiles("OO"))  # O, O, H, H
+geom.dihedral(peroxide, [2, 0, 1, 3], degrees=True)  # H-O-O-H
 ```
 
 ## Transformations
@@ -145,12 +154,13 @@ geom.translate(water, [1.0, 0.0, 0.0], keys=[0])  # move only atom 0
 ```
 
 `rotate` and `reflect` also accept an `origin`: the point to rotate about, or a
-point on the reflection plane. For example, to rotate atoms 3 and 4 about atom
-1, or to move the center of mass to the origin:
+point on the reflection plane. For example, to rotate atom 2 about atom 0, or to
+move the center of mass to the origin:
 
 ```python
-geom.rotate(geo, rot, origin=geo.coordinates[1], keys=[3, 4])
-geom.center(geo)
+rot = Rotation.from_euler("z", 30, degrees=True)
+geom.rotate(water, rot, origin=water.coordinates[0], keys=[2])
+geom.center(water)
 ```
 
 `alignment_rotation` finds the rotation that best maps one geometry onto
@@ -159,14 +169,15 @@ mass), and `inertial_frame_rotation` finds the rotation into the principal
 axis frame, with the principal axes from `principal_axes`:
 
 ```python
-rot = geom.alignment_rotation(geo, ref)           # rotate(center(ref), rot) ~ center(geo)
-framed = geom.rotate(geom.center(geo), geom.inertial_frame_rotation(geo))
-moments, axes = geom.principal_axes(geo)          # ascending; right-handed axes
+rot = geom.alignment_rotation(water, rotated)  # rotate(center(rotated), rot) ~ center(water)
+framed = geom.rotate(geom.center(water), geom.inertial_frame_rotation(water))
+moments, axes = geom.principal_axes(water)     # ascending; right-handed axes
 ```
 
 ## Selecting and joining atoms
 
 ```python
+methane = geom.from_rdkit_mol(rd.mol.from_smiles("C"))  # C, H, H, H, H
 methyl = geom.select_atoms(methane, [0, 1, 2, 3])  # keep these atoms, in this order
 methyl = geom.remove_atoms(methane, [4])           # same, by removing atom 4
 dimer = geom.join([methyl, methyl])                # concatenate atoms
@@ -180,7 +191,7 @@ methyl radical above has `spin=1`). Pass `charge` and `spin` to override.
 
 ## Next steps
 
-- [Molecular identity](identity.md) — generate InChI/SMILES from a
+- [Molecular identity](../user-guide/identity.qmd) — generate InChI/SMILES from a
   `Geometry`, or a `Geometry` from one.
-- [Visualization](visualization.md) — view or render a `Geometry`.
-- [Interoperability](interoperability.md) — convert to/from RDKit.
+- [Visualization](../user-guide/visualization.qmd) — view or render a `Geometry`.
+- [Interoperability](../user-guide/interoperability.qmd) — convert to/from RDKit.

@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+### Changed
+- The conda package is now published to the [`avcopan/automech`](https://prefix.dev/channels/avcopan/automech) channel on prefix.dev, instead of the `avcopan` channel on anaconda.org.
+- **Breaking:** automol requires Python 3.13 or later, following [SPEC 0](https://scientific-python.org/specs/spec-0000/). The minimum versions of numpy (2.2), scipy (1.15), pydantic (2.9), and rdkit (2025.3.3) are raised to match, and are tested.
+- The project now follows the [copier-pixi-python](https://github.com/avcopan/copier-pixi-python) template, and the documentation site is built with Great Docs.
+
+### Removed
+- The unused `ipython` dependency.
 
 ## [0.0.30] - 2026-11-03
 ### Added

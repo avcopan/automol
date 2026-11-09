@@ -1,3 +1,8 @@
+---
+title: "Interoperability"
+guide-section: "User Guide"
+---
+
 # Interoperability
 
 `Geometry` stays deliberately minimal — symbols, coordinates, charge, and
@@ -9,8 +14,14 @@ built from.
 ## RDKit
 
 ```python
-from automol import geom
+from automol import Geometry, geom
 
+water = Geometry(
+    symbols=["O", "H", "H"],
+    coordinates=[[0.0, 0.0, 0.0], [0.0, 0.0, 0.96], [0.93, 0.0, -0.24]],
+    charge=0,
+    spin=0,
+)
 mol = geom.rdkit_mol(water)         # Geometry -> rdkit.Chem.Mol
 water_rt = geom.from_rdkit_mol(mol)  # rdkit.Chem.Mol -> Geometry
 ```

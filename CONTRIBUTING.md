@@ -1,48 +1,62 @@
 # Contributing to automol
 
-Thank you for your interest in contributing to **automol**!
+Contributions are welcome: bug reports, documentation, and code.
+For larger changes, please open an issue first to discuss the idea.
 
-Contributions of all kinds are welcome, including bug reports, documentation improvements, and new features.
+## Setup
 
-## Development workflow
+1. Install [Pixi](https://pixi.prefix.dev/latest/installation/).
+2. Fork and clone the repository.
+3. In the clone, install the environments and the Git hooks:
+   ```bash
+   pixi install --all
+   pixi run lefthook install
+   ```
 
-To get set up:
-1. Install [Pixi](https://pixi.prefix.dev/latest/installation/)
-2. Fork the repository
-3. Clone the repository and run `pixi run init` inside it
+The project follows the [copier-pixi-python](https://github.com/avcopan/copier-pixi-python) template, whose README explains the tooling in more detail.
 
-To contribute code, submit pull requests with clear descriptions of the changes. For larger contributions, create an issue first to propose your idea.
+## Workflow
 
-All tasks run through Pixi (`pixi run <task>`), defined in `pixi.toml` under `[feature.dev.tasks]`:
+| task | what it does |
+|---|---|
+| `pixi run test` | Run the tests, including the doctests in `src/` |
+| `pixi run test-lowest` | Run the tests with the lowest dependency versions allowed by `pyproject.toml` |
+| `pixi run pre-commit` | Run every check that runs on commit: format, lint, types, import contracts, both test runs, and a clean-tree check |
+| `pixi run pre-commit-check` | The same, without the tests |
+| `pixi run docs-preview` | Build and preview the documentation site |
+| `pixi run add <pkg>` | Add a run dependency to `pyproject.toml` |
 
-- `pixi run fmt` — format with Ruff
-- `pixi run lint` — lint with Ruff (`--fix`)
-- `pixi run types` — static type-check with `ty`
-- `pixi run imports` — enforce module layering with `lint-imports` (import-linter)
-- `pixi run test` — run the full pytest suite
-- `pixi run pre-commit` — run all of the above via lefthook, in order (fmt → lint → types → imports → test), then check the tree is clean
-- `pixi run cov-view` — open the HTML coverage report
-
-To run a single test, invoke `pytest` directly inside the pixi env rather than through the `pixi run test` task, e.g.:
-
+To run a single test, call pytest in the `test` environment:
 ```bash
-pixi run -e dev pytest tests/test_geom.py::test__center_of_mass
+pixi run -e test pytest tests/test_geom.py::test__center_of_mass
 ```
 
-pytest is configured with `--doctest-modules`, so doctests in `src/` docstrings are collected and run as part of the suite. Coverage must stay ≥80% (`fail_under = 80` in `pyproject.toml`).
+Coverage must stay at or above 80%.
+Docstrings use the [Google style](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings), with types taken from the annotations rather than repeated in `Args:` and `Returns:`.
+Docstring examples run as doctests, so keep them working.
 
-## Coding standards
+## Design
 
-Coding standards are largely enforced by the pre-commit hooks, which perform formatting and linting ([Ruff](https://github.com/charliermarsh/ruff)), import linting ([Lint-Imports](https://import-linter.readthedocs.io/en/stable/)), static type-checking ([Ty](https://github.com/astral-sh/ty)), and testing ([PyTest](https://docs.pytest.org/en/latest/)) with code coverage reports [CodeCov](https://docs.codecov.com/docs).
+### Modules, types, and variables
 
-Docstrings follow the [Google style](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings) (Ruff `pydocstyle` convention `google`). Types come from annotations, so leave them out of `Args:`, `Returns:`, and `Attributes:`, and omit `Returns:` for functions returning `None`. Doctest examples embedded in docstrings are executed as part of the test suite (`--doctest-modules`), so keep them runnable and accurate — a docstring example that no longer works is treated as a test failure, not just stale documentation.
+automol keeps modules, types, and data-valued variables distinct, so scientific code stays short and free of name collisions:
 
-## Architecture
+- **Modules** are short, singular nouns that act as namespaces for algorithms, e.g. `automol.geom`. Never use a module name as a variable name.
+- **Types** are singular, capitalized data models, e.g. `Geometry`.
+- **Variables** holding instances use abbreviations distinct from the module, e.g. `geo` for a `Geometry` (not `geom`).
+- **Algorithms are module-level functions**, not methods, e.g. `geom.center_of_mass(geo)`.
 
-### Module layering
+```python
+from automol import geom, rd
 
-`pyproject.toml` defines a strict layer contract, enforced by `lint-imports` (`pixi run imports`).
-Higher layers may depend on lower ones, never the reverse:
+geo = geom.from_rdkit_mol(rd.mol.from_smiles("O"))
+com = geom.center_of_mass(geo)
+```
+
+### Layers
+
+Modules are layered, and a module may only import from the layers below it.
+`pixi run imports` enforces this with the contract in `pyproject.toml`:
 
 ```
 automol.ident   (highest)
@@ -51,52 +65,12 @@ automol.rd
 automol.utils   (lowest)
 ```
 
-`automol.rd` (RDKit interop) sits below `automol.geom`, which is itself below `automol.ident` (InChI/SMILES generation). Adding an import that violates this order will fail `pixi run imports`.
+### Conversions
 
-3D visualization (`View`, `view`, `render_svg`, `render_gif`) lives in `automol.geom` rather than in its own layer: `Geometry._repr_html_` uses it, so a separate `automol.view` module would create a reverse dependency.
+Each conversion between an automol model and an external library or format has exactly one home in automol.
+Bridge modules know only their external library: `automol.rd` deals only in RDKit `Mol` objects and never imports automol's models.
+The conversions themselves, such as `geom.rdkit_mol()` and `geom.from_rdkit_mol()`, live above the bridge, in `automol.geom`, which the layers allow.
+Other packages, such as autostorage, call these conversions rather than reimplementing them.
 
-### "If you own the data, you own the interface"
-
-Each core data model (e.g. `Geometry`) is owned by the module that defines it, and that module owns the conversion logic to/from external formats or libraries, not the bridge sub-package:
-
-- Bridge/interop sub-packages (e.g. `automol.rd`) stay "pure" — zero knowledge of the core models. `automol.rd.mol` only deals in RDKit `Mol` objects (plus primitive types), never `Geometry`. This follows directly from the layering contract: `automol.rd` sits *below* `automol.geom`, so it cannot import `Geometry` even if it wanted to.
-- The core model's own module imports the lower-layer bridge and owns the conversion, e.g. `geom.py` imports `automol.rd` and defines `rdkit_mol()` / `from_rdkit_mol()` to convert to/from RDKit `Mol` objects, rather than `automol.rd` knowing about `Geometry`.
-- When another package in the suite (e.g. AutoStore) needs to convert an automol `Geometry`, it calls automol's own conversion function rather than reimplementing the mapping.
-
-Conversions are standalone module-level functions, not methods on the Pydantic model, so the model itself stays free of optional/heavy dependencies.
-
-### Current module map
-
-- `automol.geom` (`geom.py`) — the `Geometry` core model and everything that operates on it, in sections: xyz I/O, RDKit conversion, properties (center of mass, distance matrix/keys, adjacency matrix, inertia tensor), internal coordinates (bonds/angles/dihedrals), rigid-body transforms, and visualization (`View`/`view` with py3Dmol, `render_svg`/`render_gif` with xyzrender).
-- `automol.rd` — RDKit bridge (`rd/mol.py`): SMILES/InChI/xyz parsing, `Mol` accessors, and Lewis structure perception (`from_connectivity`).
-- `automol.ident` — `Algorithm`/`AlgorithmRegistry` and the built-in `rdkit_inchi`, `rdkit_smiles`, and `hill_formula` algorithms for identifier generation from a `Geometry`.
-- `automol.utils` — shared low-level helpers: `element.py` (periodic table data from `elements-data.json`), `types.py`, `units.py`, and `exc.py`.
-
-## Conventions
-
-automol distinguishes **modules**, **types**, and **data-valued variables** to keep scientific code concise and free of name collisions:
-
-- **Modules** are short, singular domain nouns and act only as namespaces for algorithms, e.g. `automol.geom`, `automol.ident`. Never use a module name as a variable name.
-- **Types** are singular, capitalized data models, e.g. `Geometry`.
-- **Variables** holding instances use short abbreviations distinct from the module name, e.g. a `Geometry` instance is `geo` (not `geom`, which is the module).
-- **Algorithms are module-level functions**, not instance methods, e.g. `center_of_mass(geo: Geometry) -> FloatArray` in `automol.geom`.
-
-```python
-from automol import geom, Geometry
-
-geo = Geometry(["O", "H", "H"], coordinates)
-com = geom.center_of_mass(geo)
-```
-
-This holds across sub-package boundaries too — the RDKit bridge follows the same pattern of module-level conversion functions rather than methods on `Geometry` or `Mol`:
-
-```python
-from automol import geom, rd
-
-mol = rd.mol.from_smiles("O")
-geo = geom.from_rdkit_mol(mol)
-```
-
-## Questions
-
-If you have questions about contributing or design decisions, feel free to open an issue for discussion.
+Keeping conversions in `automol.geom` works for libraries automol depends on anyway, like RDKit.
+For a library that is heavy or optional, either import it lazily inside the function that needs it, as `geom.render_svg` does with xyzrender, or put its conversions in a dedicated adapter module above both `automol.geom` and the bridge, so that `automol.geom` doesn't depend on it.

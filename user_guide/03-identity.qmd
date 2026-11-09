@@ -1,4 +1,9 @@
-# Molecular identity
+---
+title: "Molecular Identity"
+guide-section: "User Guide"
+---
+
+# Molecular Identity
 
 `automol.ident` generates string identifiers (InChI, SMILES, molecular
 formulas, ...) from a `Geometry` and, where possible, reconstructs a

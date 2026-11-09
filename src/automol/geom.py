@@ -292,7 +292,7 @@ def xyz_block(geo: Geometry, *, comment: str | None = None) -> str:
         msg = f"The xyz comment must be a single line, got {comment!r}."
         raise ValueError(msg)
     lines = [str(geo.atom_count), comment]
-    for sym, (x, y, z) in zip(geo.symbols, geo.coordinates, strict=True):
+    for sym, (x, y, z) in zip(geo.symbols, geo.coordinates.tolist(), strict=True):
         lines.append(f"{sym:<4} {x:12.8f} {y:12.8f} {z:12.8f}")
 
     return "\n".join(lines)

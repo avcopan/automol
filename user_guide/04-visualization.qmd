@@ -1,3 +1,8 @@
+---
+title: "Visualization"
+guide-section: "User Guide"
+---
+
 # Visualization
 
 `automol.geom` builds on [py3Dmol](https://3dmol.csb.pitt.edu/) for
