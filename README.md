@@ -4,20 +4,30 @@
 [![Pixi Badge](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/prefix-dev/pixi/main/assets/badge/v0.json)](https://pixi.sh)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Typing: ty](https://img.shields.io/badge/typing-ty-EFC621.svg)](https://github.com/astral-sh/ty)
+[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-border.json)](https://github.com/copier-org/copier)
 
 automol is a Python library for working with molecular geometries. It centers on a single `Geometry` model (atomic symbols, Cartesian coordinates, charge, and spin) and builds identity generation (InChI, SMILES, ...), 3D visualization, and RDKit interoperability on top of it.
 
-See the [documentation](https://avcopan.github.io/automol/) for API reference.
+See the [documentation](https://avcopan.github.io/automol/) for the user guide and API reference.
 
 ## Installation
 
-automol is built and distributed with [Pixi](https://pixi.sh). In another Pixi-managed project:
+automol requires Python 3.13 or later.
+With [Pixi](https://pixi.sh), add it from the [`avcopan/automech`](https://prefix.dev/channels/avcopan/automech) channel on prefix.dev:
 
 ```bash
-pixi add --channel avcopan automol
+pixi workspace channel add https://repo.prefix.dev/avcopan/automech
+pixi add automol
+pixi add --pypi xyzrender  # optional: only on PyPI, needed for geom.render_svg/render_gif
 ```
 
-For local development, see [Contributing](CONTRIBUTING.md).
+Or install it from PyPI, which includes xyzrender:
+
+```bash
+pip install automol  # or: uv add automol
+```
+
+For local development, see [Contributing](https://github.com/avcopan/automol/blob/main/CONTRIBUTING.md).
 
 ## Usage
 
@@ -43,7 +53,7 @@ com = geom.center_of_mass(water)
 ```python
 from automol import hill_formula, rdkit_inchi, rdkit_smiles
 
-rdkit_inchi.identity_fn(water)   # "InChI=1S/H2O/h1H2"
+rdkit_inchi.identity_fn(water)  # "InChI=1S/H2O/h1H2"
 rdkit_smiles.identity_fn(water)  # "O"
 hill_formula.identity_fn(water)  # "H2O"
 
@@ -76,7 +86,6 @@ view.add_geometry(water, label=True)
 `Geometry` also supports inlay rendering, providing a `View()` and xyz-formatted block:
 
 ```python
-
 water
 # Shows a 3D rendering + xyz-formatted block.
 ```
@@ -85,12 +94,16 @@ See the [documentation](https://avcopan.github.io/automol/) for more on geometri
 
 ## Architecture
 
-automol is organized as a strict layer stack (`ident` → `geom` → `rd` → `utils`), enforced by import-linter, with each core data model owned by the module that defines it — external-library bridges (like the RDKit interop above) live in consuming sub-packages rather than in the core models themselves. See [Contributing](CONTRIBUTING.md) for the full architectural rationale.
+automol is organized as a strict layer stack (`ident` → `geom` → `rd` → `utils`), enforced by import-linter, with each core data model owned by the module that defines it — external-library bridges (like the RDKit interop above) live in consuming sub-packages rather than in the core models themselves. See [Contributing](https://github.com/avcopan/automol/blob/main/CONTRIBUTING.md) for the full architectural rationale.
 
 ## Contributing
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change. See [Contributing](CONTRIBUTING.md) for coding standards and workflow.
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change. See [Contributing](https://github.com/avcopan/automol/blob/main/CONTRIBUTING.md) for coding standards and workflow.
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [MIT License](https://github.com/avcopan/automol/blob/main/LICENSE).
+
+## Credits
+
+This package was created with [copier](https://copier.readthedocs.io/) and the [avcopan/copier-pixi-python](https://github.com/avcopan/copier-pixi-python) project template.
