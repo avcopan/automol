@@ -565,7 +565,7 @@ def test__select_atoms_charge_and_spin() -> None:
     ch2 = geom.remove_atoms(methane, [3, 4])
     assert (ch2.charge, ch2.spin) == (0, 0)
     # Joining two methyl radicals sums the spins (a triplet)
-    assert geom.join([methyl, methyl]).spin == 2  # noqa: PLR2004
+    assert geom.join([methyl, methyl]).spin == 2
 
 
 # Rotational analysis and alignment
@@ -593,7 +593,7 @@ def test__axis_alignment_rotation(
         assert np.allclose(geom.distance_matrix(aligned), geom.distance_matrix(geo))
         # Already aligned: nothing to do
         again = geom.axis_alignment_rotation(aligned, (0, 4), axis=axis)
-        assert again.magnitude() < 1e-6  # noqa: PLR2004
+        assert again.magnitude() < 1e-6
 
 
 @pytest.mark.parametrize(

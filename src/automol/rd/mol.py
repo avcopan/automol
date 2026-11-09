@@ -227,7 +227,7 @@ def set_coordinates(mol: Mol, coords: FloatArray, *, in_place: bool = False) -> 
 
     mol = mol if in_place else Mol(mol)
     conf = Chem.Conformer(mol.GetNumAtoms())
-    for i, (x, y, z) in enumerate(coords):
+    for i, (x, y, z) in enumerate(coords.tolist()):
         conf.SetAtomPosition(i, (float(x), float(y), float(z)))
     mol.RemoveAllConformers()
     mol.AddConformer(conf, assignId=True)
