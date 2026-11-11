@@ -3,7 +3,7 @@
 Deprecated: use autogeom (https://github.com/avcopan/autogeom) instead.
 """
 
-__version__ = "0.0.31"
+__version__ = "0.0.32"
 
 import warnings
 

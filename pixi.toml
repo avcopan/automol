@@ -9,7 +9,7 @@ automol = { path = "." }
 
 [package]
 name = "automol"
-version = "0.0.31"
+version = "0.0.32"
 
 [package.build]
 backend = { name = "pixi-build-python", version = "*" }
