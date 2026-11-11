@@ -6,9 +6,37 @@
 [![Typing: ty](https://img.shields.io/badge/typing-ty-EFC621.svg)](https://github.com/astral-sh/ty)
 [![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-border.json)](https://github.com/copier-org/copier)
 
+> [!WARNING]
+> **automol is deprecated and no longer maintained.** Version 0.0.32 is the last release.
+> Use [autogeom](https://github.com/avcopan/autogeom) instead, which continues the `Geometry` code under a new name.
+> The identity framework (`Algorithm`, `AlgorithmRegistry`, `IdentityKind`) moved to [autostorage](https://github.com/avcopan/autostorage).
+> See [Moving to autogeom](#moving-to-autogeom) below.
+
 automol is a Python library for working with molecular geometries. It centers on a single `Geometry` model (atomic symbols, Cartesian coordinates, charge, and spin) and builds identity generation (InChI, SMILES, ...), 3D visualization, and RDKit interoperability on top of it.
 
 See the [documentation](https://avcopan.github.io/automol/) for the user guide and API reference.
+
+## Moving to autogeom
+
+The name `automol` clashes with the `automol` module of the older AutoMech codes, so the two could not be installed in one environment.
+The code now lives on under names that don't clash:
+
+- **[autogeom](https://github.com/avcopan/autogeom)** holds the `Geometry` model and everything that operates on it ([documentation](https://avcopan.github.io/autogeom/)).
+- **[autostorage](https://github.com/avcopan/autostorage)** holds the identity framework, which only it used.
+
+Install autogeom with `pip install autogeom`, or with `pixi add autogeom` from the [`avcopan/automech`](https://prefix.dev/channels/avcopan/automech) channel.
+
+| automol 0.0.31 | now |
+|---|---|
+| `automol.Geometry`, `automol.View` | `autogeom.Geometry`, `autogeom.View` |
+| `automol.geom.<function>(geo)` | `autogeom.<function>(geo)` (the `geom` module is gone) |
+| `automol.rd.mol.<function>` | `autogeom.rd.<function>` |
+| `automol.utils.element`, `automol.utils.types`, `automol.utils.exc` | `autogeom.element`, `autogeom.types`, `autogeom.exc` |
+| `automol.Algorithm`, `automol.AlgorithmRegistry`, `automol.IdentityKind` | `autostorage.IdentityAlgorithm`, `autostorage.IdentityAlgorithmRegistry`, `autostorage.IdentityKind` |
+| `automol.rdkit_inchi`, `automol.rdkit_smiles`, `automol.hill_formula` | `autostorage.rdkit_inchi`, `autostorage.rdkit_smiles`, `autostorage.hill_formula` |
+
+The changelogs of [autogeom](https://github.com/avcopan/autogeom/blob/main/CHANGELOG.md) and [autostorage](https://github.com/avcopan/autostorage/blob/main/CHANGELOG.md) list every change.
+The rest of this page describes automol 0.0.32 as it is.
 
 ## Installation
 

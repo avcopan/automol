@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+### Deprecated
+- **automol is deprecated, and this is its last release.** Its name clashes with the `automol` module of the older AutoMech codes, so the code continues under new names:
+  - [autogeom](https://github.com/avcopan/autogeom) holds the `Geometry` model and the functions that operate on it;
+  - [autostorage](https://github.com/avcopan/autostorage) holds the identity framework (`Algorithm`, `AlgorithmRegistry`, `IdentityKind`, and the built-in algorithms).
+
+  The README has a table of what moved where.
+- Importing automol raises a `FutureWarning` that points to autogeom. Nothing else in the code has changed since 0.0.31.
 
 ## [0.0.31] - 2026-11-09
 ### Changed
